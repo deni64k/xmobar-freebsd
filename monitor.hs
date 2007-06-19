@@ -20,8 +20,10 @@ memParse file =
         rest = free + buffer + cache
         used = total - rest
         usedratio = used * 100 / total
+        realused = if usedratio > 50 then "^#FF0000"++show used++"^#FFFFFF"
+                   else "^#FF00FF"++show used++"^#FFFFFF"
     in
-        printf "MEM: %sM %.1f%% used   %.0fM rest" used usedratio rest
+        printf "MEM: %sM %.1f%% used   %.0fM rest" realused usedratio rest
 
 
 mem :: IO String
@@ -40,7 +42,9 @@ temp :: IO String
 temp = do
     file <- readFile "/proc/acpi/thermal_zone/THRM/temperature"
     let t = (words file) !! 1
-    return $ "TEMP: " ++ t ++ "C"
+        f t | read t > 60 = "^#FF0000"++t++"^#FFFFFF"
+            | otherwise = "^#00FF00"++t++"^#FFFFFF"
+    return $ "TEMP: " ++ (f t) ++ "C"
 
 
 takeTail :: Int -> [a] -> [a]
