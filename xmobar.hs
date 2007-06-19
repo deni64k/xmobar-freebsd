@@ -2,7 +2,7 @@
 -- |
 -- Module      :  XMobar
 -- Copyright   :  (c) Andrea Rossato
--- License     :  BSD-style (see xmonad/LICENSE)
+-- License     :  BSD-style (see LICENSE)
 -- 
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable

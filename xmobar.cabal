@@ -1,0 +1,16 @@
+name:               xmobar
+version:            0.1
+homepage:           http://gorgias.mine.nu/repos/xmobar/
+synopsis:           A Statusbar for the XMonad Window Manager
+description:        A Statusbar for the XMonad Window Manager
+category:           System
+license:            BSD3
+license-file:       LICENSE
+author:             Andrea Rossato
+maintainer:         andrea.rossato@unibz.it
+build-depends:      base>=2.0, X11>=1.2.1, mtl>=1.0, unix>=1.0, parsec>=2.0
+
+executable:         xmobar
+main-is:            xmobar.hs
+ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+ghc-prof-options:   -prof -auto-all
