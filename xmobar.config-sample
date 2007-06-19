@@ -1,0 +1,8 @@
+Config { fonts = "-misc-fixed-*-*-*-*-*-*-*-*-*-*-*-*"
+       , bgColor = "#000000"
+       , fgColor = "#00ff00"
+       , xPos = 0
+       , yPos = 0
+       , width = 1024
+       , hight = 15
+       }
