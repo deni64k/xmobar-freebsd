@@ -5,4 +5,5 @@ Config { fonts = "-misc-fixed-*-*-*-*-*-*-*-*-*-*-*-*"
        , yPos = 0
        , width = 1024
        , hight = 15
+       , refresh = 10
        }

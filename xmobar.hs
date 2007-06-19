@@ -44,6 +44,7 @@ import Graphics.X11.Xlib.Misc
 import Text.ParserCombinators.Parsec
 
 import Control.Monad
+import Control.Concurrent
 import System.Environment
 
 -- $config
@@ -58,6 +59,7 @@ data Config =
            , yPos :: Int       -- ^ y Window position 
            , width :: Int      -- ^ Window width
            , hight :: Int      -- ^ Window hight
+           , refresh :: Int    -- ^ Refresh rate in tenth of seconds
            } deriving (Eq, Show, Read, Ord)
 
 defaultConfig :: Config
@@ -69,6 +71,7 @@ defaultConfig =
            , yPos = 0
            , width = 1024
            , hight = 15
+           , refresh = 10
            }
 
 -- $main
@@ -131,6 +134,7 @@ drawInWin config (dpy, win) str = do
   freeGC dpy gc
   sync dpy True
   -- back again: we are never ending
+  threadDelay $ 100000 * refresh config
   eventLoop config
 
 
