@@ -12,27 +12,52 @@
 --
 -----------------------------------------------------------------------------
 
-module Main where
+module Main ( -- * Configuration
+              -- $config
+              Config (..),
+              -- * Main Stuff
+              -- $main
+              main
+            , eventLoop
+            , createWin
+            , drawInWin
+              -- * Printing
+              -- $print
+            , printStrings
+              -- * Parsing
+              -- $parser
+            , stringParse 
+            , stringParser
+            , defaultColors
+            , colorsAndText
+              -- * Unmamaged Windows
+              -- $unmanwin
+            , mkUnmanagedWindow
+              -- * Useful Utilities
+            , readConfig
+            , initColor
+            ) where
 
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Misc
-import Graphics.X11.Xlib.Extras
 
 import Text.ParserCombinators.Parsec
 
-import Control.Concurrent
 import Control.Monad
-import Data.Bits
-import System
+import System.Environment
 
+-- $config
+-- Configuration data type and default configuration
+
+-- | The configuration data type
 data Config = 
-    Config { fonts :: String
-           , bgColor :: String
-           , fgColor :: String
-           , xPos :: Int
-           , yPos :: Int
-           , width :: Int
-           , hight :: Int
+    Config { fonts :: String   -- ^ Fonts
+           , bgColor :: String -- ^ Backgroud color
+           , fgColor :: String -- ^ Default font color
+           , xPos :: Int       -- ^ x Window position (origin in the upper left corner) 
+           , yPos :: Int       -- ^ y Window position 
+           , width :: Int      -- ^ Window width
+           , hight :: Int      -- ^ Window hight
            } deriving (Eq, Show, Read, Ord)
 
 defaultConfig :: Config
@@ -46,6 +71,9 @@ defaultConfig =
            , hight = 15
            }
 
+-- $main
+
+-- | The main entry point
 main :: IO ()
 main = 
     do args <- getArgs
@@ -56,13 +84,15 @@ main =
               else readConfig (args!!0)
        eventLoop config
 
+-- | The event loop
 eventLoop :: Config -> IO ()
 eventLoop c =
     do i <- getLine
        ps <- stringParse c i
        w <- createWin c
-       runWin c w ps
+       drawInWin c w ps
 
+-- | The function to create the initial window
 createWin :: Config -> IO (Display, Window)
 createWin config =
   do dpy   <- openDisplay ""
@@ -72,17 +102,17 @@ createWin config =
             (fromIntegral $ xPos config) 
             (fromIntegral $ yPos config) 
             (fromIntegral $ width config) 
-            (fromIntegral $ hight config) 0
+            (fromIntegral $ hight config)
      mapWindow dpy win
      return (dpy,win)
 
-runWin :: Config -> (Display, Window) -> [(String, String)] -> IO ()
-runWin config (dpy, win) str = do
-  -- get default colors
+-- | Draws and updates the window
+drawInWin :: Config -> (Display, Window) -> [(String, String)] -> IO ()
+drawInWin config (dpy, win) str = do
+  -- get win bgcolor
   bgcolor  <- initColor dpy $ bgColor config
-  fgcolor  <- initColor dpy $ fgColor config
 
-  -- window background 
+  -- set window background 
   gc <- createGC dpy win
   setForeground dpy gc bgcolor
   fillRectangle dpy win gc 0 0 
@@ -104,13 +134,19 @@ runWin config (dpy, win) str = do
   eventLoop config
 
 
-{- $print
-An easy way to print the stuff we need to print
--}
+-- $print
 
+-- | An easy way to print the stuff we need to print
+printStrings :: Display
+             -> Drawable
+             -> GC
+             -> FontStruct
+             -> Position
+             -> [(String, String, Position)]
+             -> IO ()
 printStrings _ _ _ _ _ [] = return ()
-printStrings dpy win gc fontst offset (x@(s,c,l):xs) =
-    do let (_,asc,desc,_) = textExtents fontst s
+printStrings dpy win gc fontst offset ((s,c,l):xs) =
+    do let (_,asc,_,_) = textExtents fontst s
        color  <- initColor dpy c
        setForeground dpy gc color
        drawString dpy win gc offset asc s
@@ -120,15 +156,19 @@ printStrings dpy win gc fontst offset (x@(s,c,l):xs) =
 This is suppose do be a parser. Don't trust him.
 -}
 
+-- | Run the actual parsers
 stringParse :: Config -> String -> IO [(String, String)]
 stringParse config s = 
     case (parse (stringParser config) "" s) of
-      Left err -> return [("Sorry, if I were a decent parser you now would be starring at something meaningful...",(fgColor config))]
+      Left _ -> return [("Sorry, if I were a decent parser you now would be starring at something meaningful..."
+                        , (fgColor config))]
       Right x  -> return x
 
+-- | Get the string and combine the needed parsers
 stringParser :: Config -> Parser [(String, String)]
 stringParser c = manyTill (choice [colorsAndText c,defaultColors c]) eof
 
+-- | parses a string with default color (no color set)
 defaultColors :: Config -> Parser (String, String)
 defaultColors config = 
     do { s <- many $ noneOf "^"
@@ -137,6 +177,7 @@ defaultColors config =
        }
     <|> colorsAndText config
 
+-- | parses a string with a color set
 colorsAndText :: Config -> Parser (String, String) 
 colorsAndText config = 
     do { string "^#"
@@ -150,11 +191,13 @@ colorsAndText config =
 
 {- $unmanwin
 
-This is a way to create unmamaged window. It was a mistery in haskell. 
+This is a way to create unmamaged window. It was a mistery in Haskell. 
 Till I've found out...;-)
 
 -}
 
+-- | Creates a window with the attribute override_redirect set to True.
+-- Windows Managers should not touch this kind of windows.
 mkUnmanagedWindow :: Display
                   -> Screen
                   -> Window
@@ -162,9 +205,8 @@ mkUnmanagedWindow :: Display
                   -> Position
                   -> Dimension
                   -> Dimension
-                  -> Pixel
                   -> IO Window
-mkUnmanagedWindow dpy scr rw x y w h bgcolor = do
+mkUnmanagedWindow dpy scr rw x y w h = do
   let visual = defaultVisualOfScreen scr
       attrmask = cWOverrideRedirect
   window <- allocaSetWindowAttributes $ 
@@ -175,17 +217,18 @@ mkUnmanagedWindow dpy scr rw x y w h bgcolor = do
   return window
 
 {- $utility
-
-Utilitis, aka stollen without givin' credit stuff.
-
+Utilities, aka stollen without givin' credit stuff.
 -}
 
+-- | Reads the configuration files or quits with an error
 readConfig :: FilePath -> IO Config
 readConfig f = 
     do s <- readFile f
        case reads s of
-         [(config, str)] -> return config
-         [] -> error ("corrupt config file: " ++ f)
+         [(config,_)] -> return config
+         [] -> error ("Corrupt config file: " ++ f)
+         _ -> error ("Some problem occured. Aborting...")
+
 
 -- | Get the Pixel value for a named color
 initColor :: Display -> String -> IO Pixel
