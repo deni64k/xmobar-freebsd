@@ -1,3 +1,17 @@
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  XMobar
+-- Copyright   :  (c) Andrea Rossato
+-- License     :  BSD-style (see xmonad/LICENSE)
+-- 
+-- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
+-- Stability   :  unstable
+-- Portability :  unportable
+--
+-- A status bar for the Xmonad Window Manager 
+--
+-----------------------------------------------------------------------------
+
 module Main where
 
 import Graphics.X11.Xlib
