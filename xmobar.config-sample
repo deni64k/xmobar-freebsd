@@ -1,14 +1,13 @@
-Config { fonts = "-misc-fixed-*-*-*-*-*-*-*-*-*-*-*-*"
+Config { fonts = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
        , bgColor = "#000000"
-       , fgColor = "#00ff00"
+       , fgColor = "#BFBFBF"
        , xPos = 0
        , yPos = 0
-       , width = 200
-       , hight = 20
-       , align = "center"
+       , width = 1024
+       , hight = 15
+       , align = "right"
        , refresh = 10
-       , commands = [("date", ["+%d-%m-%Y %X"])]
+       , commands = [("xmb-net", ["eth1"])]
        , sepChar = "%"
-       , template = "<fc=#0000ff>%date%</fc>"
-
+       , template = "%xmb-cpu% %xmb-mem% %xmb-net% <fc=#ee9a00>%date%</fc>"
        }
