@@ -2,7 +2,9 @@ name:               xmobar
 version:            0.1
 homepage:           http://gorgias.mine.nu/repos/xmobar/
 synopsis:           A Statusbar for the XMonad Window Manager
-description:        A Statusbar for the XMonad Window Manager
+description: 	    Xmobar is a minimal status bar for the XMonad Window Manager.
+		    .
+                    It was inspired by the Ion3 status bar, and supports similar features.
 category:           System
 license:            BSD3
 license-file:       LICENSE

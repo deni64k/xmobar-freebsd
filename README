@@ -1,0 +1,43 @@
+XMobar - a status bar for the XMonad Window Manager
+
+ABOUT
+-----
+
+Xmobar is a minimal status bar for the XMonad Window Manager.
+
+It was inspired by the Ion3 status bar, and supports similar features.
+See xmobar.config-sample for a sample configuration.
+
+Try it with:
+xmobar xmobar.config-sample
+
+INSTALLATION
+------------
+
+tar xvfz xmobar-0.1
+runhaskell Setup.lhs configure --prefix=/usr/local
+runhaskell Setup.lhs build
+runhaskell Setup.lhs haddock (optional for building the code documentation)
+runhaskell Setup.lhs install (possibly to be run as root)
+
+Run with:
+xmobar /path/to/config $
+
+
+AUTHOR
+------
+
+Andrea Rossato <andrea.rossato@unibz.it>
+
+
+LINKS
+-----
+
+The XMobar home page:
+http://gorgias.mine.nu/xmobar/
+
+XMobars darcs repository:
+http://gorgias.mine.nu/repos/xmobar/
+
+The XMonad Window Manager
+http://xmonad.org
