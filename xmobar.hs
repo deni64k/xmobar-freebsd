@@ -14,28 +14,40 @@
 
 module Main ( -- * Configuration
               -- $config
-              Config (..),
+              Config (..)
               -- * Main Stuff
               -- $main
-              main
+            , Xbar
+            , main
+            , runXMobar
             , eventLoop
             , createWin
             , drawInWin
               -- * Printing
               -- $print
             , printStrings
+              -- * Program Execution
+              -- $commands
+            , getOptions
+            , execCommands
+            , runCom
               -- * Parsing
               -- $parser
-            , stringParse 
+            , parseString
             , stringParser
             , defaultColors
             , colorsAndText
+            , templateStringParser
+            , templateCommandParser
+            , templateParser
+            , parseTemplate
               -- * Unmamaged Windows
               -- $unmanwin
             , mkUnmanagedWindow
               -- * Useful Utilities
             , readConfig
             , initColor
+            , io
             ) where
 
 import Graphics.X11.Xlib
@@ -43,36 +55,52 @@ import Graphics.X11.Xlib.Misc
 
 import Text.ParserCombinators.Parsec
 
-import Control.Monad
+import Control.Monad.Reader
 import Control.Concurrent
 import System.Environment
+
+import System.Process
+import System.Exit
+import System.IO (hClose, hGetLine)
 
 -- $config
 -- Configuration data type and default configuration
 
 -- | The configuration data type
 data Config = 
-    Config { fonts :: String   -- ^ Fonts
-           , bgColor :: String -- ^ Backgroud color
-           , fgColor :: String -- ^ Default font color
-           , xPos :: Int       -- ^ x Window position (origin in the upper left corner) 
-           , yPos :: Int       -- ^ y Window position 
-           , width :: Int      -- ^ Window width
-           , hight :: Int      -- ^ Window hight
-           , refresh :: Int    -- ^ Refresh rate in tenth of seconds
+    Config { fonts          :: String   -- ^ Fonts
+           , bgColor        :: String   -- ^ Backgroud color
+           , fgColor        :: String   -- ^ Default font color
+           , xPos           :: Int      -- ^ x Window position (origin in the upper left corner) 
+           , yPos           :: Int      -- ^ y Window position 
+           , width          :: Int      -- ^ Window width
+           , hight          :: Int      -- ^ Window hight
+           , align          :: String   -- ^ text alignment
+           , refresh        :: Int      -- ^ Refresh rate in tenth of seconds
+           , commands       :: [(String,[String])]   -- ^ For setting the options of the programs to run (optionals)
+           , sepChar        :: String     -- ^ The character to be used for indicating 
+                                        --   commands in the output template (default '%')
+           , template       :: String   -- ^ The output template 
            } deriving (Eq, Show, Read, Ord)
 
 defaultConfig :: Config
 defaultConfig =
-    Config { fonts = "-misc-fixed-*-*-*-*-*-*-*-*-*-*-*-*" 
+    Config { fonts = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
            , bgColor = "#000000"
-           , fgColor = "#ffffff"
+           , fgColor = "#BFBFBF"
            , xPos = 0
            , yPos = 0
            , width = 1024
            , hight = 15
+           , align = "left"
            , refresh = 10
+           , commands = []
+           , sepChar = "%"
+           , template = "Uptime: <fc=#00FF00>%uptime%</fc> ** <fc=#FF0000>%date%</fc>"
            }
+
+-- | This is just estetics: see 'runXMobar'
+type Xbar a = ReaderT Config IO a
 
 -- $main
 
@@ -85,18 +113,32 @@ main =
               then do putStrLn ("No configuration file specified. Using default settings.")
                       return defaultConfig
               else readConfig (args!!0)
-       eventLoop config
+       runReaderT runXMobar config
+
+-- | Totally useless: since most of the operations are done in the IO
+-- monad it is ofter simpler to pass Config instead of keeping on lifting.
+-- But we like the mtl library...;-)
+runXMobar :: Xbar ()
+runXMobar =
+    do config <- ask
+       dwgf <- io $ createWin config
+       eventLoop dwgf    
 
 -- | The event loop
-eventLoop :: Config -> IO ()
-eventLoop c =
-    do i <- getLine
-       ps <- stringParse c i
-       w <- createWin c
-       drawInWin c w ps
+eventLoop :: (Display, Window, GC, FontStruct) -> Xbar ()
+eventLoop (d,w,g,f) =
+    do c <- ask
+       cl <- io $ parseTemplate c (template c)
+       i <- io $ execCommands c cl
+       ps <- io $ parseString c i
+       io $ drawInWin c (d,w,g,f) ps
+       io $ sync d True
+       -- back again: we are never ending
+       io $ threadDelay $ 100000 * refresh c
+       eventLoop (d,w,g,f)
 
 -- | The function to create the initial window
-createWin :: Config -> IO (Display, Window)
+createWin :: Config -> IO (Display, Window, GC, FontStruct)
 createWin config =
   do dpy   <- openDisplay ""
      let dflt = defaultScreen dpy
@@ -107,91 +149,155 @@ createWin config =
             (fromIntegral $ width config) 
             (fromIntegral $ hight config)
      mapWindow dpy win
-     return (dpy,win)
+     gc <- createGC dpy win
+     -- let's get the fonts
+     fontst <- loadQueryFont dpy (fonts config)
+     setFont dpy gc (fontFromFontStruct fontst)
+     -- finished
+     --freeGC dpy gc
+     return (dpy,win,gc,fontst)
 
--- | Draws and updates the window
-drawInWin :: Config -> (Display, Window) -> [(String, String)] -> IO ()
-drawInWin config (dpy, win) str = do
-  -- get win bgcolor
-  bgcolor  <- initColor dpy $ bgColor config
-
-  -- set window background 
-  gc <- createGC dpy win
-  setForeground dpy gc bgcolor
-  fillRectangle dpy win gc 0 0 
-                    (fromIntegral $ width config) 
-                    (fromIntegral $ hight config)
-
-  -- let's get the fonts
-  fontst <- loadQueryFont dpy (fonts config)
-  setFont dpy gc (fontFromFontStruct fontst)
-  
-  -- print what you need to print
-  let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
-  printStrings dpy win gc fontst 1 strWithLenth 
-
-  -- refreesh, fre, resync... do what you gotta do
-  freeGC dpy gc
-  sync dpy True
-  -- back again: we are never ending
-  threadDelay $ 100000 * refresh config
-  eventLoop config
-
+-- | Draws in and updates the window
+drawInWin :: Config -> (Display, Window, GC, FontStruct) -> [(String, String)] -> IO ()
+drawInWin config (dpy, win, gc, fontst) str = 
+    do bgcolor  <- initColor dpy $ bgColor config
+       -- set window background 
+       setForeground dpy gc bgcolor
+       fillRectangle dpy win gc 0 0 
+                         (fromIntegral $ width config) 
+                         (fromIntegral $ hight config)
+       -- write
+       let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
+       printStrings config dpy win gc fontst 1 strWithLenth 
+       sync dpy True
 
 -- $print
 
 -- | An easy way to print the stuff we need to print
-printStrings :: Display
+printStrings :: Config 
+             -> Display
              -> Drawable
              -> GC
              -> FontStruct
              -> Position
              -> [(String, String, Position)]
              -> IO ()
-printStrings _ _ _ _ _ [] = return ()
-printStrings dpy win gc fontst offset ((s,c,l):xs) =
+printStrings _ _ _ _ _ _ [] = return ()
+printStrings config dpy win gc fontst offs sl@((s,c,l):xs) =
     do let (_,asc,_,_) = textExtents fontst s
-       color  <- initColor dpy c
+           totSLen = foldr (\(_,_,len) -> (+) len) 0 sl
+           valign = (fromIntegral (hight config) + fromIntegral asc) `div` 2
+           offset = case (align config) of
+                      "center" -> (fromIntegral (width config) - fromIntegral totSLen) `div` 2
+                      "right" -> fromIntegral (width config) - fromIntegral totSLen
+                      "left" -> offs
+                      _ -> offs
+       color <- initColor dpy c
        setForeground dpy gc color
-       drawString dpy win gc offset asc s
-       printStrings dpy win gc fontst (offset + l) xs
+       drawString dpy win gc offset valign s
+       printStrings config dpy win gc fontst (offs + l) xs
+
+-- $commands
+
+-- | Gets the command options set in configuration.
+getOptions :: Config -> String -> [String]
+getOptions c com =
+    let l = commands c
+        p = filter (\(s,_) -> s == com) l
+    in case p of
+         [(_,opts)] -> opts
+         _ -> []
+
+-- | Runs a list of programs
+execCommands :: Config -> [(String,String,String)] -> IO String
+execCommands _ [] = return ""
+execCommands c ((s,com,ss):xs) =
+    do i <- runCom c com
+       is <- execCommands c xs
+       return $ s ++ i ++ ss ++ is
+
+-- | Runs the external program
+runCom :: Config -> String -> IO String
+runCom c com =
+    do (i,o,e,p) <- runInteractiveProcess com (getOptions c com) Nothing Nothing
+       exit <- waitForProcess p
+       let closeHandle = do hClose o
+                            hClose i
+                            hClose e
+       case exit of
+         ExitSuccess -> do str <- hGetLine o
+                           closeHandle
+                           return str
+         _ -> do closeHandle
+                 return $ "Could not execute command " ++ com
 
 {- $parser
-This is suppose do be a parser. Don't trust him.
--}
+These are the neede parsers. Don't trust them too much.
 
--- | Run the actual parsers
-stringParse :: Config -> String -> IO [(String, String)]
-stringParse config s = 
+There are parsers for the commands output and parsers for the
+formatting template.
+ -}
+
+-- | Runs the actual string parsers
+parseString :: Config -> String -> IO [(String, String)]
+parseString config s = 
     case (parse (stringParser config) "" s) of
       Left _ -> return [("Sorry, if I were a decent parser you now would be starring at something meaningful..."
                         , (fgColor config))]
       Right x  -> return x
 
--- | Get the string and combine the needed parsers
+-- | Gets the string and combines the needed parsers
 stringParser :: Config -> Parser [(String, String)]
-stringParser c = manyTill (choice [colorsAndText c,defaultColors c]) eof
+stringParser c = manyTill (colorsAndText c <|> defaultColors c) eof
 
--- | parses a string with default color (no color set)
+-- | Parses a string with the default color (no color set)
 defaultColors :: Config -> Parser (String, String)
 defaultColors config = 
-    do { s <- many $ noneOf "^"
-       ; notFollowedBy (char '#')
+    do { s <- many $ noneOf "<"
        ; return (s,(fgColor config))
        }
     <|> colorsAndText config
 
--- | parses a string with a color set
+-- | Parses a string with a color set
 colorsAndText :: Config -> Parser (String, String) 
 colorsAndText config = 
-    do { string "^#"
+    do { string "<fc=#"
        ; n <- count 6 hexDigit
-       ; s <- many $ noneOf "^"
-       ; notFollowedBy (char '#') 
+       ; string ">"
+       ; s <- many $ noneOf "<"
+       ; string "</fc>"
        ; return (s,"#"++n)
        }
     <|> defaultColors config
 
+-- | Parses the output template string
+templateStringParser :: Config -> Parser (String,String,String)
+templateStringParser c =
+    do{ s <- many $ noneOf "%"
+      ; (_,com,_) <- templateCommandParser c
+      ; ss <- many $ noneOf "%"
+      ; return (s, com, ss)
+      } 
+
+-- | Parses the command part of the template string
+templateCommandParser :: Config -> Parser (String,String,String)
+templateCommandParser c =
+    do { let chr = head $ sepChar c
+       ; char chr
+       ; com <- many $ noneOf (sepChar c)
+       ; char chr
+       ; return $ ("",com,"")
+       }
+-- | Combines the template parsers
+templateParser :: Config -> Parser [(String,String,String)]
+templateParser c = many (templateStringParser c <|> templateCommandParser c)
+
+-- | Actually runs the template parsers
+parseTemplate :: Config -> String -> IO [(String,String,String)]
+parseTemplate config s = 
+    case (parse (templateParser config) "" s) of
+      Left _ -> return [("Could not parse templete","","")]
+      Right x  -> return x
 
 {- $unmanwin
 
@@ -239,4 +345,6 @@ initColor :: Display -> String -> IO Pixel
 initColor dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
 
-
+-- | Short-hand for lifting in the IO monad
+io :: IO a -> Xbar a
+io = liftIO

@@ -3,7 +3,12 @@ Config { fonts = "-misc-fixed-*-*-*-*-*-*-*-*-*-*-*-*"
        , fgColor = "#00ff00"
        , xPos = 0
        , yPos = 0
-       , width = 1024
-       , hight = 15
+       , width = 200
+       , hight = 20
+       , align = "center"
        , refresh = 10
+       , commands = [("date", ["+%d-%m-%Y %X"])]
+       , sepChar = "%"
+       , template = "<fc=#0000ff>%date%</fc>"
+
        }
