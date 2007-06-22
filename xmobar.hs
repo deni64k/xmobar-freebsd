@@ -99,7 +99,7 @@ defaultConfig =
            , template = "Uptime: <fc=#00FF00>%uptime%</fc> ** <fc=#FF0000>%date%</fc>"
            }
 
--- | This is just estetics: see 'runXMobar'
+-- | This is just esthetics: see 'runXMobar'
 type Xbar a = ReaderT Config IO a
 
 -- $main
@@ -116,7 +116,7 @@ main =
        runReaderT runXMobar config
 
 -- | Totally useless: since most of the operations are done in the IO
--- monad it is ofter simpler to pass Config instead of keeping on lifting.
+-- monad it is ofter simpler to pass Config instead of lifting everytime.
 -- But we like the mtl library...;-)
 runXMobar :: Xbar ()
 runXMobar =
