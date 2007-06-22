@@ -14,3 +14,18 @@ executable:         xmobar
 main-is:            xmobar.hs
 ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
 ghc-prof-options:   -prof -auto-all
+
+executable:         xmb-cpu
+main-is:            Monitors/Cpu.hs
+ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+ghc-prof-options:   -prof -auto-all
+
+executable:         xmb-mem
+main-is:            Monitors/Mem.hs
+ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+ghc-prof-options:   -prof -auto-all
+
+executable:         xmb-net
+main-is:            Monitors/Net.hs
+ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+ghc-prof-options:   -prof -auto-all
