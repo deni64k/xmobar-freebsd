@@ -23,6 +23,34 @@ runhaskell Setup.lhs install (possibly to be run as root)
 Run with:
 xmobar /path/to/config $
 
+CONFIGURATION
+-------------
+
+See xmobar.config-sample for an example.
+
+For the output template:
+
+- %command% will execute command and print the output. The output may
+  contain markups to change the characters' color.
+
+- <fc=#FF0000>string</fc> will print "string" with #FF0000 color (red).
+
+Other configuration options:
+
+fonts: Name of the font to be used
+bgColor: Backgroud color
+fgColor: Default font color
+xPos: x position (origin in the upper left corner) of the XMobar window 
+yPos: y position
+width: width of the XMobar window 
+hight: hight
+align: text alignment 
+refresh: Refresh rate in tenth of seconds
+commands: For setting the options of the programs to run (optionals)
+sepChar: The character to be used for indicating commands in the
+         output template (default '%')
+template: The output template 
+
 
 AUTHOR
 ------
