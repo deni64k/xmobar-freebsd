@@ -125,20 +125,19 @@ runXMobar =
        eventLoop dwgf    
 
 -- | The event loop
-eventLoop :: (Display, Window, GC, FontStruct) -> Xbar ()
-eventLoop (d,w,g,f) =
+eventLoop :: (Display, Window) -> Xbar ()
+eventLoop (d,w) =
     do c <- ask
        cl <- io $ parseTemplate c (template c)
        i <- io $ execCommands c cl
        ps <- io $ parseString c i
-       io $ drawInWin c (d,w,g,f) ps
-       io $ sync d True
+       io $ drawInWin c (d,w) ps
        -- back again: we are never ending
        io $ threadDelay $ 100000 * refresh c
-       eventLoop (d,w,g,f)
+       eventLoop (d,w)
 
 -- | The function to create the initial window
-createWin :: Config -> IO (Display, Window, GC, FontStruct)
+createWin :: Config -> IO (Display, Window)
 createWin config =
   do dpy   <- openDisplay ""
      let dflt = defaultScreen dpy
@@ -149,27 +148,29 @@ createWin config =
             (fromIntegral $ width config) 
             (fromIntegral $ hight config)
      mapWindow dpy win
-     gc <- createGC dpy win
-     -- let's get the fonts
-     fontst <- loadQueryFont dpy (fonts config)
-     setFont dpy gc (fontFromFontStruct fontst)
-     -- finished
-     --freeGC dpy gc
-     return (dpy,win,gc,fontst)
+     return (dpy,win)
 
 -- | Draws in and updates the window
-drawInWin :: Config -> (Display, Window, GC, FontStruct) -> [(String, String)] -> IO ()
-drawInWin config (dpy, win, gc, fontst) str = 
-    do bgcolor  <- initColor dpy $ bgColor config
-       -- set window background 
-       setForeground dpy gc bgcolor
-       fillRectangle dpy win gc 0 0 
-                         (fromIntegral $ width config) 
-                         (fromIntegral $ hight config)
-       -- write
-       let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
-       printStrings config dpy win gc fontst 1 strWithLenth 
-       sync dpy True
+drawInWin :: Config -> (Display, Window) -> [(String, String)] -> IO ()
+drawInWin config (dpy, win) str = 
+     do bgcolor  <- initColor dpy $ bgColor config
+        gc <- createGC dpy win
+        --let's get the fonts
+        fontst <- loadQueryFont dpy (fonts config)
+        setFont dpy gc (fontFromFontStruct fontst)
+
+        -- set window background 
+        setForeground dpy gc bgcolor
+        fillRectangle dpy win gc 0 0 
+                          (fromIntegral $ width config) 
+                          (fromIntegral $ hight config)
+        -- write
+        let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
+        printStrings config dpy win gc fontst 1 strWithLenth 
+        -- free everything
+        freeFont dpy fontst
+        freeGC dpy gc
+        flush dpy
 
 -- $print
 
@@ -219,16 +220,18 @@ execCommands c ((s,com,ss):xs) =
 -- | Runs the external program
 runCom :: Config -> String -> IO String
 runCom c com =
-    do (i,o,e,p) <- runInteractiveProcess com (getOptions c com) Nothing Nothing
+    do (i,o,e,p) <- runInteractiveCommand (com ++ concat (map (' ':) $ getOptions c com))
+       -- the followinf leaks memory
+       --(i,o,e,p) <- runInteractiveProcess com (getOptions c com) Nothing Nothing
        exit <- waitForProcess p
-       let closeHandle = do hClose o
-                            hClose i
-                            hClose e
+       let closeHandles = do hClose o
+                             hClose i
+                             hClose e
        case exit of
          ExitSuccess -> do str <- hGetLine o
-                           closeHandle
+                           closeHandles
                            return str
-         _ -> do closeHandle
+         _ -> do closeHandles
                  return $ "Could not execute command " ++ com
 
 {- $parser
