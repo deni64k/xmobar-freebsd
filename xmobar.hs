@@ -232,7 +232,7 @@ execCommands c (x:xs) =
 
 execCommand :: Config -> (String,String,String) -> IO (ThreadId, MVar String)
 execCommand c com = 
-    do var <- newMVar ""
+    do var <- newMVar "Updating..."
        h <- forkIO $ runCommandLoop var c com
        return (h,var)
 
