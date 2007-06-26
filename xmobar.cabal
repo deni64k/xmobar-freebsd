@@ -33,3 +33,8 @@ executable:         xmb-net
 main-is:            Monitors/Net.hs
 ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
 ghc-prof-options:   -prof -auto-all
+
+executable:         xmb-weather
+main-is:            Monitors/Weather.hs
+ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+ghc-prof-options:   -prof -auto-all
