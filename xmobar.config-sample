@@ -7,7 +7,7 @@ Config { fonts = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
        , hight = 15
        , align = "right"
        , refresh = 10
-       , commands = [("xmb-net", ["eth1"])]
+       , commands = [("xmb-net", 10, ["eth1"])]
        , sepChar = "%"
        , template = "%xmb-cpu% %xmb-mem% %xmb-net% <fc=#ee9a00>%date%</fc>"
        }

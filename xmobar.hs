@@ -79,7 +79,8 @@ data Config =
            , hight          :: Int      -- ^ Window hight
            , align          :: String   -- ^ text alignment
            , refresh        :: Int      -- ^ Refresh rate in tenth of seconds
-           , commands       :: [(String,[String])]   -- ^ For setting the options of the programs to run (optionals)
+           , commands       :: [(String, Int, [String])]   -- ^ For setting the refresh rate and 
+                                                           -- options for the programs to run (optionals)
            , sepChar        :: String     -- ^ The character to be used for indicating 
                                         --   commands in the output template (default '%')
            , template       :: String   -- ^ The output template 
@@ -96,7 +97,7 @@ defaultConfig =
            , hight = 15
            , align = "left"
            , refresh = 10
-           , commands = []
+           , commands = [("date", 100, [])]
            , sepChar = "%"
            , template = "Uptime: <fc=#00FF00>%uptime%</fc> ** <fc=#FF0000>%date%</fc>"
            }
@@ -207,10 +208,19 @@ printStrings config dpy win gc fontst offs sl@((s,c,l):xs) =
 getOptions :: Config -> String -> [String]
 getOptions c com =
     let l = commands c
-        p = filter (\(s,_) -> s == com) l
+        p = filter (\(s,_,_) -> s == com) l
     in case p of
-         [(_,opts)] -> opts
+         [(_,_,opts)] -> opts
          _ -> []
+
+-- | Gets the command options set in configuration.
+getRefRate :: Config -> String -> Int
+getRefRate c com =
+    let l = commands c
+        p = filter (\(s,_,_) -> s == com) l
+    in case p of
+         [(_,int,_)] -> int
+         _ -> refresh c
 
 -- | Runs a list of programs
 execCommands :: Config -> [(String,String,String)] -> IO [(ThreadId, MVar String)]
@@ -245,18 +255,18 @@ runCommandLoop var conf c@(s,com,ss)
              ExitSuccess -> do str <- hGetLine o
                                closeHandles
                                modifyMVar_ var (\_ -> return $ s ++ str ++ ss)
-                               threadDelay $ 100000 * refresh conf
+                               threadDelay $ 100000 * (getRefRate conf com)
                                runCommandLoop var conf c
              _ -> do closeHandles
                      modifyMVar_ var $ \_ -> return $ "Could not execute command " ++ com
-                     threadDelay $ 100000 * refresh conf
+                     threadDelay $ 100000 * (getRefRate conf com)
                      runCommandLoop var conf c
                                   
 
 -- | Reads MVars set by 'runCommandLoop'
 readVariables :: [(ThreadId, MVar String)] -> IO String
 readVariables [] = return ""
-readVariables ((h,v):xs) =
+readVariables ((_,v):xs) =
     do f <- readMVar v
        fs <- readVariables xs
        return $! f ++ fs
