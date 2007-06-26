@@ -212,6 +212,7 @@ getOptions c com =
 -- | Runs a list of programs
 execCommands :: Config -> [(String,String,String)] -> IO String
 execCommands _ [] = return ""
+execCommands _ ((_,"",_):_) = return "Could not parse template"
 execCommands c ((s,com,ss):xs) =
     do i <- runCom c com
        is <- execCommands c xs
@@ -245,7 +246,7 @@ formatting template.
 parseString :: Config -> String -> IO [(String, String)]
 parseString config s = 
     case (parse (stringParser config) "" s) of
-      Left _ -> return [("Sorry, if I were a decent parser you now would be starring at something meaningful..."
+      Left _ -> return [("Could not parse string: " ++ s
                         , (fgColor config))]
       Right x  -> return x
 
@@ -299,7 +300,7 @@ templateParser c = many (templateStringParser c <|> templateCommandParser c)
 parseTemplate :: Config -> String -> IO [(String,String,String)]
 parseTemplate config s = 
     case (parse (templateParser config) "" s) of
-      Left _ -> return [("Could not parse templete","","")]
+      Left _ -> return [("","","")]
       Right x  -> return x
 
 {- $unmanwin
