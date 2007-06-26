@@ -137,17 +137,17 @@ eventLoop (d,w) =
        eventLoop (d,w)
 
 -- | The function to create the initial window
-createWin :: Config -> IO (Display, Window)
+createWin :: Config -> Xbar (Display, Window)
 createWin config =
-  do dpy   <- openDisplay ""
+  do dpy   <- io $ openDisplay ""
      let dflt = defaultScreen dpy
-     rootw  <- rootWindow dpy dflt
-     win <- mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
+     rootw  <- io $ rootWindow dpy dflt
+     win <- io $ mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
             (fromIntegral $ xPos config) 
             (fromIntegral $ yPos config) 
             (fromIntegral $ width config) 
             (fromIntegral $ hight config)
-     mapWindow dpy win
+     io $ mapWindow dpy win
      return (dpy,win)
 
 -- | Draws in and updates the window
