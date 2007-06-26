@@ -36,7 +36,7 @@ data WeatherInfo = Fail String
                       } 
                    
 instance Show WeatherInfo where
-    show (Fail x) = "N/A " ++ x
+    show (Fail _) = "N/A"
     show (WI st t temp rh) =
         st ++ ": " ++ (formatWeather temp) ++ "C, rh " ++ formatWeather rh ++
         "% (" ++ t ++ ")"
