@@ -84,7 +84,7 @@ eventLoop =
        ps <- io $ parseString c i
        drawInWin ps
        -- back again: we are never ending
-       io $ threadDelay $ 100000 * refresh c
+       io $ tenthSeconds (refresh c)
        eventLoop
 
 -- | The function to create the initial window
@@ -191,7 +191,7 @@ runCommandLoop :: MVar String -> Config -> (String,String,String) -> IO ()
 runCommandLoop var conf c@(s,com,ss) 
     | com == "" = 
         do modifyMVar_ var (\_ -> return $ "Could not parse the template")
-           threadDelay (100000 * (refresh conf))
+           tenthSeconds (refresh conf)
            runCommandLoop var conf c
     | otherwise =
         do (i,o,e,p) <- runInteractiveCommand (com ++ concat (map (' ':) $ getOptions conf com))
@@ -205,11 +205,11 @@ runCommandLoop var conf c@(s,com,ss)
              ExitSuccess -> do str <- hGetLine o
                                closeHandles
                                modifyMVar_ var (\_ -> return $ s ++ str ++ ss)
-                               threadDelay (100000 * (getRefRate conf com))
+                               tenthSeconds (getRefRate conf com)
                                runCommandLoop var conf c
              _ -> do closeHandles
                      modifyMVar_ var $ \_ -> return $ "Could not execute command " ++ com
-                     threadDelay (100000 * (getRefRate conf com))
+                     tenthSeconds (getRefRate conf com)
                      runCommandLoop var conf c
                                   
 
@@ -260,3 +260,9 @@ initColor dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
 -- | Short-hand for lifting in the IO monad
 io :: IO a -> Xbar a
 io = liftIO
+
+tenthSeconds :: Int -> IO ()
+tenthSeconds s =
+    threadDelay n
+        where n | (maxBound :: Int) `div` 100000 <= s = (maxBound :: Int)
+                | otherwise = s * 100000
