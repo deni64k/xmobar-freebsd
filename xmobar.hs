@@ -1,3 +1,4 @@
+{-# OPTIONS -fglasgow-exts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  XMobar
@@ -18,13 +19,13 @@ module Main ( -- * Configuration
               -- * Main Stuff
               -- $main
             , Xbar
-            , main
             , runXMobar
+            , main
             , eventLoop
             , createWin
-            , drawInWin
               -- * Printing
               -- $print
+            , drawInWin
             , printStrings
               -- * Program Execution
               -- $commands
@@ -57,6 +58,7 @@ import Graphics.X11.Xlib.Misc
 
 import Text.ParserCombinators.Parsec
 
+import Control.Monad.State
 import Control.Monad.Reader
 import Control.Concurrent
 import System.Environment
@@ -97,15 +99,30 @@ defaultConfig =
            , hight = 15
            , align = "left"
            , refresh = 10
-           , commands = [("date", 100, [])]
+           , commands = [("date", 10, [])]
            , sepChar = "%"
            , template = "Uptime: <fc=#00FF00>%uptime%</fc> ** <fc=#FF0000>%date%</fc>"
            }
 
--- | This is just esthetics: see 'runXMobar'
-type Xbar a = ReaderT Config IO a
+-- | This is just esthetics, stolen from XMonad: see 'runXMobar'
+newtype Xbar a = X (ReaderT Config (StateT XState IO) a)
+    deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader Config)
 
+-- | The State component of StateT
+data XState = 
+    XState { display :: Display
+           , window :: Window
+           , vars :: [(ThreadId, MVar String)]
+           }
 -- $main
+
+-- | Totally useless: but it is nice to be able to use get to get the
+-- | state and ask to get the configuration: functions requires less
+-- | arguments, after all.
+runXMobar :: Config -> [(ThreadId, MVar String)] -> Display -> Window -> Xbar () -> IO ()
+runXMobar c v d w (X f) = 
+    do runStateT (runReaderT f c) (XState d w v)
+       return ()
 
 -- | The main entry point
 main :: IO ()
@@ -116,80 +133,76 @@ main =
               then do putStrLn ("No configuration file specified. Using default settings.")
                       return defaultConfig
               else readConfig (args!!0)
-       runReaderT runXMobar config
-
--- | Totally useless: since most of the operations are done in the IO
--- monad it is ofter simpler to pass Config instead of lifting everytime.
--- But we like the mtl library...;-)
-runXMobar :: Xbar ()
-runXMobar =
-    do config <- ask
-       dw <- createWin config
-       cl <- io $ parseTemplate config (template config)
-       var <- io $ execCommands config cl
-       eventLoop dw var
+       cl <- parseTemplate config (template config)
+       var <- execCommands config cl
+       (d,w) <- createWin config
+       runXMobar config var d w eventLoop
 
 -- | The event loop
-eventLoop :: (Display, Window) -> [(ThreadId, MVar String)] -> Xbar ()
-eventLoop (d,w) var =
+eventLoop :: Xbar ()
+eventLoop =
     do c <- ask
-       i <- io $ readVariables var
+       s <- get
+       i <- io $ readVariables (vars s)
        ps <- io $ parseString c i
-       io $ drawInWin c (d,w) ps
+       drawInWin ps
        -- back again: we are never ending
        io $ threadDelay $ 100000 * refresh c
-       eventLoop (d,w) var
+       eventLoop
 
 -- | The function to create the initial window
-createWin :: Config -> Xbar (Display, Window)
+createWin :: Config -> IO (Display, Window)
 createWin config =
-  do dpy   <- io $ openDisplay ""
+  do dpy   <- openDisplay ""
      let dflt = defaultScreen dpy
-     rootw  <- io $ rootWindow dpy dflt
-     win <- io $ mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
+     rootw  <- rootWindow dpy dflt
+     win <- mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
             (fromIntegral $ xPos config) 
             (fromIntegral $ yPos config) 
             (fromIntegral $ width config) 
             (fromIntegral $ hight config)
-     io $ mapWindow dpy win
+     mapWindow dpy win
      return (dpy,win)
 
--- | Draws in and updates the window
-drawInWin :: Config -> (Display, Window) -> [(String, String)] -> IO ()
-drawInWin config (dpy, win) str = 
-     do bgcolor  <- initColor dpy $ bgColor config
-        gc <- createGC dpy win
-        --let's get the fonts
-        fontst <- loadQueryFont dpy (fonts config)
-        setFont dpy gc (fontFromFontStruct fontst)
-
-        -- set window background 
-        setForeground dpy gc bgcolor
-        fillRectangle dpy win gc 0 0 
-                          (fromIntegral $ width config) 
-                          (fromIntegral $ hight config)
-        -- write
-        let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
-        printStrings config dpy win gc fontst 1 strWithLenth 
-        -- free everything
-        freeFont dpy fontst
-        freeGC dpy gc
-        flush dpy
 
 -- $print
 
+-- | Draws in and updates the window
+drawInWin :: [(String, String)] -> Xbar ()
+drawInWin str = 
+    do config <- ask
+       st <- get
+       let (dpy,win) = (display st, window st)
+       bgcolor  <-  io $ initColor dpy $ bgColor config
+       gc <- io $ createGC dpy win
+       --let's get the fonts
+       fontst <-  io $ loadQueryFont dpy (fonts config)
+       io $ setFont dpy gc (fontFromFontStruct fontst)
+
+       -- set window background 
+       io $ setForeground dpy gc bgcolor
+       io $ fillRectangle dpy win gc 0 0 
+              (fromIntegral $ width config) 
+              (fromIntegral $ hight config)
+       -- write
+       let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
+       printStrings gc fontst 1 strWithLenth 
+       -- free everything
+       io $ freeFont dpy fontst
+       io $ freeGC dpy gc
+       io $ flush dpy
+
 -- | An easy way to print the stuff we need to print
-printStrings :: Config 
-             -> Display
-             -> Drawable
-             -> GC
+printStrings :: GC
              -> FontStruct
              -> Position
              -> [(String, String, Position)]
-             -> IO ()
-printStrings _ _ _ _ _ _ [] = return ()
-printStrings config dpy win gc fontst offs sl@((s,c,l):xs) =
-    do let (_,asc,_,_) = textExtents fontst s
+             -> Xbar ()
+printStrings _ _ _ [] = return ()
+printStrings gc fontst offs sl@((s,c,l):xs) =
+    do config <- ask
+       st <- get
+       let (_,asc,_,_) = textExtents fontst s
            totSLen = foldr (\(_,_,len) -> (+) len) 0 sl
            valign = (fromIntegral (hight config) + fromIntegral asc) `div` 2
            offset = case (align config) of
@@ -197,10 +210,10 @@ printStrings config dpy win gc fontst offs sl@((s,c,l):xs) =
                       "right" -> fromIntegral (width config) - fromIntegral totSLen
                       "left" -> offs
                       _ -> offs
-       color <- initColor dpy c
-       setForeground dpy gc color
-       drawString dpy win gc offset valign s
-       printStrings config dpy win gc fontst (offs + l) xs
+       color <- io $ initColor (display st) c
+       io $ setForeground (display st) gc color
+       io $ drawString (display st) (window st) gc offset valign s
+       printStrings gc fontst (offs + l) xs
 
 -- $commands
 
