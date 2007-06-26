@@ -14,7 +14,7 @@ build-depends:      base>=2.0, X11>=1.2.1, mtl>=1.0, unix>=1.0, parsec>=2.0
 
 executable:         xmobar
 main-is:            xmobar.hs
-ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s -threaded
 ghc-prof-options:   -prof -auto-all
 
 executable:         xmb-cpu
