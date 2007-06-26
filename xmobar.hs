@@ -30,7 +30,9 @@ module Main ( -- * Configuration
               -- $commands
             , getOptions
             , execCommands
-            , runCom
+            , execCommand
+            , runCommandLoop
+            , readVariables
               -- * Parsing
               -- $parser
             , parseString
@@ -121,20 +123,21 @@ main =
 runXMobar :: Xbar ()
 runXMobar =
     do config <- ask
-       dwgf <- io $ createWin config
-       eventLoop dwgf    
+       dw <- createWin config
+       cl <- io $ parseTemplate config (template config)
+       var <- io $ execCommands config cl
+       eventLoop dw var
 
 -- | The event loop
-eventLoop :: (Display, Window) -> Xbar ()
-eventLoop (d,w) =
+eventLoop :: (Display, Window) -> [(ThreadId, MVar String)] -> Xbar ()
+eventLoop (d,w) var =
     do c <- ask
-       cl <- io $ parseTemplate c (template c)
-       i <- io $ execCommands c cl
+       i <- io $ readVariables var
        ps <- io $ parseString c i
        io $ drawInWin c (d,w) ps
        -- back again: we are never ending
        io $ threadDelay $ 100000 * refresh c
-       eventLoop (d,w)
+       eventLoop (d,w) var
 
 -- | The function to create the initial window
 createWin :: Config -> Xbar (Display, Window)
@@ -210,30 +213,53 @@ getOptions c com =
          _ -> []
 
 -- | Runs a list of programs
-execCommands :: Config -> [(String,String,String)] -> IO String
-execCommands _ [] = return ""
-execCommands _ ((_,"",_):_) = return "Could not parse template"
-execCommands c ((s,com,ss):xs) =
-    do i <- runCom c com
+execCommands :: Config -> [(String,String,String)] -> IO [(ThreadId, MVar String)]
+execCommands _ [] = return []
+execCommands c (x:xs) =
+    do i <- execCommand c x
        is <- execCommands c xs
-       return $ s ++ i ++ ss ++ is
+       return $ i : is
+
+execCommand :: Config -> (String,String,String) -> IO (ThreadId, MVar String)
+execCommand c com = 
+    do var <- newMVar ""
+       h <- forkIO $ runCommandLoop var c com
+       return (h,var)
 
 -- | Runs the external program
-runCom :: Config -> String -> IO String
-runCom c com =
-    do (i,o,e,p) <- runInteractiveCommand (com ++ concat (map (' ':) $ getOptions c com))
-       -- the followinf leaks memory
-       --(i,o,e,p) <- runInteractiveProcess com (getOptions c com) Nothing Nothing
-       exit <- waitForProcess p
-       let closeHandles = do hClose o
-                             hClose i
-                             hClose e
-       case exit of
-         ExitSuccess -> do str <- hGetLine o
-                           closeHandles
-                           return str
-         _ -> do closeHandles
-                 return $ "Could not execute command " ++ com
+runCommandLoop :: MVar String -> Config -> (String,String,String) -> IO ()
+runCommandLoop var conf c@(s,com,ss) 
+    | com == "" = 
+        do modifyMVar_ var (\_ -> return $ "Could not parse the template")
+           threadDelay $ 100000 * refresh conf
+           runCommandLoop var conf c
+    | otherwise =
+        do (i,o,e,p) <- runInteractiveCommand (com ++ concat (map (' ':) $ getOptions conf com))
+           -- the followinf leaks memory
+           --(i,o,e,p) <- runInteractiveProcess com (getOptions c com) Nothing Nothing
+           exit <- waitForProcess p
+           let closeHandles = do hClose o
+                                 hClose i
+                                 hClose e
+           case exit of
+             ExitSuccess -> do str <- hGetLine o
+                               closeHandles
+                               modifyMVar_ var (\_ -> return $ s ++ str ++ ss)
+                               threadDelay $ 100000 * refresh conf
+                               runCommandLoop var conf c
+             _ -> do closeHandles
+                     modifyMVar_ var $ \_ -> return $ "Could not execute command " ++ com
+                     threadDelay $ 100000 * refresh conf
+                     runCommandLoop var conf c
+                                  
+
+-- | Reads MVars set by 'runCommandLoop'
+readVariables :: [(ThreadId, MVar String)] -> IO String
+readVariables [] = return ""
+readVariables ((h,v):xs) =
+    do f <- readMVar v
+       fs <- readVariables xs
+       return $! f ++ fs
 
 {- $parser
 These are the neede parsers. Don't trust them too much.
@@ -277,9 +303,9 @@ colorsAndText config =
 -- | Parses the output template string
 templateStringParser :: Config -> Parser (String,String,String)
 templateStringParser c =
-    do{ s <- many $ noneOf "%"
+    do{ s <- many $ noneOf (sepChar c)
       ; (_,com,_) <- templateCommandParser c
-      ; ss <- many $ noneOf "%"
+      ; ss <- many $ noneOf (sepChar c)
       ; return (s, com, ss)
       } 
 
@@ -294,7 +320,7 @@ templateCommandParser c =
        }
 -- | Combines the template parsers
 templateParser :: Config -> Parser [(String,String,String)]
-templateParser c = many (templateStringParser c <|> templateCommandParser c)
+templateParser c = many (templateStringParser c)
 
 -- | Actually runs the template parsers
 parseTemplate :: Config -> String -> IO [(String,String,String)]
