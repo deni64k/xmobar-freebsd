@@ -191,7 +191,7 @@ runCommandLoop :: MVar String -> Config -> (String,String,String) -> IO ()
 runCommandLoop var conf c@(s,com,ss) 
     | com == "" = 
         do modifyMVar_ var (\_ -> return $ "Could not parse the template")
-           threadDelay $ 100000 * refresh conf
+           threadDelay (100000 * (refresh conf))
            runCommandLoop var conf c
     | otherwise =
         do (i,o,e,p) <- runInteractiveCommand (com ++ concat (map (' ':) $ getOptions conf com))
@@ -205,11 +205,11 @@ runCommandLoop var conf c@(s,com,ss)
              ExitSuccess -> do str <- hGetLine o
                                closeHandles
                                modifyMVar_ var (\_ -> return $ s ++ str ++ ss)
-                               threadDelay $ 100000 * (getRefRate conf com)
+                               threadDelay (100000 * (getRefRate conf com))
                                runCommandLoop var conf c
              _ -> do closeHandles
                      modifyMVar_ var $ \_ -> return $ "Could not execute command " ++ com
-                     threadDelay $ 100000 * (getRefRate conf com)
+                     threadDelay (100000 * (getRefRate conf com))
                      runCommandLoop var conf c
                                   
 
