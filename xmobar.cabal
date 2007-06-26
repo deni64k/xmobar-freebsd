@@ -1,5 +1,5 @@
 name:               xmobar
-version:            0.1
+version:            0.3
 homepage:           http://gorgias.mine.nu/repos/xmobar/
 synopsis:           A Statusbar for the XMonad Window Manager
 description: 	    Xmobar is a minimal status bar for the XMonad Window Manager.
@@ -13,7 +13,9 @@ maintainer:         andrea.rossato@unibz.it
 build-depends:      base>=2.0, X11>=1.2.1, mtl>=1.0, unix>=1.0, parsec>=2.0
 
 executable:         xmobar
-main-is:            xmobar.hs
+main-is:            Main.hs
+Hs-Source-Dirs:     ./
+Other-Modules:      XMobar, Config, Parsers 
 ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s -threaded
 ghc-prof-options:   -prof -auto-all
 
