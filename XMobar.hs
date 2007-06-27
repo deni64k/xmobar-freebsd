@@ -261,8 +261,12 @@ initColor dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
 io :: IO a -> Xbar a
 io = liftIO
 
+-- | work arount the the Int max bound: since threadDelay takes an Int, it
+-- is not possible to set a thread delay grater than about 45 minutes.
+-- With a little recursion we solve the problem.
 tenthSeconds :: Int -> IO ()
-tenthSeconds s =
-    threadDelay n
-        where n | (maxBound :: Int) `div` 100000 <= s = (maxBound :: Int)
-                | otherwise = s * 100000
+tenthSeconds s | s >= x = do threadDelay y
+                             tenthSeconds (x - s)
+               | otherwise = threadDelay (s * 100000)
+               where y = (maxBound :: Int)
+                     x = y `div` 100000
