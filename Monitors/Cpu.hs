@@ -26,7 +26,7 @@ data Config =
            , cpuNormalColor :: String
            , cpuCritical :: Integer
            , cpuCriticalColor :: String
-           }
+           } deriving (Show)
 
 defaultConfig :: Config
 defaultConfig = 
@@ -46,6 +46,11 @@ floatToPercent :: Float -> String
 floatToPercent n = 
     showFFloat (Just 2) (n*100) "%" 
 
+setColor :: Show a => String -> a -> (a -> String) -> String
+setColor str conf ty =
+    "<fc=" ++ ty conf ++ ">" ++
+    str ++ "</fc>"
+    
 fileCPU :: IO B.ByteString
 fileCPU = B.readFile "/proc/stat"
 
@@ -74,29 +79,17 @@ parseCPU =
        return percent
 
 formatCpu :: [Float] -> String 
-formatCpu [] = ""
 formatCpu (us:ni:sy:_)
-    | x >= c = setColor z cpuCriticalColor
-    | x >= n  = setColor z cpuNormalColor
-    | otherwise = floatToPercent y
+    | x >= c = setColor y config cpuCriticalColor
+    | x >= n  = setColor y config cpuNormalColor
+    | otherwise = y
     where x = (us * 100) + (sy * 100) + (ni * 100)
-          y = us + sy + ni
-          z = floatToPercent y
+          y = floatToPercent $ us + sy + ni
           c = fromInteger (cpuCritical config)
           n = fromInteger (cpuNormal config)
 formatCpu _ = ""
 
-setColor :: String -> (Config -> String) -> String
-setColor str ty =
-    "<fc=" ++ ty config ++ ">" ++
-    str ++ "</fc>"
-    
-cpu :: IO String
-cpu = 
-    do l <- parseCPU
-       return $ "Cpu: " ++ formatCpu l
-
 main :: IO ()
 main =
-    do c <- cpu
-       putStrLn c
+    do s <- parseCPU
+       putStrLn $ "Cpu: " ++ formatCpu s
