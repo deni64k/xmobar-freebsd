@@ -21,7 +21,7 @@ ghc-prof-options:   -prof -auto-all
 
 executable:         xmb-cpu
 main-is:            Monitors/Cpu.hs
-ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
+ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s -threaded
 ghc-prof-options:   -prof -auto-all
 
 executable:         xmb-mem
