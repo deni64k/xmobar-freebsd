@@ -16,8 +16,9 @@ module Main where
 
 import Numeric
 import Control.Concurrent
-import Text.ParserCombinators.Parsec
+import Control.Concurrent.MVar
 
+import qualified Data.ByteString.Lazy.Char8 as B
 
 data Config = 
     Config { intervall :: Int
@@ -41,40 +42,32 @@ config = defaultConfig
 
 -- Utilities
 
-interSec :: IO ()
-interSec = threadDelay  (intervall config)
-
-takeDigits :: Int -> Float -> Float
-takeDigits d n = 
-    read $ showFFloat (Just d) n ""
-
 floatToPercent :: Float -> String
 floatToPercent n = 
     showFFloat (Just 2) (n*100) "%" 
 
+fileCPU :: IO B.ByteString
+fileCPU = B.readFile "/proc/stat"
 
-run :: Parser [a] -> IO String -> IO [a]
-run p input
-        = do a <- input
-             case (parse p "" a) of
-               Left _ -> return []
-               Right x  -> return x
+getData :: MVar [Float] -> Int -> IO ()
+getData var d =
+    do threadDelay d
+       s <- fileCPU
+       modifyMVar_ var (\_ -> return $! cpuParser s)
 
-fileCPU :: IO String
-fileCPU = readFile "/proc/stat"
-
-
-getNumbers :: Parser Float
-getNumbers = skipMany space >> many1 digit >>= \n -> return $ read n
-
-parserCPU :: Parser [Float]
-parserCPU = string "cpu" >> count 4 getNumbers
+cpuParser :: B.ByteString -> [Float]
+cpuParser =
+    map read . map B.unpack . tail . B.words . flip (!!) 0 . B.lines
 
 parseCPU :: IO [Float]
 parseCPU = 
-    do a <- run parserCPU fileCPU
-       interSec
-       b <- run parserCPU fileCPU
+    do v1 <- newMVar []
+       forkIO $! getData v1 0
+       v2 <- newMVar []
+       forkIO $! getData v2 500000
+       threadDelay 750000
+       a <- readMVar v1
+       b <- readMVar v2
        let dif = zipWith (-) b a
            tot = foldr (+) 0 dif
            percent = map (/ tot) dif
