@@ -144,7 +144,7 @@ printStrings gc fontst offs sl@((s,c,l):xs) =
            valign = (fromIntegral (hight config) + fromIntegral asc) `div` 2
            offset = case (align config) of
                       "center" -> (fromIntegral (width config) - fromIntegral totSLen) `div` 2
-                      "right" -> fromIntegral (width config) - fromIntegral totSLen
+                      "right" -> fromIntegral (width config) - fromIntegral totSLen - 1
                       "left" -> offs
                       _ -> offs
        color <- io $ initColor (display st) c
@@ -163,7 +163,7 @@ getOptions c com =
          [(_,_,opts)] -> opts
          _ -> []
 
--- | Gets the command options set in configuration.
+-- | Gets the refresh rate set in configuration for a given command.
 getRefRate :: Config -> String -> Int
 getRefRate c com =
     let l = commands c
