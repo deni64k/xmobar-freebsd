@@ -1,95 +1,123 @@
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  Monitors.Weather
+-- Copyright   :  (c) Andrea Rossato
+-- License     :  BSD-style (see LICENSE)
+-- 
+-- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
+-- Stability   :  unstable
+-- Portability :  unportable
+--
+-- A weather monitor for XMobar
+--
+-----------------------------------------------------------------------------
+
 module Main where
 
-import Text.ParserCombinators.Parsec
-import System.Environment
+import Monitors.Common
+
+import Data.IORef
 
 import System.Process
 import System.Exit
 import System.IO
 
+import Text.ParserCombinators.Parsec
 
 
-data Config = 
-    Config { weatherNormal :: Integer
-           , weatherNormalColor :: String
-           , weatherCritical :: Integer
-           , weatherCriticalColor :: String
-           }
+monitorConfig :: IO MConfig
+monitorConfig = 
+    do lc <- newIORef "#BFBFBF"
+       l <- newIORef 15
+       nc <- newIORef "#00FF00"
+       h <- newIORef 27
+       hc <- newIORef "#FF0000"
+       t <- newIORef "<station>: <tempC>C, rh <rh>% (<hour>)"
+       p <- newIORef package
+       u <- newIORef "station ID"
+       a <- newIORef []
+       e <- newIORef ["station"
+                     , "stationState"
+                     , "year"
+                     , "month"
+                     , "day"
+                     , "hour"
+                     , "wind"
+                     , "visibility"
+                     , "skyCondition"
+                     , "tempC"
+                     , "tempF"
+                     , "dewPoint"
+                     , "rh"
+                     ,"pressure"
+                     ]
+       return $ MC nc l lc h hc t p u a e
 
-defaultConfig :: Config
-defaultConfig = 
-    Config { weatherNormal = 0
-           , weatherNormalColor = "#00FF00" 
-           , weatherCritical = 50
-           , weatherCriticalColor = "#FF0000" 
-           }
 
-config :: Config
-config = defaultConfig
+data WeatherInfo = 
+    WI { stationPlace :: String
+       , stationState :: String
+       , year :: String
+       , month :: String
+       , day :: String
+       , hour :: String
+       , wind :: String
+       , visibility :: String
+       , skyCondition :: String
+       , temperature :: Float
+       , dewPoint :: String
+       , humidity :: Float
+       , pressure :: String
+       } deriving (Show)
 
 
-data WeatherInfo = Fail String
-                 | WI { station :: String
-                      , time :: String
-                      , temperature :: Int
-                      , humidity :: Int
-                      } 
-                   
-instance Show WeatherInfo where
-    show (Fail _) = "N/A"
-    show (WI st t temp rh) =
-        st ++ ": " ++ (formatWeather temp) ++ "C, rh " ++ formatWeather rh ++
-        "% (" ++ t ++ ")"
 
-parseData :: Parser WeatherInfo
-parseData = 
-    do { st <- manyTill anyChar $ char '('
-       ; pNL
-       ; manyTill anyChar $ char '/'
-       ; space
-       ; t <- manyTill anyChar newline
-       ; manyTill pNL (string "Temperature")
-       ; temp <- pTemp
-       ; manyTill pNL (string "Relative Humidity")
-       ; rh <- pRh
-       ; manyTill pNL eof
-       ; return $ WI st t temp rh
-       } 
+pTime :: Parser (String, String, String, String)
+pTime = do y <- getNumbersAsString
+           char '.'
+           m <- getNumbersAsString
+           char '.'
+           d <- getNumbersAsString
+           char ' '
+           (h:hh:mi:mimi) <- getNumbersAsString
+           char ' '
+           return (y, m, d ,([h]++[hh]++":"++[mi]++mimi))
 
-pTemp :: Parser Int
+pTemp :: Parser Float
 pTemp = do string ": "
            manyTill anyChar $ char '('
            s <- manyTill digit $ (char ' ' <|> char '.')
-           pNL
+           skipRestOfLine
            return $read s
 
-pRh :: Parser Int
+pRh :: Parser Float
 pRh = do string ": "
          s <- manyTill digit $ (char '%' <|> char '.')
-         return $read s
+         return $ read s
 
-pNL :: Parser Char
-pNL = do many $ noneOf "\n\r"
-         newline
-
-
-runP :: Parser WeatherInfo -> String -> IO WeatherInfo
-runP p i =
-    do case (parse p "" i) of
-         Left err -> return $ Fail $ show err
-         Right x  -> return x
-
-formatWeather :: Int -> String
-formatWeather d | d > fromInteger (weatherCritical config) = setColor str weatherCriticalColor 
-                | d > fromInteger (weatherNormal config) = setColor str weatherNormalColor
-                | otherwise = str
-                where str = show d
-
-
-setColor :: String -> (Config -> String) -> String
-setColor str ty =
-    "<fc=" ++ ty config ++ ">" ++
-    str ++ "</fc>"
+parseData :: Parser [WeatherInfo]
+parseData = 
+    do st <- getAllBut "," 
+       space
+       ss <- getAllBut "("
+       skipRestOfLine >> getAllBut "/"
+       (y,m,d,h) <- pTime
+       skipRestOfLine >> string "Wind: "
+       w <- manyTill anyChar $ newline 
+       manyTill skipRestOfLine $ string "Visibility: "
+       v <- manyTill anyChar $ newline
+       manyTill skipRestOfLine $ string "Sky conditions: "
+       sk <- manyTill anyChar $ newline
+       manyTill skipRestOfLine $ string "Temperature"
+       temp <- pTemp
+       manyTill skipRestOfLine $ string "Dew Point: "
+       dp <- manyTill anyChar $ newline
+       manyTill skipRestOfLine $ string "Relative Humidity"
+       rh <- pRh
+       manyTill skipRestOfLine $ string "Pressure (altimeter): "
+       p <- manyTill anyChar $ newline
+       manyTill skipRestOfLine eof
+       return $ [WI st ss y m d h w v sk temp dp rh p]
 
 defUrl :: String
 defUrl = "http://weather.noaa.gov/pub/data/observations/metar/decoded/"
@@ -107,13 +135,24 @@ getData url=
              _ -> do closeHandles
                      return "Could not retrieve data"
 
+formatWeather :: [WeatherInfo] -> Monitor String
+formatWeather [(WI st ss y m d h w v sk temp dp r p)] =
+    do cel <- showWithColors show temp
+       far <- showWithColors (show . takeDigits 1) (((9 / 5) * temp) + 32)
+       rh <- showWithColors show r
+       parseTemplate [st, ss, y, m, d, h, w, v, sk, cel, far, dp, rh , p ]
+formatWeather _ = return "N/A"
+
+runWeather :: [String] -> Monitor String
+runWeather str =
+    do d <- io $ getData $ head str
+       i <- io $ runP parseData d
+       formatWeather i
+
+package :: String
+package = "xmb-weather"
+
 main :: IO ()
 main =
-    do args <- getArgs
-       str <- if length args /= 1
-                 then error $ "No Station ID specified.\nUsage: weather STATION_ID" ++
-                      "\nExample: xmb-weather LIPB"
-                 else getData (args !! 0)
-       i <- runP parseData str 
-       putStrLn $ show i
-       
+    do let af = return "No station ID specified"
+       runMonitor monitorConfig af runWeather
