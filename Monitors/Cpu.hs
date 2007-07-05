@@ -14,51 +14,27 @@
 
 module Main where
 
-import Numeric
-import Control.Concurrent
-import Control.Concurrent.MVar
-
+import Monitors.Common
 import qualified Data.ByteString.Lazy.Char8 as B
+import Data.IORef
 
-data Config = 
-    Config { intervall :: Int
-           , cpuNormal :: Integer
-           , cpuNormalColor :: String
-           , cpuCritical :: Integer
-           , cpuCriticalColor :: String
-           } deriving (Show)
+monitorConfig :: IO MConfig
+monitorConfig = 
+    do lc <- newIORef "#BFBFBF"
+       l <- newIORef 2
+       nc <- newIORef "#00FF00"
+       h <- newIORef 60
+       hc <- newIORef "#FF0000"
+       t <- newIORef "Cpu: <total>"
+       p <- newIORef package
+       u <- newIORef ""
+       a <- newIORef []
+       e <- newIORef ["total","user","nice","system","idle"]
+       return $ MC nc l lc h hc t p u a e
 
-defaultConfig :: Config
-defaultConfig = 
-    Config { intervall = 500000
-           , cpuNormal = 2
-           , cpuNormalColor = "#00FF00" 
-           , cpuCritical = 60
-           , cpuCriticalColor = "#FF0000"  
-           }
-
-config :: Config
-config = defaultConfig
-
--- Utilities
-
-floatToPercent :: Float -> String
-floatToPercent n = 
-    showFFloat (Just 2) (n*100) "%" 
-
-setColor :: Show a => String -> a -> (a -> String) -> String
-setColor str conf ty =
-    "<fc=" ++ ty conf ++ ">" ++
-    str ++ "</fc>"
-    
-fileCPU :: IO B.ByteString
-fileCPU = B.readFile "/proc/stat"
-
-getData :: MVar [Float] -> Int -> IO ()
-getData var d =
-    do threadDelay d
-       s <- fileCPU
-       modifyMVar_ var (\_ -> return $! cpuParser s)
+cpuData :: IO [Float]
+cpuData = do s <- B.readFile "/proc/stat"
+             return $ cpuParser s
 
 cpuParser :: B.ByteString -> [Float]
 cpuParser =
@@ -66,30 +42,30 @@ cpuParser =
 
 parseCPU :: IO [Float]
 parseCPU = 
-    do v1 <- newMVar []
-       forkIO $! getData v1 0
-       v2 <- newMVar []
-       forkIO $! getData v2 500000
-       threadDelay 750000
-       a <- readMVar v1
-       b <- readMVar v2
+    do (a,b) <- doActionTwiceWithDelay 750000 cpuData
        let dif = zipWith (-) b a
            tot = foldr (+) 0 dif
            percent = map (/ tot) dif
        return percent
 
-formatCpu :: [Float] -> String 
-formatCpu (us:ni:sy:_)
-    | x >= c = setColor y config cpuCriticalColor
-    | x >= n  = setColor y config cpuNormalColor
-    | otherwise = y
-    where x = (us * 100) + (sy * 100) + (ni * 100)
-          y = floatToPercent $ us + sy + ni
-          c = fromInteger (cpuCritical config)
-          n = fromInteger (cpuNormal config)
-formatCpu _ = ""
+formatCpu :: [Float] -> Monitor [String] 
+formatCpu [] = return [""]
+formatCpu x =
+    do let f s = floatToPercent (s / 100)
+           t = foldr (+) 0 $ take 3 x
+           list = t:x
+       mapM (showWithColors f) . map (* 100) $ list
 
+package :: String
+package = "xmb-cpu"
+
+runCpu :: [String] -> Monitor String
+runCpu _ =
+    do c <- io $ parseCPU
+       l <- formatCpu c
+       parseTemplate l 
+    
 main :: IO ()
 main =
-    do s <- parseCPU
-       putStrLn $ "Cpu: " ++ formatCpu s
+    do let af = runCpu []
+       runMonitor monitorConfig af runCpu
