@@ -22,6 +22,7 @@ import XMobar
 import Parsers
 import Config
 import System.Environment
+import System.IO.Error
 
 -- $main
  
@@ -29,11 +30,9 @@ import System.Environment
 main :: IO ()
 main = 
     do args <- getArgs
-       config <-
-           if length args /= 1
-              then do putStrLn ("No configuration file specified. Using default settings.")
-                      return defaultConfig
-              else readConfig (args!!0)
+       config <- case args of
+           [cfgfile] -> readConfig cfgfile
+           _         -> readDefaultConfig
        cl <- parseTemplate config (template config)
        var <- execCommands config cl
        (d,w) <- createWin config
@@ -48,4 +47,11 @@ readConfig f =
          [] -> error ("Corrupt config file: " ++ f)
          _ -> error ("Some problem occured. Aborting...")
 
+-- | Read default configuration or quit with an error
+readDefaultConfig :: IO Config
+readDefaultConfig = 
+    do home <- getEnv "HOME"
+       let path = home ++ "/.xmobarrc"
+       catch (readConfig path)
+             (\e -> if isUserError e then ioError e else return defaultConfig)
 
