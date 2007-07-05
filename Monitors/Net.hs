@@ -14,82 +14,51 @@
 
 module Main where
 
-import Numeric
-import Control.Concurrent
+import Monitors.Common
+
+import Data.IORef
 import Text.ParserCombinators.Parsec
-import System.Environment
 
-data Config = 
-    Config { intervall :: Int
-           , netDevice :: String
-           , netNormal :: Integer
-           , netNormalColor :: String
-           , netCritical :: Integer
-           , netCriticalColor :: String
-           }
+data NetDev = NA
+            | ND { netDev :: String
+                 , netRx :: Float
+                 , netTx :: Float
+                 } deriving (Eq,Show,Read)
 
-defaultConfig :: Config
-defaultConfig = 
-    Config { intervall = 500000
-           , netDevice = "eth1"
-           , netNormal = 0
-           , netNormalColor = "#00FF00" 
-           , netCritical = 50
-           , netCriticalColor = "#FF0000" 
-           }
+interval :: Int
+interval = 500000
 
-config :: Config
-config = defaultConfig
-
--- Utilities
-
-interSec :: IO ()
-interSec = threadDelay  (intervall config)
-
-takeDigits :: Int -> Float -> Float
-takeDigits d n = 
-    read $ showFFloat (Just d) n ""
-
-floatToPercent :: Float -> String
-floatToPercent n = 
-    showFFloat (Just 2) (n*100) "%" 
-
-
-run :: Parser [a] -> IO String -> IO [a]
-run p input
-        = do a <- input
-             case (parse p "" a) of
-               Left _ -> return []
-               Right x  -> return x
+monitorConfig :: IO MConfig
+monitorConfig = 
+    do lc <- newIORef "#BFBFBF"
+       l <- newIORef 0
+       nc <- newIORef "#00FF00"
+       h <- newIORef 32
+       hc <- newIORef "#FF0000"
+       t <- newIORef "<dev>: <rx>|<tx>"
+       p <- newIORef package
+       u <- newIORef "dev"
+       a <- newIORef []
+       e <- newIORef ["dev", "rx", "tx"]
+       return $ MC nc l lc h hc t p u a e
 
 fileNET :: IO String
 fileNET = 
     do f <- readFile "/proc/net/dev"
        return $ unlines $ drop 2 $ lines f
 
--- CPU
+formatNet :: Float -> Monitor String
+formatNet d =
+    showWithColors f d
+        where f s = show s ++ "Kb"
 
-getNumbers :: Parser Float
-getNumbers = skipMany space >> many1 digit >>= \n -> return $ read n
-
--- Net Devices
-
-data NetDev = NA
-            | ND { netDev :: String
-                 , netRx :: Float
-                 , netTx :: Float
-                 } deriving (Eq,Read)
-
-instance Show NetDev where
-    show NA = "N/A"
-    show (ND nd rx tx) =
-        nd ++ ": " ++ (formatNet rx) ++ "|" ++ formatNet tx          
-
-formatNet :: Float -> String
-formatNet d | d > fromInteger (netCritical config) = setColor str netCriticalColor 
-            | d > fromInteger (netNormal config) = setColor str netNormalColor
-            | otherwise = str
-            where str = show d ++ "Kb"
+printNet :: NetDev -> Monitor String
+printNet nd =
+    do case nd of
+         ND d r t -> do rx <- formatNet r
+                        tx <- formatNet t
+                        parseTemplate [d,rx,tx]
+         NA -> return "N/A"
 
 pNetDev :: Parser NetDev
 pNetDev = 
@@ -108,35 +77,27 @@ parserNet = manyTill pNetDev eof
 
 parseNET :: String -> IO [NetDev]
 parseNET nd = 
-    do a <- run parserNet fileNET
-       interSec
-       b <- run parserNet fileNET
-       let netRate f da db = takeDigits 2 $ ((f db) - (f da)) * fromIntegral (1000000 `div` (intervall config))
+    do (a',b') <- doActionTwiceWithDelay interval fileNET
+       a <- runP parserNet a'
+       b <- runP parserNet b'
+       let netRate f da db = takeDigits 2 $ ((f db) - (f da)) * fromIntegral (1000000 `div` interval)
            diffRate (da,db) = ND (netDev da) 
                               (netRate netRx da db)
                               (netRate netTx da db)
        return $ filter (\d -> netDev d == nd) $ map diffRate $ zip a b
 
--- Formattings
-
-setColor :: String -> (Config -> String) -> String
-setColor str ty =
-    "<fc=" ++ ty config ++ ">" ++
-    str ++ "</fc>"
-    
-net :: String -> IO String
-net nd = 
-    do pn <- parseNET nd
+runNet :: [String] -> Monitor String
+runNet nd = 
+    do pn <- io $ parseNET $ head nd
        n <- case pn of
               [x] -> return x
               _ -> return $ NA
-       return $ show n
+       printNet n
+
+package :: String
+package = "xmb-net"
 
 main :: IO ()
 main =
-    do args <- getArgs
-       n <-
-           if length args /= 1
-              then error "No device specified.\nUsage: net dev"
-              else net (args!!0)
-       putStrLn n
+    do let f = return "No device specified"
+       runMonitor monitorConfig f runNet
