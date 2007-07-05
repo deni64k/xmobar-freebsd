@@ -42,7 +42,7 @@ parseMEM =
        let p x y = flip (/) 1024 . read . stringParser x $ y
            tot = p (1,11) file
            free = p (1,12) file
-       return [tot, (tot - free), free, free / tot * 100]
+       return [tot, (tot - free), free, (tot - free) / tot * 100]
 
 formatMem :: [Float] -> Monitor [String] 
 formatMem x =
