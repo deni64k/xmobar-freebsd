@@ -23,18 +23,18 @@ module Config ( -- * Configuration
 
 -- | The configuration data type
 data Config = 
-    Config { fonts          :: String   -- ^ Fonts
+    Config { font           :: String   -- ^ Font
            , bgColor        :: String   -- ^ Backgroud color
            , fgColor        :: String   -- ^ Default font color
            , xPos           :: Int      -- ^ x Window position (origin in the upper left corner) 
            , yPos           :: Int      -- ^ y Window position 
            , width          :: Int      -- ^ Window width
-           , hight          :: Int      -- ^ Window hight
+           , height         :: Int      -- ^ Window height
            , align          :: String   -- ^ text alignment
            , refresh        :: Int      -- ^ Refresh rate in tenth of seconds
-           , commands       :: [(String, Int, [String])]   -- ^ For setting the refresh rate and 
-                                                           -- options for the programs to run (optionals)
-           , sepChar        :: String     -- ^ The character to be used for indicating 
+           , commands       :: [(String, Int, [String])]   -- ^ For setting the refresh rate and
+                                                           -- options for the programs to run (optional)
+           , sepChar        :: String   -- ^ The character to be used for indicating
                                         --   commands in the output template (default '%')
            , template       :: String   -- ^ The output template 
            } deriving (Eq, Show, Read, Ord)
@@ -42,13 +42,13 @@ data Config =
 -- | The default configuration values
 defaultConfig :: Config
 defaultConfig =
-    Config { fonts = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
+    Config { font = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
            , bgColor = "#000000"
            , fgColor = "#BFBFBF"
            , xPos = 0
            , yPos = 0
            , width = 1024
-           , hight = 15
+           , height = 15
            , align = "left"
            , refresh = 10
            , commands = [("date", 10, [])]

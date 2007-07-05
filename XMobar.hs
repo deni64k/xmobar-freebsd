@@ -97,7 +97,7 @@ createWin config =
             (fromIntegral $ xPos config) 
             (fromIntegral $ yPos config) 
             (fromIntegral $ width config) 
-            (fromIntegral $ hight config)
+            (fromIntegral $ height config)
      mapWindow dpy win
      return (dpy,win)
 
@@ -113,14 +113,14 @@ drawInWin str =
        bgcolor  <-  io $ initColor dpy $ bgColor config
        gc <- io $ createGC dpy win
        --let's get the fonts
-       fontst <-  io $ loadQueryFont dpy (fonts config)
+       fontst <-  io $ loadQueryFont dpy (font config)
        io $ setFont dpy gc (fontFromFontStruct fontst)
 
        -- set window background 
        io $ setForeground dpy gc bgcolor
        io $ fillRectangle dpy win gc 0 0 
               (fromIntegral $ width config) 
-              (fromIntegral $ hight config)
+              (fromIntegral $ height config)
        -- write
        let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
        printStrings gc fontst 1 strWithLenth 
@@ -141,7 +141,7 @@ printStrings gc fontst offs sl@((s,c,l):xs) =
        st <- get
        let (_,asc,_,_) = textExtents fontst s
            totSLen = foldr (\(_,_,len) -> (+) len) 0 sl
-           valign = (fromIntegral (hight config) + fromIntegral asc) `div` 2
+           valign = (fromIntegral (height config) + fromIntegral asc) `div` 2
            offset = case (align config) of
                       "center" -> (fromIntegral (width config) - fromIntegral totSLen) `div` 2
                       "right" -> fromIntegral (width config) - fromIntegral totSLen - 1

@@ -1,10 +1,10 @@
-Config { fonts = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
+Config { font = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
        , bgColor = "#000000"
        , fgColor = "#BFBFBF"
        , xPos = 0
        , yPos = 0
        , width = 1024
-       , hight = 15
+       , height = 15
        , align = "right"
        , refresh = 10
        , commands = [("xmb-weather", 36000, ["EGPF"]), ("xmb-net", 10, ["eth0"])]
