@@ -59,14 +59,23 @@ defaultColors config =
 -- | Parses a string with a color set
 colorsAndText :: Config -> Parser (String, String) 
 colorsAndText config = 
-    do { string "<fc=#"
-       ; n <- count 6 hexDigit
+    do { string "<fc="
+       ; c <- colorSpec
        ; string ">"
        ; s <- many $ noneOf "<"
        ; string "</fc>"
-       ; return (s,"#"++n)
+       ; return (s,c)
        }
     <|> defaultColors config
+
+-- | Parses a color specification (hex or named)
+colorSpec :: Parser String
+colorSpec =
+    do { c <- char '#'
+       ; s <- count 6 hexDigit
+       ; return $ c:s
+       }
+    <|> many1 alphaNum
 
 -- | Parses the output template string
 templateStringParser :: Config -> Parser (String,String,String)
