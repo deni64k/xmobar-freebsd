@@ -142,9 +142,10 @@ printStrings gc fontst offs sl@((s,c,l):xs) =
        let (_,asc,_,_) = textExtents fontst s
            totSLen = foldr (\(_,_,len) -> (+) len) 0 sl
            valign = (fromIntegral (height config) + fromIntegral asc) `div` 2
+           remWidth = fromIntegral (width config) - fromIntegral totSLen
            offset = case (align config) of
-                      "center" -> (fromIntegral (width config) - fromIntegral totSLen) `div` 2
-                      "right" -> fromIntegral (width config) - fromIntegral totSLen - 1
+                      "center" -> (remWidth + offs) `div` 2
+                      "right" -> remWidth - 1
                       "left" -> offs
                       _ -> offs
        color <- io $ initColor (display st) c
