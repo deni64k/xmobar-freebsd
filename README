@@ -22,7 +22,7 @@ runhaskell Setup.lhs haddock (optional for building the code documentation)
 runhaskell Setup.lhs install (possibly to be run as root)
 
 Run with:
-xmobar /path/to/config $
+xmobar /path/to/config &
 
 CONFIGURATION
 =============
