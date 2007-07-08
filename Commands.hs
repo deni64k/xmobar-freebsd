@@ -1,3 +1,17 @@
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  XMobar.Commands
+-- Copyright   :  (c) Andrea Rossato
+-- License     :  BSD-style (see LICENSE)
+-- 
+-- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
+-- Stability   :  unstable
+-- Portability :  unportable
+--
+-- A Command datatype for XMobar status bar for the Xmonad Window Manager 
+--
+-----------------------------------------------------------------------------
+
 module Commands where
 
 import System.Process
