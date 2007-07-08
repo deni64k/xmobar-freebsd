@@ -25,7 +25,6 @@ module XMobar (-- * Main Stuff
               , printStrings
               -- * Program Execution
               -- $commands
-              , getOptions
               , execCommands
               , execCommand
               , runCommandLoop
@@ -45,12 +44,9 @@ import Control.Monad.State
 import Control.Monad.Reader
 import Control.Concurrent
 
-import System.Process
-import System.Exit
-import System.IO (hClose, hGetLine)
-
 import Config
 import Parsers
+import Commands
 
 -- $main
 --
@@ -155,64 +151,41 @@ printStrings gc fontst offs sl@((s,c,l):xs) =
 
 -- $commands
 
--- | Gets the command options set in configuration.
-getOptions :: Config -> String -> [String]
-getOptions c com =
-    let l = commands c
-        p = filter (\(s,_,_) -> s == com) l
-    in case p of
-         [(_,_,opts)] -> opts
-         _ -> []
-
 -- | Gets the refresh rate set in configuration for a given command.
-getRefRate :: Config -> String -> Int
+getRefRate :: Config -> Command -> Int
 getRefRate c com =
     let l = commands c
-        p = filter (\(s,_,_) -> s == com) l
+        p = filter (\(s,_) -> s == com) l
     in case p of
-         [(_,int,_)] -> int
+         [(_,int)] -> int
          _ -> refresh c
 
--- | Runs a list of programs
-execCommands :: Config -> [(String,String,String)] -> IO [(ThreadId, MVar String)]
+-- | Runs a list of programs as independent threads and returns their thread id
+-- and the MVar they will be writing to.
+execCommands :: Config -> [(Command,String,String)] -> IO [(ThreadId, MVar String)]
 execCommands _ [] = return []
 execCommands c (x:xs) =
     do i <- execCommand c x
        is <- execCommands c xs
        return $ i : is
 
-execCommand :: Config -> (String,String,String) -> IO (ThreadId, MVar String)
+execCommand :: Config -> (Command,String,String) -> IO (ThreadId, MVar String)
 execCommand c com = 
     do var <- newMVar "Updating..."
        h <- forkIO $ runCommandLoop var c com
        return (h,var)
 
--- | Runs the external program
-runCommandLoop :: MVar String -> Config -> (String,String,String) -> IO ()
-runCommandLoop var conf c@(s,com,ss) 
-    | com == "" = 
+runCommandLoop :: MVar String -> Config -> (Command,String,String) -> IO ()
+runCommandLoop var conf c@(com,s,ss)
+    | show com == "" = 
         do modifyMVar_ var (\_ -> return $ "Could not parse the template")
            tenthSeconds (refresh conf)
            runCommandLoop var conf c
     | otherwise =
-        do (i,o,e,p) <- runInteractiveCommand (com ++ concat (map (' ':) $ getOptions conf com))
-           -- the followinf leaks memory
-           --(i,o,e,p) <- runInteractiveProcess com (getOptions c com) Nothing Nothing
-           exit <- waitForProcess p
-           let closeHandles = do hClose o
-                                 hClose i
-                                 hClose e
-           case exit of
-             ExitSuccess -> do str <- hGetLine o
-                               closeHandles
-                               modifyMVar_ var (\_ -> return $ s ++ str ++ ss)
-                               tenthSeconds (getRefRate conf com)
-                               runCommandLoop var conf c
-             _ -> do closeHandles
-                     modifyMVar_ var $ \_ -> return $ "Could not execute command " ++ com
-                     tenthSeconds (getRefRate conf com)
-                     runCommandLoop var conf c
-                                  
+        do str <- run com
+           modifyMVar_ var (\_ -> return $ s ++ str ++ ss)
+           tenthSeconds (getRefRate conf com)
+           runCommandLoop var conf c
 
 -- | Reads MVars set by 'runCommandLoop'
 readVariables :: [(ThreadId, MVar String)] -> IO String
