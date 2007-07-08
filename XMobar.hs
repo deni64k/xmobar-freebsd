@@ -111,28 +111,40 @@ drawInWin str =
        --let's get the fonts
        fontst <-  io $ loadQueryFont dpy (font config)
        io $ setFont dpy gc (fontFromFontStruct fontst)
-
-       -- set window background 
+       -- create a pixmap to write to and fill it with a rectangle:
+       p <- io $ createPixmap dpy win 
+            (fromIntegral (width config)) 
+            (fromIntegral (height config)) 
+            (defaultDepthOfScreen (defaultScreenOfDisplay dpy)) 
        io $ setForeground dpy gc bgcolor
-       io $ fillRectangle dpy win gc 0 0 
+       io $ fillRectangle dpy p gc 0 0 
               (fromIntegral $ width config) 
               (fromIntegral $ height config)
-       -- write
+       -- write to the pixmap the new string:
        let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
-       printStrings gc fontst 1 strWithLenth 
-       -- free everything
+       p' <- printStrings p gc fontst 1 strWithLenth 
+       -- copy the pixmap with the new string to the window.
+       io $ copyArea dpy p' win gc 
+              (fromIntegral (xPos config)) 
+              (fromIntegral (yPos config)) 
+              (fromIntegral (width config)) 
+              (fromIntegral (height config)) 0 0
+       -- free up everything (we do not want to leak memory!)
        io $ freeFont dpy fontst
        io $ freeGC dpy gc
+       io $ freePixmap dpy p'
+       -- resync
        io $ sync dpy True
 
 -- | An easy way to print the stuff we need to print
-printStrings :: GC
+printStrings :: Drawable 
+             -> GC
              -> FontStruct
              -> Position
              -> [(String, String, Position)]
-             -> Xbar ()
-printStrings _ _ _ [] = return ()
-printStrings gc fontst offs sl@((s,c,l):xs) =
+             -> Xbar Pixmap --()
+printStrings p _ _ _ [] = return p --()
+printStrings p gc fontst offs sl@((s,c,l):xs) =
     do config <- ask
        st <- get
        let (_,asc,_,_) = textExtents fontst s
@@ -144,10 +156,13 @@ printStrings gc fontst offs sl@((s,c,l):xs) =
                       "right" -> remWidth - 1
                       "left" -> offs
                       _ -> offs
-       color <- io $ initColor (display st) c
-       io $ setForeground (display st) gc color
-       io $ drawString (display st) (window st) gc offset valign s
-       printStrings gc fontst (offs + l) xs
+       fgcolor <- io $ initColor (display st) c
+       bgcolor  <-  io $ initColor (display st) (bgColor config)
+       io $ setForeground (display st) gc fgcolor
+       io $ setBackground (display st) gc bgcolor
+       io $ drawImageString (display st) p gc offset valign s
+       p' <- printStrings p gc fontst (offs + l) xs
+       return p'
 
 -- $commands
 
