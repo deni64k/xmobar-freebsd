@@ -1,5 +1,5 @@
 name:               xmobar
-version:            0.4
+version:            0.5
 homepage:           http://gorgias.mine.nu/repos/xmobar/
 synopsis:           A Statusbar for the XMonad Window Manager
 description: 	    Xmobar is a minimal status bar for the XMonad Window Manager.
@@ -15,36 +15,7 @@ build-depends:      base>=2.0, X11>=1.2.1, mtl>=1.0, unix>=1.0, parsec>=2.0, fil
 executable:         xmobar
 main-is:            Main.hs
 Hs-Source-Dirs:     ./
-Other-Modules:      XMobar, Config, Parsers, Monitors.Common 
+Other-Modules:      XMobar, Config, Parsers, Commands, Monitors.Common, Monitors.Batt 
+		    Monitors.Weather, Monitors.Swap, Monitors.Mem, Monitors.Cpu
 ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s -threaded
-ghc-prof-options:   -prof -auto-all
-
-executable:         xmb-cpu
-main-is:            Monitors/Cpu.hs
-ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s -threaded
-ghc-prof-options:   -prof -auto-all
-
-executable:         xmb-mem
-main-is:            Monitors/Mem.hs
-ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
-ghc-prof-options:   -prof -auto-all
-
-executable:         xmb-swap
-main-is:            Monitors/Swap.hs
-ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
-ghc-prof-options:   -prof -auto-all
-
-executable:         xmb-net
-main-is:            Monitors/Net.hs
-ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s -threaded
-ghc-prof-options:   -prof -auto-all
-
-executable:         xmb-weather
-main-is:            Monitors/Weather.hs
-ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
-ghc-prof-options:   -prof -auto-all
-
-executable:         xmb-batt
-main-is:            Monitors/Batt.hs
-ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s
 ghc-prof-options:   -prof -auto-all

@@ -133,7 +133,7 @@ usage =
        io $ putStr $ usageInfo ("Usage: " ++ pn ++ " [OPTIONS...] " ++ u) opts
 
 version :: String
-version = "0.4"
+version = "0.5"
 
 versinfo :: String -> String -> IO ()
 versinfo p v = putStrLn $ p ++" " ++ v
