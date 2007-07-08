@@ -124,11 +124,7 @@ drawInWin str =
        let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
        p' <- printStrings p gc fontst 1 strWithLenth 
        -- copy the pixmap with the new string to the window.
-       io $ copyArea dpy p' win gc 
-              (fi (xPos config)) 
-              (fi (yPos config)) 
-              (fi (width config)) 
-              (fi (height config)) 0 0
+       io $ copyArea dpy p' win gc 0 0 (fi (width config)) (fi (height config)) 0 0
        -- free up everything (we do not want to leak memory!)
        io $ freeFont dpy fontst
        io $ freeGC dpy gc
