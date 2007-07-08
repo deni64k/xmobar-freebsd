@@ -30,6 +30,8 @@ module Monitors.Common (
                        , getNumbers
                        , getNumbersAsString
                        , getAllBut
+                       , getAfterString
+                       , skipTillString
                        , parseTemplate
                        -- ** String Manipulation
                        -- $strings
@@ -207,6 +209,16 @@ skipRestOfLine =
     do many $ noneOf "\n\r"
        newline
 
+getAfterString :: String -> Parser String
+getAfterString s =
+    do { try $ manyTill skipRestOfLine $ string s
+       ; v <- manyTill anyChar $ newline
+       ; return v
+       } <|> return ("<" ++ s ++ " not found!>")
+
+skipTillString :: String -> Parser String
+skipTillString s = 
+    manyTill skipRestOfLine $ string s
 
 -- | Parses the output template string
 templateStringParser :: Parser (String,String,String)
