@@ -123,7 +123,7 @@ drawInWin str =
        -- free everything
        io $ freeFont dpy fontst
        io $ freeGC dpy gc
-       io $ flush dpy
+       io $ sync dpy True
 
 -- | An easy way to print the stuff we need to print
 printStrings :: GC
