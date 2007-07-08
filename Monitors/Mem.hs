@@ -12,14 +12,14 @@
 --
 -----------------------------------------------------------------------------
 
-module Main where
+module Monitors.Mem where
 
 import Monitors.Common
 
 import Data.IORef
 
-monitorConfig :: IO MConfig
-monitorConfig = 
+memConfig :: IO MConfig
+memConfig = 
     do lc <- newIORef "#BFBFBF"
        l <- newIORef 300
        nc <- newIORef "#00FF00"
@@ -59,7 +59,9 @@ runMem _ =
        l <- formatMem m
        parseTemplate l 
     
+{-
 main :: IO ()
 main =
     do let af = runMem []
        runMonitor monitorConfig af runMem
+-}

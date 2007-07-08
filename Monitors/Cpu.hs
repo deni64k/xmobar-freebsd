@@ -12,14 +12,14 @@
 --
 -----------------------------------------------------------------------------
 
-module Main where
+module Monitors.Cpu where
 
 import Monitors.Common
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.IORef
 
-monitorConfig :: IO MConfig
-monitorConfig = 
+cpuConfig :: IO MConfig
+cpuConfig = 
     do lc <- newIORef "#BFBFBF"
        l <- newIORef 2
        nc <- newIORef "#00FF00"
@@ -65,7 +65,9 @@ runCpu _ =
        l <- formatCpu c
        parseTemplate l 
     
+{-
 main :: IO ()
 main =
     do let af = runCpu []
-       runMonitor monitorConfig af runCpu
+       runMonitor cpuConfig af runCpu
+-}

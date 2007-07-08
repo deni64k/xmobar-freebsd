@@ -12,7 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Main where
+module Monitors.Weather where
 
 import Monitors.Common
 
@@ -25,8 +25,8 @@ import System.IO
 import Text.ParserCombinators.Parsec
 
 
-monitorConfig :: IO MConfig
-monitorConfig = 
+weatherConfig :: IO MConfig
+weatherConfig = 
     do lc <- newIORef "#BFBFBF"
        l <- newIORef 15
        nc <- newIORef "#00FF00"
@@ -53,8 +53,7 @@ monitorConfig =
                      ]
        return $ MC nc l lc h hc t p u a e
 
-
-data WeatherInfo = 
+data WeatherInfo =
     WI { stationPlace :: String
        , stationState :: String
        , year :: String
@@ -69,8 +68,6 @@ data WeatherInfo =
        , humidity :: Float
        , pressure :: String
        } deriving (Show)
-
-
 
 pTime :: Parser (String, String, String, String)
 pTime = do y <- getNumbersAsString
@@ -147,7 +144,9 @@ runWeather str =
 package :: String
 package = "xmb-weather"
 
+{-
 main :: IO ()
 main =
     do let af = return "No station ID specified"
-       runMonitor monitorConfig af runWeather
+       runMonitor weatherConfig af runWeather
+-}

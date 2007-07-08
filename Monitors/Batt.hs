@@ -12,7 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Main where
+module Monitors.Batt where
 
 import Data.IORef
 import qualified Data.ByteString.Lazy.Char8 as B
@@ -20,8 +20,8 @@ import System.Posix.Files
 
 import Monitors.Common
 
-monitorConfig :: IO MConfig
-monitorConfig = 
+battConfig :: IO MConfig
+battConfig = 
     do lc <- newIORef "#FF0000"
        l <- newIORef 25
        nc <- newIORef "#FF0000"
@@ -79,7 +79,9 @@ runBatt _ =
        l <- formatBatt c
        parseTemplate l 
     
+{-
 main :: IO ()
 main =
     do let af = runBatt []
-       runMonitor monitorConfig af runBatt
+       runMonitor battConfig af runBatt
+-}

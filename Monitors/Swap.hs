@@ -12,15 +12,15 @@
 --
 -----------------------------------------------------------------------------
 
-module Main where
+module Monitors.Swap where
 
 import Monitors.Common
 
 import Data.IORef
 import qualified Data.ByteString.Lazy.Char8 as B
 
-monitorConfig :: IO MConfig
-monitorConfig = 
+swapConfig :: IO MConfig
+swapConfig = 
     do lc <- newIORef "#BFBFBF"
        l <- newIORef 30
        nc <- newIORef "#00FF00"
@@ -44,21 +44,23 @@ parseMEM =
            free = p (1,12) file
        return [tot, (tot - free), free, (tot - free) / tot * 100]
 
-formatMem :: [Float] -> Monitor [String] 
-formatMem x =
+formatSwap :: [Float] -> Monitor [String] 
+formatSwap x =
     do let f n = show (takeDigits 2 n)
        mapM (showWithColors f) x
 
 package :: String
 package = "xmb-swap"
 
-runMem :: [String] -> Monitor String
-runMem _ =
+runSwap :: [String] -> Monitor String
+runSwap _ =
     do m <- io $ parseMEM
-       l <- formatMem m
+       l <- formatSwap m
        parseTemplate l 
     
+{-
 main :: IO ()
 main =
-    do let af = runMem []
-       runMonitor monitorConfig af runMem
+    do let af = runSwap []
+       runMonitor swapConfig af runSwap
+-}

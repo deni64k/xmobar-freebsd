@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Monitors.Cpu
+-- Module      :  Monitors.Net
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -12,7 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Main where
+module Monitors.Net where
 
 import Monitors.Common
 
@@ -28,8 +28,8 @@ data NetDev = NA
 interval :: Int
 interval = 500000
 
-monitorConfig :: IO MConfig
-monitorConfig = 
+netConfig :: IO MConfig
+netConfig = 
     do lc <- newIORef "#BFBFBF"
        l <- newIORef 0
        nc <- newIORef "#00FF00"
@@ -94,10 +94,13 @@ runNet nd =
               _ -> return $ NA
        printNet n
 
+
 package :: String
 package = "xmb-net"
 
+{-
 main :: IO ()
 main =
     do let f = return "No device specified"
-       runMonitor monitorConfig f runNet
+       runMonitor netConfig f runNet
+-}
