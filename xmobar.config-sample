@@ -7,7 +7,16 @@ Config { font = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
        , height = 15
        , align = "right"
        , refresh = 10
-       , commands = [("xmb-weather", 36000, ["EGPF"]), ("xmb-net", 10, ["eth0"])]
+       , commands = [ (Weather "EGPF" ["-t","<station>: <tempC>C"], 36000)
+                    , (Network "eth0" [], 10)
+                    , (Network "eth1" [], 10)
+                    , (Cpu [], 10)
+                    , (Exec "date" ["+\"%a %b %_d %H:%M\""] "mydate", 600)
+                    , (Exec "date" ["+%Y"] "year", 304128000)
+                    , (Memory ["-t","Mem: <usedratio>%"], 10)
+                    , (Swap [], 10)
+                    , (Exec "uname" ["-s","-r"] "", 36000)
+                    ]
        , sepChar = "%"
-       , template = "%xmb-cpu% | %xmb-mem% * %xmb-swap% | %xmb-net% | %xmb-weather% | <fc=#ee9a00>%date%</fc>"
+       , template = "%cpu% | %memory% * %swap% | %eth0% - %eth1% | %EGPF% | <fc=#ee9a00>%mydate% of %year%</fc> %uname%"
        }
