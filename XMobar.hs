@@ -90,10 +90,10 @@ createWin config =
      let dflt = defaultScreen dpy
      rootw  <- rootWindow dpy dflt
      win <- mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
-            (fromIntegral $ xPos config) 
-            (fromIntegral $ yPos config) 
-            (fromIntegral $ width config) 
-            (fromIntegral $ height config)
+            (fi $ xPos config) 
+            (fi $ yPos config) 
+            (fi $ width config) 
+            (fi $ height config)
      mapWindow dpy win
      return (dpy,win)
 
@@ -113,22 +113,22 @@ drawInWin str =
        io $ setFont dpy gc (fontFromFontStruct fontst)
        -- create a pixmap to write to and fill it with a rectangle:
        p <- io $ createPixmap dpy win 
-            (fromIntegral (width config)) 
-            (fromIntegral (height config)) 
+            (fi (width config)) 
+            (fi (height config)) 
             (defaultDepthOfScreen (defaultScreenOfDisplay dpy)) 
        io $ setForeground dpy gc bgcolor
        io $ fillRectangle dpy p gc 0 0 
-              (fromIntegral $ width config) 
-              (fromIntegral $ height config)
+              (fi $ width config) 
+              (fi $ height config)
        -- write to the pixmap the new string:
        let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
        p' <- printStrings p gc fontst 1 strWithLenth 
        -- copy the pixmap with the new string to the window.
        io $ copyArea dpy p' win gc 
-              (fromIntegral (xPos config)) 
-              (fromIntegral (yPos config)) 
-              (fromIntegral (width config)) 
-              (fromIntegral (height config)) 0 0
+              (fi (xPos config)) 
+              (fi (yPos config)) 
+              (fi (width config)) 
+              (fi (height config)) 0 0
        -- free up everything (we do not want to leak memory!)
        io $ freeFont dpy fontst
        io $ freeGC dpy gc
@@ -149,15 +149,15 @@ printStrings p gc fontst offs sl@((s,c,l):xs) =
        st <- get
        let (_,asc,_,_) = textExtents fontst s
            totSLen = foldr (\(_,_,len) -> (+) len) 0 sl
-           valign = (fromIntegral (height config) + fromIntegral asc) `div` 2
-           remWidth = fromIntegral (width config) - fromIntegral totSLen
+           valign = (fi (height config) + fi asc) `div` 2
+           remWidth = fi (width config) - fi totSLen
            offset = case (align config) of
                       "center" -> (remWidth + offs) `div` 2
                       "right" -> remWidth - 1
                       "left" -> offs
                       _ -> offs
        fgcolor <- io $ initColor (display st) c
-       bgcolor  <-  io $ initColor (display st) (bgColor config)
+       bgcolor <- io $ initColor (display st) (bgColor config)
        io $ setForeground (display st) gc fgcolor
        io $ setBackground (display st) gc bgcolor
        io $ drawImageString (display st) p gc offset valign s
@@ -259,3 +259,7 @@ tenthSeconds s | s >= x = do threadDelay y
                | otherwise = threadDelay (s * 100000)
                where y = (maxBound :: Int)
                      x = y `div` 100000
+
+-- | Short-hand for 'fromIntegral'
+fi :: (Integral a, Num b) => a -> b
+fi = fromIntegral
