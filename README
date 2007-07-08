@@ -1,9 +1,10 @@
 XMobar - a status bar for the XMonad Window Manager
 
 ABOUT
------
+=====
 
-Xmobar is a minimal status bar for the XMonad Window Manager.
+Xmobar is a minimalisti, text based, status bar, designed for the
+XMonad Window Manager.
 
 It was inspired by the Ion3 status bar, and supports similar features.
 See xmobar.config-sample for a sample configuration.
@@ -12,9 +13,9 @@ Try it with:
 xmobar xmobar.config-sample
 
 INSTALLATION
-------------
+============
 
-tar xvfz xmobar-0.1
+tar xvfz xmobar-0.5
 runhaskell Setup.lhs configure --prefix=/usr/local
 runhaskell Setup.lhs build
 runhaskell Setup.lhs haddock (optional for building the code documentation)
@@ -24,7 +25,10 @@ Run with:
 xmobar /path/to/config $
 
 CONFIGURATION
--------------
+=============
+
+Quick Start
+-----------
 
 See xmobar.config-sample for an example.
 
@@ -51,18 +55,134 @@ sepChar: The character to be used for indicating commands in the
          output template (default '%')
 template: The output template 
 
+The Output Template
+-------------------
+
+The output template must contain at least one command. XMobar will
+parse the template and will search for the commands to be executed in
+the "commands" configuration option. First an "alias" will be search
+(internal commands such as Weather or Network have default aliasing,
+see below). After that the command name will be tried. If a command is
+found, its arguments will be used. If no command is found in the
+commands list, then XMobar will try to execute the program with the
+name found in the template. If the execution is not successful an
+error will be reported.
+   
+The "commands" Configuration Option
+-----------------------------------
+
+The "commands" configuration option is a list of commands for storing
+information to be used by XMobar wen parsing the template. Each member
+of the list consists in a tuple formed by a command with arguments and
+a number, the refresh rate in tenth of second.
+
+Available commands are: Weather, Network, memory, Swap, Cpu, Battery,
+and Exec. This last one is used to execute external programs.
+
+Es: (Memory ["-t","Mem: <usedratio>%"], 10)
+
+Internal Commands and Aliases
+-----------------------------
+
+Each command in the "commands" configuration option has an alias to be
+used in the template.
+
+Internal commands have default aliases:
+Weather StationID Args
+- aliases to the Station ID: so Weather "LIPB" [] can be used in template as %LIBP%
+- Args: the argument list (see below)
+- Variables that can be used with the "-t"/"--template" argument: 
+	    "station", "stationState", "year", "month", "day", "hour",
+	    "wind", "visibility", "skyCondition", "tempC", "tempF",
+	    "dewPoint", "rh", "pressure"
+- Default template: "<station>: <tempC>C, rh <rh>% (<hour>)"
+
+Network Interface ARGS
+- aliases to the interface name: so Network "eth0" [] can be used as %eth0%
+- Args: the argument list (see below)
+- Variables that can be used with the "-t"/"--template" argument: 
+	    "dev", "rx", "tx"
+- Default template: "<dev>: <rx>|<tx>"
+
+Memory Args
+- aliases to "memory"
+- Args: the argument list (see below)
+- Variables that can be used with the "-t"/"--template" argument: 
+	    "total", "free", "buffer", "cache", "rest", "used", "usedratio"
+- Default template: "Mem: <usedratio>% (<cache>M)"
+
+Swap Args
+- aliases to "swap"
+- Args: the argument list (see below)
+- Variables that can be used with the "-t"/"--template" argument: 
+	    "total", "used", "free", "usedratio"
+- Default template: "Swap: <usedratio>%"
+
+Cpu Args
+- aliases to "cpu"
+- Args: the argument list (see below)
+- Variables that can be used with the "-t"/"--template" argument: 
+	    "total", "user", "nice", "system", "idle"
+- Default template: "Cpu: <total>"
+
+Battery Args
+- aliases to "battery"
+- Args: the argument list (see below)
+- Variables that can be used with the "-t"/"--template" argument: 
+	    "left"
+- Default template: "Batt: <left>"
+
+Internal Commands Arguments
+---------------------------
+
+These are the arguments that can be used for internal commands in the
+"commands" configuration option:
+
+-H number           --High=number               The high threshold
+-L number           --Low=number                The low threshold
+                    --high=color number         Color for the high threshold: es "#FF0000"
+                    --normal=color number       Color for the normal threshold: es "#00FF00"
+                    --low=color number          Color for the low threshold: es "#0000FF"
+-t output template  --template=output template  Output template
+
+Commands must be set as a list. Es:
+(Weather "EGPF" ["-t","<station>: <tempC>C"], 36000)
+
+Executing External Commands
+---------------------------
+
+In order to execute an external command you can either write the
+command name in the template, in this case it will be executed without
+arguments, or you can configure it in the "commands" configuration
+option with the Exec command:
+
+Exec ProgarmName Args Alias
+- ProgramName: the name of the program
+- Args: the arguments to be passed to the program at execution time
+- Alias: a name to be used in the template. If the alias is en empty
+  string the program name can be used in the template.
+Es:
+(Exec "uname" ["-s","-r"] "", 36000)
+can be used in the output template as %uname%
+(Exec "date" ["+\"%a %b %_d %H:%M\""] "mydate", 600)
+can be used in the output template as %mydate%
 
 AUTHOR
-------
+======
 
 Andrea Rossato <andrea.rossato@unibz.it>
 
+CREDITS
+=======
+
+XMobar incorporates patches from:
+Krzysztof Kosciuszkiewicz
 
 LINKS
------
+=====
 
 The XMobar home page:
-http://gorgias.mine.nu/xmobar/
+http://gorgias.mine.nu/repos/xmobar/
 
 XMobars darcs repository:
 http://gorgias.mine.nu/repos/xmobar/
