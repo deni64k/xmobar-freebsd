@@ -3,7 +3,7 @@ XMobar - a status bar for the XMonad Window Manager
 ABOUT
 =====
 
-Xmobar is a minimalisti, text based, status bar, designed for the
+Xmobar is a minimalistic, text based, status bar, designed for the
 XMonad Window Manager.
 
 It was inspired by the Ion3 status bar, and supports similar features.
@@ -59,33 +59,36 @@ The Output Template
 -------------------
 
 The output template must contain at least one command. XMobar will
-parse the template and will search for the commands to be executed in
+parse the template and will search for the command to be executed in
 the "commands" configuration option. First an "alias" will be search
 (internal commands such as Weather or Network have default aliasing,
 see below). After that the command name will be tried. If a command is
-found, its arguments will be used. If no command is found in the
-commands list, then XMobar will try to execute the program with the
-name found in the template. If the execution is not successful an
-error will be reported.
+found, the arguments specified in the "commands" list will be used. 
+
+If no command is found in the "commands" list, XMobar will try to
+execute a program with the name found in the template. If the
+execution is not successful an error will be reported.
    
 The "commands" Configuration Option
 -----------------------------------
 
-The "commands" configuration option is a list of commands for storing
-information to be used by XMobar wen parsing the template. Each member
-of the list consists in a tuple formed by a command with arguments and
-a number, the refresh rate in tenth of second.
+The "commands" configuration option is a list of commands'information
+and arguments to be used by XMobar when parsing the output template.
+Each member of the list consists in a tuple formed by a template
+command (with arguments) and a number (the refresh rate in tenth of
+second).
 
-Available commands are: Weather, Network, memory, Swap, Cpu, Battery,
-and Exec. This last one is used to execute external programs.
+Available template commands are: Weather, Network, Memory, Swap, Cpu,
+Battery, and Exec. This last one is used to execute external programs.
 
-Es: (Memory ["-t","Mem: <usedratio>%"], 10)
+This is an example of a command in the "commands" list:
+(Memory ["-t","Mem: <usedratio>%"], 10)
 
 Internal Commands and Aliases
 -----------------------------
 
-Each command in the "commands" configuration option has an alias to be
-used in the template.
+Each command in the "commands" configuration option list has an alias
+to be used in the template.
 
 Internal commands have default aliases:
 Weather StationID Args
@@ -143,7 +146,7 @@ These are the arguments that can be used for internal commands in the
                     --high=color number         Color for the high threshold: es "#FF0000"
                     --normal=color number       Color for the normal threshold: es "#00FF00"
                     --low=color number          Color for the low threshold: es "#0000FF"
--t output template  --template=output template  Output template
+-t output template  --template=output template  Output template of the command.
 
 Commands must be set as a list. Es:
 (Weather "EGPF" ["-t","<station>: <tempC>C"], 36000)
@@ -154,7 +157,7 @@ Executing External Commands
 In order to execute an external command you can either write the
 command name in the template, in this case it will be executed without
 arguments, or you can configure it in the "commands" configuration
-option with the Exec command:
+option list with the Exec template command:
 
 Exec ProgarmName Args Alias
 - ProgramName: the name of the program
