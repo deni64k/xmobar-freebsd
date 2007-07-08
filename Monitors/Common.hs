@@ -21,6 +21,7 @@ module Monitors.Common (
                        , setConfigValue
                        , getConfigValue
                        , runMonitor
+                       , runM
                        , io
                        -- * Parsers
                        -- $parsers
@@ -171,6 +172,12 @@ runMonitor conf actionFail action =
        args <- getArgs
        let ac = doArgs args actionFail action
        putStrLn =<< runReaderT ac c
+
+runM :: [String] -> IO MConfig -> Monitor String -> ([String] -> Monitor String) -> IO String
+runM args conf actionFail action =
+    do c <- conf
+       let ac = doArgs args actionFail action
+       runReaderT ac c
 
 io :: IO a -> Monitor a
 io = liftIO
