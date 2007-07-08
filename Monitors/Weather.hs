@@ -102,20 +102,15 @@ parseData =
        ss <- getAllBut "("
        skipRestOfLine >> getAllBut "/"
        (y,m,d,h) <- pTime
-       skipRestOfLine >> string "Wind: "
-       w <- manyTill anyChar $ newline 
-       manyTill skipRestOfLine $ string "Visibility: "
-       v <- manyTill anyChar $ newline
-       manyTill skipRestOfLine $ string "Sky conditions: "
-       sk <- manyTill anyChar $ newline
-       manyTill skipRestOfLine $ string "Temperature"
+       w <- getAfterString "Wind: "
+       v <- getAfterString "Visibility: "
+       sk <- getAfterString "Sky conditions: "
+       skipTillString "Temperature"
        temp <- pTemp
-       manyTill skipRestOfLine $ string "Dew Point: "
-       dp <- manyTill anyChar $ newline
-       manyTill skipRestOfLine $ string "Relative Humidity"
+       dp <- getAfterString "Dew Point: "
+       skipTillString "Relative Humidity"
        rh <- pRh
-       manyTill skipRestOfLine $ string "Pressure (altimeter): "
-       p <- manyTill anyChar $ newline
+       p <- getAfterString "Pressure (altimeter): "
        manyTill skipRestOfLine eof
        return $ [WI st ss y m d h w v sk temp dp rh p]
 
