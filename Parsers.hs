@@ -26,7 +26,9 @@ module Parsers (
                ) where
 
 import Config
+import Commands
 import Text.ParserCombinators.Parsec
+import qualified Data.Map as Map
 
 
 {- $parser
@@ -81,9 +83,9 @@ colorSpec =
 templateStringParser :: Config -> Parser (String,String,String)
 templateStringParser c =
     do{ s <- many $ noneOf (sepChar c)
-      ; (_,com,_) <- templateCommandParser c
+      ; (com,_,_) <- templateCommandParser c
       ; ss <- many $ noneOf (sepChar c)
-      ; return (s, com, ss)
+      ; return (com, s, ss)
       } 
 
 -- | Parses the command part of the template string
@@ -93,16 +95,28 @@ templateCommandParser c =
        ; char chr
        ; com <- many $ noneOf (sepChar c)
        ; char chr
-       ; return $ ("",com,"")
-       }
+       ; return $ (com,"","")
+       } 
+
 -- | Combines the template parsers
 templateParser :: Config -> Parser [(String,String,String)]
 templateParser c = many (templateStringParser c)
 
 -- | Actually runs the template parsers
-parseTemplate :: Config -> String -> IO [(String,String,String)]
+parseTemplate :: Config -> String -> IO [(Command,String,String)]
 parseTemplate config s = 
-    case (parse (templateParser config) "" s) of
-      Left _ -> return [("","","")]
-      Right x  -> return x
+    do str <- case (parse (templateParser config) "" s) of
+                Left _ -> return [("","","")]
+                Right x  -> return x
+       let comList = map (show . fst) $ commands config
+           m = Map.fromList . zip comList . map fst $ (commands config)
+       return $ combine m str
 
+-- | Given a finite "Map" and a parsed templatet produces the
+-- | resulting output string.
+combine :: Map.Map String Command -> [(String, String, String)] -> [(Command,String,String)]
+combine _ [] = []
+combine m ((ts,s,ss):xs) = 
+    [(com, s, ss)] ++ combine m xs
+        where com = Map.findWithDefault dflt ts m
+              dflt = Exec ts [] [] --"<" ++ ts ++ " not found!>"
