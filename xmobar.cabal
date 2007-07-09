@@ -1,5 +1,5 @@
 name:               xmobar
-version:            0.5
+version:            0.6
 homepage:           http://gorgias.mine.nu/repos/xmobar/
 synopsis:           A Statusbar for the XMonad Window Manager
 description: 	    Xmobar is a minimal status bar for the XMonad Window Manager.

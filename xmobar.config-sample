@@ -1,6 +1,6 @@
 Config { font = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
-       , bgColor = "#000000"
-       , fgColor = "#BFBFBF"
+       , bgColor = "black"
+       , fgColor = "grey"
        , xPos = 0
        , yPos = 0
        , width = 1024
