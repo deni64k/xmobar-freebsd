@@ -111,19 +111,20 @@ drawInWin str =
        --let's get the fonts
        fontst <-  io $ loadQueryFont dpy (font config)
        io $ setFont dpy gc (fontFromFontStruct fontst)
-       -- create a pixmap to write to and fill it with a rectangle:
+       -- create a pixmap to write to and fill it with a rectangle
        p <- io $ createPixmap dpy win 
             (fi (width config)) 
             (fi (height config)) 
-            (defaultDepthOfScreen (defaultScreenOfDisplay dpy)) 
+            (defaultDepthOfScreen (defaultScreenOfDisplay dpy))
+       -- the fgcolor of the rectangle will be the bgcolor of the window
        io $ setForeground dpy gc bgcolor
        io $ fillRectangle dpy p gc 0 0 
               (fi $ width config) 
               (fi $ height config)
-       -- write to the pixmap the new string:
+       -- write to the pixmap the new string
        let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
        p' <- printStrings p gc fontst 1 strWithLenth 
-       -- copy the pixmap with the new string to the window.
+       -- copy the pixmap with the new string to the window
        io $ copyArea dpy p' win gc 0 0 (fi (width config)) (fi (height config)) 0 0
        -- free up everything (we do not want to leak memory!)
        io $ freeFont dpy fontst
@@ -138,8 +139,8 @@ printStrings :: Drawable
              -> FontStruct
              -> Position
              -> [(String, String, Position)]
-             -> Xbar Pixmap --()
-printStrings p _ _ _ [] = return p --()
+             -> Xbar Pixmap
+printStrings p _ _ _ [] = return p
 printStrings p gc fontst offs sl@((s,c,l):xs) =
     do config <- ask
        st <- get
