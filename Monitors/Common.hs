@@ -288,7 +288,8 @@ type Pos = (Int, Int)
 
 takeDigits :: Int -> Float -> Float
 takeDigits d n = 
-    read $ showFFloat (Just d) n ""
+    fromIntegral ((round (n * fact)) :: Int) / fact
+  where fact = 10 ^ d
 
 floatToPercent :: Float -> String
 floatToPercent n = 
