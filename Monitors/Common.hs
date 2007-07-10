@@ -137,9 +137,9 @@ options =
                 , Option ['V']  ["version"] (NoArg Version) "Show version information"
                 , Option ['H']  ["High"]  (ReqArg High "number") "The high threshold"
                 , Option ['L']  ["Low"]  (ReqArg Low "number") "The low threshold"
-                , Option []  ["high"]  (ReqArg HighColor "color number") "Color for the high threshold: es \"#FF0000\""
-                , Option []  ["normal"]  (ReqArg NormalColor "color number") "Color for the normal threshold: es \"#00FF00\""
-                , Option []  ["low"]  (ReqArg LowColor "color number") "Color for the low threshold: es \"#0000FF\""
+                , Option []  ["high"]  (ReqArg HighColor "color number") "Color for the high threshold: ex \"#FF0000\""
+                , Option []  ["normal"]  (ReqArg NormalColor "color number") "Color for the normal threshold: ex \"#00FF00\""
+                , Option []  ["low"]  (ReqArg LowColor "color number") "Color for the low threshold: ex \"#0000FF\""
                 , Option ['t']  ["template"]  (ReqArg Template "output template") 
                              ("Output template.\nAvaliable variables: " ++ show t ++ "\nDefault template: " ++ show tmpl)
                 ] ++ ao
