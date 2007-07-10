@@ -16,8 +16,6 @@ module Monitors.Weather where
 
 import Monitors.Common
 
-import Data.IORef
-
 import System.Process
 import System.Exit
 import System.IO
@@ -26,32 +24,26 @@ import Text.ParserCombinators.Parsec
 
 
 weatherConfig :: IO MConfig
-weatherConfig = 
-    do lc <- newIORef "#BFBFBF"
-       l <- newIORef 15
-       nc <- newIORef "#00FF00"
-       h <- newIORef 27
-       hc <- newIORef "#FF0000"
-       t <- newIORef "<station>: <tempC>C, rh <rh>% (<hour>)"
-       p <- newIORef package
-       u <- newIORef "station ID"
-       a <- newIORef []
-       e <- newIORef ["station"
-                     , "stationState"
-                     , "year"
-                     , "month"
-                     , "day"
-                     , "hour"
-                     , "wind"
-                     , "visibility"
-                     , "skyCondition"
-                     , "tempC"
-                     , "tempF"
-                     , "dewPoint"
-                     , "rh"
-                     ,"pressure"
-                     ]
-       return $ MC nc l lc h hc t p u a e
+weatherConfig = newConfig
+       "<station>: <tempC>C, rh <rh>% (<hour>)" -- template
+       package                                  -- package
+       "station ID"                             -- usage tail?
+       []                                       -- added args
+       ["station"                               -- available replacements
+       , "stationState"
+       , "year"
+       , "month"
+       , "day"
+       , "hour"
+       , "wind"
+       , "visibility"
+       , "skyCondition"
+       , "tempC"
+       , "tempF"
+       , "dewPoint"
+       , "rh"
+       ,"pressure"
+       ]
 
 data WeatherInfo =
     WI { stationPlace :: String

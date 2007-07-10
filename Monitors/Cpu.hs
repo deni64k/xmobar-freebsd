@@ -16,21 +16,14 @@ module Monitors.Cpu where
 
 import Monitors.Common
 import qualified Data.ByteString.Lazy.Char8 as B
-import Data.IORef
 
 cpuConfig :: IO MConfig
-cpuConfig = 
-    do lc <- newIORef "#BFBFBF"
-       l <- newIORef 2
-       nc <- newIORef "#00FF00"
-       h <- newIORef 60
-       hc <- newIORef "#FF0000"
-       t <- newIORef "Cpu: <total>"
-       p <- newIORef package
-       u <- newIORef ""
-       a <- newIORef []
-       e <- newIORef ["total","user","nice","system","idle"]
-       return $ MC nc l lc h hc t p u a e
+cpuConfig = newConfig
+       "Cpu: <total>"                           -- template
+       package                                  -- package
+       ""                                       -- usage tail?
+       []                                       -- added args
+       ["total","user","nice","system","idle"]  -- available replacements
 
 cpuData :: IO [Float]
 cpuData = do s <- B.readFile "/proc/stat"

@@ -20,6 +20,7 @@ module Monitors.Common (
                        , Opts (..)
                        , setConfigValue
                        , getConfigValue
+                       , newConfig
                        , runMonitor
                        , runM
                        , io
@@ -65,11 +66,11 @@ import System.Exit
 type Monitor a = ReaderT MConfig IO a
 
 data MConfig =
-    MC { normalColor :: IORef String
+    MC { normalColor :: IORef (Maybe String)
        , low :: IORef Int
-       , lowColor :: IORef String
+       , lowColor :: IORef (Maybe String)
        , high :: IORef Int
-       , highColor :: IORef String
+       , highColor :: IORef (Maybe String)
        , template :: IORef String
        , packageName :: IORef String
        , usageTail :: IORef String
@@ -98,6 +99,24 @@ getConfigValue :: Selector a -> Monitor a
 getConfigValue s =
     sel s
 
+newConfig :: String
+          -> String
+          -> String
+          -> [OptDescr Opts]
+          -> [String]
+          -> IO MConfig
+newConfig tmpl pkg usg args exprts =
+    do lc <- newIORef Nothing
+       l <- newIORef 33
+       nc <- newIORef Nothing
+       h <- newIORef 66
+       hc <- newIORef Nothing
+       t <- newIORef tmpl
+       p <- newIORef pkg
+       u <- newIORef usg
+       a <- newIORef args
+       e <- newIORef exprts
+       return $ MC nc l lc h hc t p u a e
 
 data Opts = Help
           | Version
@@ -162,9 +181,9 @@ doConfigOptions (o:oo) =
          Version -> io $ versinfo pn version >> exitWith ExitSuccess
          High h -> setConfigValue (read h) high >> next
          Low l -> setConfigValue (read l) low >> next
-         HighColor hc -> setConfigValue hc highColor >> next
-         NormalColor nc -> setConfigValue nc normalColor >> next
-         LowColor lc -> setConfigValue lc lowColor >> next
+         HighColor hc -> setConfigValue (Just hc) highColor >> next
+         NormalColor nc -> setConfigValue (Just nc) normalColor >> next
+         LowColor lc -> setConfigValue (Just lc) lowColor >> next
          Template t -> setConfigValue t template >> next
          _ -> next
 
@@ -279,11 +298,13 @@ stringParser :: Pos -> B.ByteString -> String
 stringParser (x,y) =
      flip (!!) x . map B.unpack . B.words . flip (!!) y . B.lines
 
-setColor :: String -> Selector String -> Monitor String
+setColor :: String -> Selector (Maybe String) -> Monitor String
 setColor str s =
     do a <- getConfigValue s
-       return $ "<fc=" ++ a ++ ">" ++
-              str ++ "</fc>"
+       case a of
+            Nothing -> return str
+            Just c -> return $
+                "<fc=" ++ c ++ ">" ++ str ++ "</fc>"
 
 showWithColors :: (Float -> String) -> Float -> Monitor String
 showWithColors f x =

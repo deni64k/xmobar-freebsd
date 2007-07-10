@@ -16,21 +16,14 @@ module Monitors.Mem where
 
 import Monitors.Common
 
-import Data.IORef
-
 memConfig :: IO MConfig
-memConfig = 
-    do lc <- newIORef "#BFBFBF"
-       l <- newIORef 300
-       nc <- newIORef "#00FF00"
-       h <- newIORef 500
-       hc <- newIORef "#FF0000"
-       t <- newIORef "Mem: <usedratio>% (<cache>M)"
-       p <- newIORef package
-       u <- newIORef ""
-       a <- newIORef []
-       e <- newIORef ["total", "free", "buffer", "cache", "rest", "used", "usedratio"]
-       return $ MC nc l lc h hc t p u a e
+memConfig = newConfig
+       "Mem: <usedratio>% (<cache>M)" -- template
+       package                        -- package
+       ""                             -- usage tail?
+       []                             -- added args
+       ["total", "free", "buffer",    -- available replacements
+        "cache", "rest", "used", "usedratio"]
 
 fileMEM :: IO String
 fileMEM = readFile "/proc/meminfo"

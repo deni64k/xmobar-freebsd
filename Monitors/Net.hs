@@ -15,8 +15,6 @@
 module Monitors.Net where
 
 import Monitors.Common
-
-import Data.IORef
 import Text.ParserCombinators.Parsec
 
 data NetDev = NA
@@ -29,18 +27,12 @@ interval :: Int
 interval = 500000
 
 netConfig :: IO MConfig
-netConfig = 
-    do lc <- newIORef "#BFBFBF"
-       l <- newIORef 0
-       nc <- newIORef "#00FF00"
-       h <- newIORef 32
-       hc <- newIORef "#FF0000"
-       t <- newIORef "<dev>: <rx>|<tx>"
-       p <- newIORef package
-       u <- newIORef "dev"
-       a <- newIORef []
-       e <- newIORef ["dev", "rx", "tx"]
-       return $ MC nc l lc h hc t p u a e
+netConfig = newConfig
+    "<dev>: <rx>|<tx>"      -- template
+    package                 -- package
+    "dev"                   -- usage tail?
+    []                      -- added args
+    ["dev", "rx", "tx"]     -- available replacements
 
 fileNET :: IO String
 fileNET = 

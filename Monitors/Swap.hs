@@ -16,22 +16,15 @@ module Monitors.Swap where
 
 import Monitors.Common
 
-import Data.IORef
 import qualified Data.ByteString.Lazy.Char8 as B
 
 swapConfig :: IO MConfig
-swapConfig = 
-    do lc <- newIORef "#BFBFBF"
-       l <- newIORef 30
-       nc <- newIORef "#00FF00"
-       h <- newIORef 75
-       hc <- newIORef "#FF0000"
-       t <- newIORef "Swap: <usedratio>%"
-       p <- newIORef package
-       u <- newIORef ""
-       a <- newIORef []
-       e <- newIORef ["total", "used", "free", "usedratio"]
-       return $ MC nc l lc h hc t p u a e
+swapConfig = newConfig
+        "Swap: <usedratio>"                    -- template
+        package                                -- package
+        ""                                     -- usage tail?
+        []                                     -- added args
+        ["total", "used", "free", "usedratio"] -- available replacements
 
 fileMEM :: IO B.ByteString
 fileMEM = B.readFile "/proc/meminfo"

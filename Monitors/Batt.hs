@@ -14,25 +14,18 @@
 
 module Monitors.Batt where
 
-import Data.IORef
 import qualified Data.ByteString.Lazy.Char8 as B
 import System.Posix.Files
 
 import Monitors.Common
 
 battConfig :: IO MConfig
-battConfig = 
-    do lc <- newIORef "#FF0000"
-       l <- newIORef 25
-       nc <- newIORef "#FF0000"
-       h <- newIORef 75
-       hc <- newIORef "#00FF00"
-       t <- newIORef "Batt: <left>"
-       p <- newIORef package
-       u <- newIORef ""
-       a <- newIORef []
-       e <- newIORef ["left"]
-       return $ MC nc l lc h hc t p u a e
+battConfig = newConfig
+       "Batt: <left>" -- template
+       package        -- package
+       ""             -- usage tail?
+       []             -- added args
+       ["left"]       -- available replacements
 
 fileB1 :: (String, String)
 fileB1 = ("/proc/acpi/battery/BAT1/info", "/proc/acpi/battery/BAT1/state")
