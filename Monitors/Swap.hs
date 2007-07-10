@@ -35,12 +35,16 @@ parseMEM =
        let p x y = flip (/) 1024 . read . stringParser x $ y
            tot = p (1,11) file
            free = p (1,12) file
-       return [tot, (tot - free), free, (tot - free) / tot * 100]
+       return [tot, (tot - free), free, (tot - free) / tot]
 
 formatSwap :: [Float] -> Monitor [String] 
 formatSwap x =
-    do let f n = show (takeDigits 2 n)
-       mapM (showWithColors f) x
+    do let f1 n = show (takeDigits 2 n)
+           f2 n = floatToPercent n
+           (hd, tl) = splitAt 3 x
+       firsts <- mapM (showWithColors f1) hd
+       lasts <- mapM (showWithColors f2) tl
+       return $ firsts ++ lasts
 
 package :: String
 package = "xmb-swap"
