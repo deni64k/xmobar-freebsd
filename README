@@ -143,9 +143,9 @@ These are the arguments that can be used for internal commands in the
 
 -H number           --High=number               The high threshold
 -L number           --Low=number                The low threshold
-                    --high=color number         Color for the high threshold: es "#FF0000"
-                    --normal=color number       Color for the normal threshold: es "#00FF00"
-                    --low=color number          Color for the low threshold: es "#0000FF"
+-h color number     --high=color number         Color for the high threshold: es "#FF0000"
+-n color number     --normal=color number       Color for the normal threshold: es "#00FF00"
+-l color number     --low=color number          Color for the low threshold: es "#0000FF"
 -t output template  --template=output template  Output template of the command.
 
 Commands must be set as a list. Es:
