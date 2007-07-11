@@ -54,18 +54,12 @@ class Exec e where
     run :: e -> IO String
 
 instance Exec Command where
-    run (Weather s a) = do let af = return "No station ID specified"
-                           runM (a ++ [s]) weatherConfig af runWeather 
-    run (Network i a) = do let f = return "No device specified"
-                           runM (a ++ [i]) netConfig f runNet
-    run (Memory args) = do let af = runMem []
-                           runM args memConfig af runMem
-    run (Swap args) = do let af = runSwap []
-                         runM args swapConfig af runSwap
-    run (Cpu args) = do let af = runCpu []
-                        runM args cpuConfig af runCpu
-    run (Battery args) = do let af = runBatt []
-                            runM args battConfig af runBatt
+    run (Weather s a) = runM (a ++ [s]) weatherConfig runWeather 
+    run (Network i a) = runM (a ++ [i]) netConfig runNet
+    run (Memory args) = runM args memConfig runMem
+    run (Swap args) = runM args swapConfig runSwap
+    run (Cpu args) = runM args cpuConfig runCpu
+    run (Battery args) = runM args battConfig runBatt
     run (Exec prog args _) = do (i,o,e,p) <- runInteractiveCommand (prog ++ concat (map (' ':) args))
                                 exit <- waitForProcess p
                                 let closeHandles = do hClose o
