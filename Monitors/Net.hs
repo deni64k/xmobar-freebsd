@@ -29,9 +29,6 @@ interval = 500000
 netConfig :: IO MConfig
 netConfig = mkMConfig
     "<dev>: <rx>|<tx>"      -- template
-    package                 -- package
-    "dev"                   -- usage tail?
-    []                      -- added args
     ["dev", "rx", "tx"]     -- available replacements
 
 fileNET :: IO String
@@ -85,14 +82,3 @@ runNet nd =
               [x] -> return x
               _ -> return $ NA
        printNet n
-
-
-package :: String
-package = "xmb-net"
-
-{-
-main :: IO ()
-main =
-    do let f = return "No device specified"
-       runMonitor netConfig f runNet
--}
