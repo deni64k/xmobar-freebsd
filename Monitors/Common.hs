@@ -59,7 +59,6 @@ import Text.ParserCombinators.Parsec
 
 import System.Console.GetOpt
 import System.Environment
-import System.Exit
 
 -- $monitor
 
@@ -72,9 +71,9 @@ data MConfig =
        , high :: IORef Int
        , highColor :: IORef (Maybe String)
        , template :: IORef String
-       , packageName :: IORef String
-       , usageTail :: IORef String
-       , addedArgs :: IORef [OptDescr Opts]
+--       , packageName :: IORef String
+--       , usageTail :: IORef String
+--       , addedArgs :: IORef [OptDescr Opts]
        , export :: IORef [String]
        } 
 
@@ -100,62 +99,54 @@ getConfigValue s =
     sel s
 
 mkMConfig :: String
-          -> String
-          -> String
-          -> [OptDescr Opts]
           -> [String]
           -> IO MConfig
-mkMConfig tmpl pkg usg args exprts =
+mkMConfig tmpl exprts =
     do lc <- newIORef Nothing
        l <- newIORef 33
        nc <- newIORef Nothing
        h <- newIORef 66
        hc <- newIORef Nothing
        t <- newIORef tmpl
-       p <- newIORef pkg
-       u <- newIORef usg
-       a <- newIORef args
+--      p <- newIORef pkg
+--       u <- newIORef usg
+--       a <- newIORef args
        e <- newIORef exprts
-       return $ MC nc l lc h hc t p u a e
+       return $ MC nc l lc h hc t e
+--       return $ MC nc l lc h hc t p u a e
 
-data Opts = Help
-          | Version
-          | HighColor String
+data Opts = HighColor String
           | NormalColor String
           | LowColor String
           | Low String
           | High String
           | Template String
-          | Others String
 
 options :: Monitor [OptDescr Opts]
 options =
     do t <- getConfigValue export
-       ao <- getConfigValue addedArgs 
        tmpl <- getConfigValue template
-       return $ [ Option ['h']  ["help"]    (NoArg Help)    "Show this help"
-                , Option ['V']  ["version"] (NoArg Version) "Show version information"
-                , Option ['H']  ["High"]  (ReqArg High "number") "The high threshold"
+       return $ [ Option ['H']  ["High"]  (ReqArg High "number") "The high threshold"
                 , Option ['L']  ["Low"]  (ReqArg Low "number") "The low threshold"
-                , Option []  ["high"]  (ReqArg HighColor "color number") "Color for the high threshold: ex \"#FF0000\""
-                , Option []  ["normal"]  (ReqArg NormalColor "color number") "Color for the normal threshold: ex \"#00FF00\""
-                , Option []  ["low"]  (ReqArg LowColor "color number") "Color for the low threshold: ex \"#0000FF\""
+                , Option ['h']  ["high"]  (ReqArg HighColor "color number") "Color for the high threshold: ex \"#FF0000\""
+                , Option ['n']  ["normal"]  (ReqArg NormalColor "color number") "Color for the normal threshold: ex \"#00FF00\""
+                , Option ['l']  ["low"]  (ReqArg LowColor "color number") "Color for the low threshold: ex \"#0000FF\""
                 , Option ['t']  ["template"]  (ReqArg Template "output template") 
                              ("Output template.\nAvaliable variables: " ++ show t ++ "\nDefault template: " ++ show tmpl)
-                ] ++ ao
-
+                ]
+{-
 usage :: Monitor ()
 usage =
     do pn <- io $ getProgName
-       u <- getConfigValue usageTail
        opts <- options
-       io $ putStr $ usageInfo ("Usage: " ++ pn ++ " [OPTIONS...] " ++ u) opts
+       io $ putStr $ usageInfo ("Usage: " ++ pn ++ " [OPTIONS...] ") opts
 
 version :: String
 version = "0.5"
 
 versinfo :: String -> String -> IO ()
 versinfo p v = putStrLn $ p ++" " ++ v
+-}
 
 doArgs :: [String] 
        -> Monitor String 
@@ -174,18 +165,14 @@ doArgs args actionFail action =
 doConfigOptions :: [Opts] -> Monitor ()
 doConfigOptions [] = io $ return ()
 doConfigOptions (o:oo) =
-    do pn <- getConfigValue packageName
-       let next = doConfigOptions oo
+    do let next = doConfigOptions oo
        case o of
-         Help -> usage >> io (exitWith ExitSuccess)
-         Version -> io $ versinfo pn version >> exitWith ExitSuccess
          High h -> setConfigValue (read h) high >> next
          Low l -> setConfigValue (read l) low >> next
          HighColor hc -> setConfigValue (Just hc) highColor >> next
          NormalColor nc -> setConfigValue (Just nc) normalColor >> next
          LowColor lc -> setConfigValue (Just lc) lowColor >> next
          Template t -> setConfigValue t template >> next
-         _ -> next
 
 runMonitor ::  IO MConfig -> Monitor String -> ([String] -> Monitor String) -> IO ()
 runMonitor conf actionFail action =

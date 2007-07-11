@@ -21,9 +21,6 @@ import qualified Data.ByteString.Lazy.Char8 as B
 swapConfig :: IO MConfig
 swapConfig = mkMConfig
         "Swap: <usedratio>"                    -- template
-        package                                -- package
-        ""                                     -- usage tail?
-        []                                     -- added args
         ["total", "used", "free", "usedratio"] -- available replacements
 
 fileMEM :: IO B.ByteString
@@ -46,18 +43,8 @@ formatSwap x =
        lasts <- mapM (showWithColors f2) tl
        return $ firsts ++ lasts
 
-package :: String
-package = "xmb-swap"
-
 runSwap :: [String] -> Monitor String
 runSwap _ =
     do m <- io $ parseMEM
        l <- formatSwap m
        parseTemplate l 
-    
-{-
-main :: IO ()
-main =
-    do let af = runSwap []
-       runMonitor swapConfig af runSwap
--}

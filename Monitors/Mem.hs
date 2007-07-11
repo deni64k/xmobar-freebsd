@@ -19,9 +19,6 @@ import Monitors.Common
 memConfig :: IO MConfig
 memConfig = mkMConfig
        "Mem: <usedratio>% (<cache>M)" -- template
-       package                        -- package
-       ""                             -- usage tail?
-       []                             -- added args
        ["total", "free", "buffer",    -- available replacements
         "cache", "rest", "used", "usedratio"]
 
@@ -43,18 +40,8 @@ formatMem x =
     do let f n = show (takeDigits 2 n)
        mapM (showWithColors f) x
 
-package :: String
-package = "xmb-mem"
-
 runMem :: [String] -> Monitor String
 runMem _ =
     do m <- io $ parseMEM
        l <- formatMem m
        parseTemplate l 
-    
-{-
-main :: IO ()
-main =
-    do let af = runMem []
-       runMonitor monitorConfig af runMem
--}

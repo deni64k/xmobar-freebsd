@@ -20,9 +20,6 @@ import qualified Data.ByteString.Lazy.Char8 as B
 cpuConfig :: IO MConfig
 cpuConfig = mkMConfig
        "Cpu: <total>"                           -- template
-       package                                  -- package
-       ""                                       -- usage tail?
-       []                                       -- added args
        ["total","user","nice","system","idle"]  -- available replacements
 
 cpuData :: IO [Float]
@@ -49,18 +46,8 @@ formatCpu x =
            list = t:x
        mapM (showWithColors f) . map (* 100) $ list
 
-package :: String
-package = "xmb-cpu"
-
 runCpu :: [String] -> Monitor String
 runCpu _ =
     do c <- io $ parseCPU
        l <- formatCpu c
        parseTemplate l 
-    
-{-
-main :: IO ()
-main =
-    do let af = runCpu []
-       runMonitor cpuConfig af runCpu
--}

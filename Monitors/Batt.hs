@@ -22,9 +22,6 @@ import Monitors.Common
 battConfig :: IO MConfig
 battConfig = mkMConfig
        "Batt: <left>" -- template
-       package        -- package
-       ""             -- usage tail?
-       []             -- added args
        ["left"]       -- available replacements
 
 fileB1 :: (String, String)
@@ -63,18 +60,8 @@ formatBatt x =
        l <- showWithColors f (x * 100)
        return [l]
 
-package :: String
-package = "xmb-batt"
-
 runBatt :: [String] -> Monitor String
 runBatt _ =
     do c <- io $ parseBATT
        l <- formatBatt c
        parseTemplate l 
-    
-{-
-main :: IO ()
-main =
-    do let af = runBatt []
-       runMonitor battConfig af runBatt
--}
