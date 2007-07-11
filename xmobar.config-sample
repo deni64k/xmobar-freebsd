@@ -7,10 +7,10 @@ Config { font = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
        , height = 15
        , align = "right"
        , refresh = 10
-       , commands = [ (Weather "EGPF" ["-t","<station>: <tempC>C"], 36000)
-                    , (Network "eth0" [], 10)
-                    , (Network "eth1" [], 10)
-                    , (Cpu [], 10)
+       , commands = [ (Weather "EGPF" ["-t","<station>: <tempC>C","-L","18","-H","25","--normal","green","--high","red","--low","blue"], 36000)
+                    , (Network "eth0" ["-L","0","-H","32","--normal","green","--high","red"], 10)
+                    , (Network "eth1" ["-L","0","-H","32","--normal","green","--high","red"], 10)
+                    , (Cpu ["-L","3","-H","50","--normal","green","--high","red"], 10)
                     , (Exec "date" ["+\"%a %b %_d %H:%M\""] "mydate", 600)
                     , (Exec "date" ["+%Y"] "year", 304128000)
                     , (Memory ["-t","Mem: <usedratio>%"], 10)
