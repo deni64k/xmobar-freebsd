@@ -21,7 +21,6 @@ module Monitors.Common (
                        , setConfigValue
                        , getConfigValue
                        , mkMConfig
-                       , runMonitor
                        , runM
                        , io
                        -- * Parsers
@@ -58,7 +57,6 @@ import Numeric
 import Text.ParserCombinators.Parsec
 
 import System.Console.GetOpt
-import System.Environment
 
 -- $monitor
 
@@ -71,9 +69,6 @@ data MConfig =
        , high :: IORef Int
        , highColor :: IORef (Maybe String)
        , template :: IORef String
---       , packageName :: IORef String
---       , usageTail :: IORef String
---       , addedArgs :: IORef [OptDescr Opts]
        , export :: IORef [String]
        } 
 
@@ -108,12 +103,8 @@ mkMConfig tmpl exprts =
        h <- newIORef 66
        hc <- newIORef Nothing
        t <- newIORef tmpl
---      p <- newIORef pkg
---       u <- newIORef usg
---       a <- newIORef args
        e <- newIORef exprts
        return $ MC nc l lc h hc t e
---       return $ MC nc l lc h hc t p u a e
 
 data Opts = HighColor String
           | NormalColor String
@@ -122,45 +113,24 @@ data Opts = HighColor String
           | High String
           | Template String
 
-options :: Monitor [OptDescr Opts]
+options :: [OptDescr Opts]
 options =
-    do t <- getConfigValue export
-       tmpl <- getConfigValue template
-       return $ [ Option ['H']  ["High"]  (ReqArg High "number") "The high threshold"
-                , Option ['L']  ["Low"]  (ReqArg Low "number") "The low threshold"
-                , Option ['h']  ["high"]  (ReqArg HighColor "color number") "Color for the high threshold: ex \"#FF0000\""
-                , Option ['n']  ["normal"]  (ReqArg NormalColor "color number") "Color for the normal threshold: ex \"#00FF00\""
-                , Option ['l']  ["low"]  (ReqArg LowColor "color number") "Color for the low threshold: ex \"#0000FF\""
-                , Option ['t']  ["template"]  (ReqArg Template "output template") 
-                             ("Output template.\nAvaliable variables: " ++ show t ++ "\nDefault template: " ++ show tmpl)
-                ]
-{-
-usage :: Monitor ()
-usage =
-    do pn <- io $ getProgName
-       opts <- options
-       io $ putStr $ usageInfo ("Usage: " ++ pn ++ " [OPTIONS...] ") opts
-
-version :: String
-version = "0.5"
-
-versinfo :: String -> String -> IO ()
-versinfo p v = putStrLn $ p ++" " ++ v
--}
+    [ Option ['H']  ["High"]  (ReqArg High "number") "The high threshold"
+    , Option ['L']  ["Low"]  (ReqArg Low "number") "The low threshold"
+    , Option ['h']  ["high"]  (ReqArg HighColor "color number") "Color for the high threshold: ex \"#FF0000\""
+    , Option ['n']  ["normal"]  (ReqArg NormalColor "color number") "Color for the normal threshold: ex \"#00FF00\""
+    , Option ['l']  ["low"]  (ReqArg LowColor "color number") "Color for the low threshold: ex \"#0000FF\""
+    , Option ['t']  ["template"]  (ReqArg Template "output template") "Output template."
+    ]
 
 doArgs :: [String] 
-       -> Monitor String 
        -> ([String] -> Monitor String)
        -> Monitor String
-doArgs args actionFail action =
-    do opts <- options
-       case (getOpt Permute opts args) of
-         (o, n, []) -> do
-           doConfigOptions o
-           case n of
-             []   -> actionFail
-             nd   -> action nd
-         (_, _, errs) -> io $ error (concat errs)
+doArgs args action =
+    do case (getOpt Permute options args) of
+         (o, n, []) -> do doConfigOptions o
+                          action n
+         (_, _, errs) -> return (concat errs)
 
 doConfigOptions :: [Opts] -> Monitor ()
 doConfigOptions [] = io $ return ()
@@ -174,17 +144,10 @@ doConfigOptions (o:oo) =
          LowColor lc -> setConfigValue (Just lc) lowColor >> next
          Template t -> setConfigValue t template >> next
 
-runMonitor ::  IO MConfig -> Monitor String -> ([String] -> Monitor String) -> IO ()
-runMonitor conf actionFail action =
+runM :: [String] -> IO MConfig -> ([String] -> Monitor String) -> IO String
+runM args conf action =
     do c <- conf
-       args <- getArgs
-       let ac = doArgs args actionFail action
-       putStrLn =<< runReaderT ac c
-
-runM :: [String] -> IO MConfig -> Monitor String -> ([String] -> Monitor String) -> IO String
-runM args conf actionFail action =
-    do c <- conf
-       let ac = doArgs args actionFail action
+       let ac = doArgs args action
        runReaderT ac c
 
 io :: IO a -> Monitor a
