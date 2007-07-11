@@ -70,15 +70,13 @@ pTime = do y <- getNumbersAsString
            return (y, m, d ,([h]++[hh]++":"++[mi]++mimi))
 
 pTemp :: Parser Float
-pTemp = do string ": "
-           manyTill anyChar $ char '('
+pTemp = do manyTill anyChar $ char '('
            s <- manyTill digit $ (char ' ' <|> char '.')
            skipRestOfLine
            return $read s
 
 pRh :: Parser Float
-pRh = do string ": "
-         s <- manyTill digit $ (char '%' <|> char '.')
+pRh = do s <- manyTill digit $ (char '%' <|> char '.')
          return $ read s
 
 parseData :: Parser [WeatherInfo]
@@ -91,10 +89,10 @@ parseData =
        w <- getAfterString "Wind: "
        v <- getAfterString "Visibility: "
        sk <- getAfterString "Sky conditions: "
-       skipTillString "Temperature"
+       skipTillString "Temperature: "
        temp <- pTemp
        dp <- getAfterString "Dew Point: "
-       skipTillString "Relative Humidity"
+       skipTillString "Relative Humidity: "
        rh <- pRh
        p <- getAfterString "Pressure (altimeter): "
        manyTill skipRestOfLine eof
@@ -129,13 +127,3 @@ runWeather str =
     do d <- io $ getData $ head str
        i <- io $ runP parseData d
        formatWeather i
-
-package :: String
-package = "xmb-weather"
-
-{-
-main :: IO ()
-main =
-    do let af = return "No station ID specified"
-       runMonitor weatherConfig af runWeather
--}
