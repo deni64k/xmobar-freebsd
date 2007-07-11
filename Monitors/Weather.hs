@@ -24,7 +24,7 @@ import Text.ParserCombinators.Parsec
 
 
 weatherConfig :: IO MConfig
-weatherConfig = newConfig
+weatherConfig = mkMConfig
        "<station>: <tempC>C, rh <rh>% (<hour>)" -- template
        package                                  -- package
        "station ID"                             -- usage tail?

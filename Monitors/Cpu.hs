@@ -18,7 +18,7 @@ import Monitors.Common
 import qualified Data.ByteString.Lazy.Char8 as B
 
 cpuConfig :: IO MConfig
-cpuConfig = newConfig
+cpuConfig = mkMConfig
        "Cpu: <total>"                           -- template
        package                                  -- package
        ""                                       -- usage tail?

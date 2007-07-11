@@ -19,7 +19,7 @@ import Monitors.Common
 import qualified Data.ByteString.Lazy.Char8 as B
 
 swapConfig :: IO MConfig
-swapConfig = newConfig
+swapConfig = mkMConfig
         "Swap: <usedratio>"                    -- template
         package                                -- package
         ""                                     -- usage tail?

@@ -20,7 +20,7 @@ module Monitors.Common (
                        , Opts (..)
                        , setConfigValue
                        , getConfigValue
-                       , newConfig
+                       , mkMConfig
                        , runMonitor
                        , runM
                        , io
@@ -99,13 +99,13 @@ getConfigValue :: Selector a -> Monitor a
 getConfigValue s =
     sel s
 
-newConfig :: String
+mkMConfig :: String
           -> String
           -> String
           -> [OptDescr Opts]
           -> [String]
           -> IO MConfig
-newConfig tmpl pkg usg args exprts =
+mkMConfig tmpl pkg usg args exprts =
     do lc <- newIORef Nothing
        l <- newIORef 33
        nc <- newIORef Nothing

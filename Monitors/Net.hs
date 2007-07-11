@@ -27,7 +27,7 @@ interval :: Int
 interval = 500000
 
 netConfig :: IO MConfig
-netConfig = newConfig
+netConfig = mkMConfig
     "<dev>: <rx>|<tx>"      -- template
     package                 -- package
     "dev"                   -- usage tail?

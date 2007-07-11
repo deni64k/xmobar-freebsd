@@ -17,7 +17,7 @@ module Monitors.Mem where
 import Monitors.Common
 
 memConfig :: IO MConfig
-memConfig = newConfig
+memConfig = mkMConfig
        "Mem: <usedratio>% (<cache>M)" -- template
        package                        -- package
        ""                             -- usage tail?

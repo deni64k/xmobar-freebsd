@@ -20,7 +20,7 @@ import System.Posix.Files
 import Monitors.Common
 
 battConfig :: IO MConfig
-battConfig = newConfig
+battConfig = mkMConfig
        "Batt: <left>" -- template
        package        -- package
        ""             -- usage tail?
