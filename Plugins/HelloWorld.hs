@@ -16,10 +16,10 @@ module Plugins.HelloWorld where
 
 import Commands
 
-data Plugin = HelloWorld
-    deriving (Show, Read)
+data HelloWorld = HelloWorld
+    deriving (Read)
 
-instance Exec Plugin where
+instance Exec HelloWorld where
     run HelloWorld = return "<fc=red>Hello World!!</fc>"
     rate HelloWorld = 1000
     alias HelloWorld = "helloWorld"

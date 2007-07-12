@@ -181,7 +181,7 @@ execCommand c com =
 
 runCommandLoop :: MVar String -> Config -> (Runnable,String,String) -> IO ()
 runCommandLoop var conf c@(com,s,ss)
-    | show com == "" = 
+    | alias com == "" = 
         do modifyMVar_ var (\_ -> return $ "Could not parse the template")
            tenthSeconds (refresh conf)
            runCommandLoop var conf c
