@@ -1,4 +1,23 @@
 {-# OPTIONS -fglasgow-exts #-}
+-----------------------------------------------------------------------------
+-- |
+-- Module      :  XMobar.Runnable
+-- Copyright   :  (c) Andrea Rossato
+-- License     :  BSD-style (see LICENSE)
+-- 
+-- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
+-- Stability   :  unstable
+-- Portability :  unportable
+--
+-- The existential type to store the list of commands to be executed.
+-- I must thank Claus Reinke for the help in understanding the mysteries of
+-- reading existential types. The Read instance of Runnable must be credited to 
+-- him. See here:
+-- http:\/\/www.haskell.org\/pipermail\/haskell-cafe\/2007-July\/028227.html
+--
+-----------------------------------------------------------------------------
+
+
 module Runnable where
 
 import Control.Monad
@@ -37,14 +56,3 @@ readRunnable :: ReadPrec Runnable
 readRunnable = prec 10 $ do
                  Ident "Run" <- lexP
                  parens $ readAsAnyOf runnableTypes
-
-
--- | Reads the configuration files or quits with an error
-readConfig :: FilePath -> IO Runnable
-readConfig f = 
-    do s <- readFile f
-       case reads s of
-         [(config,_)] -> return config
-         [] -> error ("Corrupt config file: " ++ f)
-         _ -> error ("Some problem occured. Aborting...")
-
