@@ -37,6 +37,7 @@ module Plugins.Monitors.Common (
                        -- $strings
                        , showWithColors
                        , takeDigits
+                       , showDigits
                        , floatToPercent
                        , stringParser
                        -- * Threaded Actions
@@ -242,9 +243,13 @@ takeDigits d n =
     fromIntegral ((round (n * fact)) :: Int) / fact
   where fact = 10 ^ d
 
+showDigits :: Int -> Float -> String
+showDigits d n =
+    showFFloat (Just d) n ""
+
 floatToPercent :: Float -> String
 floatToPercent n = 
-    showFFloat (Just 2) (n*100) "%" 
+    showDigits 2 (n*100) ++ "%"
 
 stringParser :: Pos -> B.ByteString -> String
 stringParser (x,y) =

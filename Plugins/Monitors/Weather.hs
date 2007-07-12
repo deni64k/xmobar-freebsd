@@ -117,7 +117,7 @@ getData url=
 formatWeather :: [WeatherInfo] -> Monitor String
 formatWeather [(WI st ss y m d h w v sk temp dp r p)] =
     do cel <- showWithColors show temp
-       far <- showWithColors (show . takeDigits 1) (((9 / 5) * temp) + 32)
+       far <- showWithColors (showDigits 1) (((9 / 5) * temp) + 32)
        rh <- showWithColors show r
        parseTemplate [st, ss, y, m, d, h, w, v, sk, cel, far, dp, rh , p ]
 formatWeather _ = return "N/A"

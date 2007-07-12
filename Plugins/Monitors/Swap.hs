@@ -36,7 +36,7 @@ parseMEM =
 
 formatSwap :: [Float] -> Monitor [String] 
 formatSwap x =
-    do let f1 n = show (takeDigits 2 n)
+    do let f1 n = showDigits 2 n
            f2 n = floatToPercent n
            (hd, tl) = splitAt 3 x
        firsts <- mapM (showWithColors f1) hd

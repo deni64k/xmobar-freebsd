@@ -71,7 +71,7 @@ netParser =
 formatNet :: Float -> Monitor String
 formatNet d =
     showWithColors f d
-        where f s = show s ++ "Kb"
+        where f s = showDigits 1 s ++ "Kb"
 
 printNet :: NetDev -> Monitor String
 printNet nd =

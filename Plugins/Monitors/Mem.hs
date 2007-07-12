@@ -37,7 +37,7 @@ parseMEM =
 
 formatMem :: [Float] -> Monitor [String]
 formatMem x =
-    do let f n = show (takeDigits 2 n)
+    do let f n = showDigits 2 n
        mapM (showWithColors f) x
 
 runMem :: [String] -> Monitor String
