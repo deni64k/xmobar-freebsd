@@ -51,6 +51,7 @@ import Control.Monad.Reader
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.IORef
 import qualified Data.Map as Map 
+import Data.List
 
 import Numeric
 
@@ -262,9 +263,10 @@ showWithColors f x =
     do h <- getConfigValue high
        l <- getConfigValue low
        let col = setColor $ f x
-       head $ [col highColor | x > fromIntegral h ] ++
-              [col normalColor | x > fromIntegral l ] ++
-              [col lowColor | True]
+           [ll,hh] = map fromIntegral $ sort [l, h] -- consider high < low 
+       head $ [col highColor   | x > hh ] ++
+              [col normalColor | x < ll ] ++
+              [col lowColor    | True]
 
 -- $threads
 
