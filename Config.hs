@@ -16,9 +16,12 @@ module Config ( -- * Configuration
                 -- $config
                 Config (..)
               , defaultConfig
+              , runnableTypes
               ) where
 
 import Commands
+import {-# SOURCE #-} Runnable
+
 -- $config
 -- Configuration data type and default configuration
 
@@ -33,7 +36,7 @@ data Config =
            , height         :: Int      -- ^ Window height
            , align          :: String   -- ^ text alignment
            , refresh        :: Int      -- ^ Refresh rate in tenth of seconds
-           , commands       :: [(Command,Int)] -- ^ For setting the command, the command argujments 
+           , commands       :: [Runnable] -- ^ For setting the command, the command argujments 
                                                -- and refresh rate for the programs to run (optional)
            , sepChar        :: String -- ^ The character to be used for indicating
                                       -- commands in the output template (default '%')
@@ -52,7 +55,10 @@ defaultConfig =
            , height = 15
            , align = "left"
            , refresh = 10
-           , commands = [(Memory [],10)]
+           , commands = [Run $ Memory [] 10]
            , sepChar = "%"
            , template = "Uptime: <fc=#00FF00>%uptime%</fc> ** <fc=#FF0000>%date%</fc> %memory%"
            }
+
+runnableTypes :: (Command,())
+runnableTypes = undefined :: (Command,())

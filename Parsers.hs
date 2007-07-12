@@ -27,6 +27,7 @@ module Parsers (
 
 import Config
 import Commands
+import Runnable
 import Text.ParserCombinators.Parsec
 import qualified Data.Map as Map
 
@@ -103,20 +104,20 @@ templateParser :: Config -> Parser [(String,String,String)]
 templateParser c = many (templateStringParser c)
 
 -- | Actually runs the template parsers
-parseTemplate :: Config -> String -> IO [(Command,String,String)]
+parseTemplate :: Config -> String -> IO [(Runnable,String,String)]
 parseTemplate config s = 
     do str <- case (parse (templateParser config) "" s) of
                 Left _ -> return [("","","")]
                 Right x  -> return x
-       let comList = map (show . fst) $ commands config
-           m = Map.fromList . zip comList . map fst $ (commands config)
-       return $ combine m str
+       let comList = map alias (commands config)
+           m = Map.fromList $ zip comList (commands config)
+       return $ combine config m str
 
 -- | Given a finite "Map" and a parsed templatet produces the
 -- | resulting output string.
-combine :: Map.Map String Command -> [(String, String, String)] -> [(Command,String,String)]
-combine _ [] = []
-combine m ((ts,s,ss):xs) = 
-    [(com, s, ss)] ++ combine m xs
+combine :: Config -> Map.Map String Runnable -> [(String, String, String)] -> [(Runnable,String,String)]
+combine _ _ [] = []
+combine config m ((ts,s,ss):xs) = 
+    [(com, s, ss)] ++ combine config m xs
         where com = Map.findWithDefault dflt ts m
-              dflt = Exec ts [] [] --"<" ++ ts ++ " not found!>"
+              dflt = Run $ Com ts [] [] (refresh config) --"<" ++ ts ++ " not found!>"

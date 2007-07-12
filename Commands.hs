@@ -1,3 +1,4 @@
+{-# OPTIONS -fglasgow-exts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  XMobar.Commands
@@ -26,48 +27,59 @@ import Monitors.Swap
 import Monitors.Cpu
 import Monitors.Batt
 
-data Command = Exec Program Args Alias 
-             | Weather Station Args 
-             | Network Interface Args
-             | Memory Args
-             | Swap Args
-             | Cpu Args
-             | Battery Args
-               deriving (Read,Eq)
+data Command = Com Program Args Alias Rate
+             | Weather Station Args Rate
+             | Network Interface Args Rate
+             | Memory Args Rate
+             | Swap Args Rate
+             | Cpu Args Rate
+             | Battery Args Rate
+               deriving (Show,Read,Eq)
 
 type Args = [String]
 type Program = String
 type Alias = String
 type Station = String
 type Interface = String
+type Rate = Int
 
-instance Show Command where
-    show (Weather s _) = s
-    show (Network i _) = i
-    show (Memory _) = "memory"
-    show (Swap _) = "swap"
-    show (Cpu _) = "cpu"
-    show (Battery _) = "battery"
-    show (Exec p _ a) | p /= "" = if  a == "" then p else a
-                      | otherwise = ""
 class Exec e where
     run :: e -> IO String
+    rate :: e -> Int
+    alias :: e -> String
 
 instance Exec Command where
-    run (Weather s a) = runM (a ++ [s]) weatherConfig runWeather 
-    run (Network i a) = runM (a ++ [i]) netConfig runNet
-    run (Memory args) = runM args memConfig runMem
-    run (Swap args) = runM args swapConfig runSwap
-    run (Cpu args) = runM args cpuConfig runCpu
-    run (Battery args) = runM args battConfig runBatt
-    run (Exec prog args _) = do (i,o,e,p) <- runInteractiveCommand (prog ++ concat (map (' ':) args))
-                                exit <- waitForProcess p
-                                let closeHandles = do hClose o
-                                                      hClose i
-                                                      hClose e
-                                case exit of
-                                  ExitSuccess -> do str <- hGetLine o
-                                                    closeHandles
-                                                    return str
-                                  _ -> do closeHandles
-                                          return $ "Could not execute command " ++ prog
+    alias (Weather s _ _) = s
+    alias (Network i _ _) = i
+    alias (Memory _ _) = "memory"
+    alias (Swap _ _) = "swap"
+    alias (Cpu _ _) = "cpu"
+    alias (Battery _ _) = "battery"
+    alias (Com p _ a _) | p /= "" = if  a == "" then p else a
+                      | otherwise = ""
+    rate (Weather _ _ r) = r
+    rate (Network _ _ r) = r
+    rate (Memory _ r) = r
+    rate (Swap _ r) = r
+    rate (Cpu _ r) = r
+    rate (Battery _ r) = r
+    rate (Com _ _ _ r) = r
+    run (Weather s a _) = runM (a ++ [s]) weatherConfig runWeather 
+    run (Network i a _) = runM (a ++ [i]) netConfig runNet
+    run (Memory args _) = runM args memConfig runMem
+    run (Swap args _) = runM args swapConfig runSwap
+    run (Cpu args _) = runM args cpuConfig runCpu
+    run (Battery args _) = runM args battConfig runBatt
+    run (Com prog args _ _) = do (i,o,e,p) <- runInteractiveCommand (prog ++ concat (map (' ':) args))
+                                 exit <- waitForProcess p
+                                 let closeHandles = do hClose o
+                                                       hClose i
+                                                       hClose e
+                                 case exit of
+                                   ExitSuccess -> do str <- hGetLine o
+                                                     closeHandles
+                                                     return str
+                                   _ -> do closeHandles
+                                           return $ "Could not execute command " ++ prog
+
+

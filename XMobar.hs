@@ -47,6 +47,7 @@ import Control.Concurrent
 import Config
 import Parsers
 import Commands
+import Runnable
 
 -- $main
 --
@@ -163,31 +164,22 @@ printStrings p gc fontst offs sl@((s,c,l):xs) =
 
 -- $commands
 
--- | Gets the refresh rate set in configuration for a given command.
-getRefRate :: Config -> Command -> Int
-getRefRate c com =
-    let l = commands c
-        p = filter (\(s,_) -> s == com) l
-    in case p of
-         [(_,int)] -> int
-         _ -> refresh c
-
 -- | Runs a list of programs as independent threads and returns their thread id
 -- and the MVar they will be writing to.
-execCommands :: Config -> [(Command,String,String)] -> IO [(ThreadId, MVar String)]
+execCommands :: Config -> [(Runnable,String,String)] -> IO [(ThreadId, MVar String)]
 execCommands _ [] = return []
 execCommands c (x:xs) =
     do i <- execCommand c x
        is <- execCommands c xs
        return $ i : is
 
-execCommand :: Config -> (Command,String,String) -> IO (ThreadId, MVar String)
+execCommand :: Config -> (Runnable,String,String) -> IO (ThreadId, MVar String)
 execCommand c com = 
     do var <- newMVar "Updating..."
        h <- forkIO $ runCommandLoop var c com
        return (h,var)
 
-runCommandLoop :: MVar String -> Config -> (Command,String,String) -> IO ()
+runCommandLoop :: MVar String -> Config -> (Runnable,String,String) -> IO ()
 runCommandLoop var conf c@(com,s,ss)
     | show com == "" = 
         do modifyMVar_ var (\_ -> return $ "Could not parse the template")
@@ -196,7 +188,7 @@ runCommandLoop var conf c@(com,s,ss)
     | otherwise =
         do str <- run com
            modifyMVar_ var (\_ -> return $ s ++ str ++ ss)
-           tenthSeconds (getRefRate conf com)
+           tenthSeconds (rate com) 
            runCommandLoop var conf c
 
 -- | Reads MVars set by 'runCommandLoop'
