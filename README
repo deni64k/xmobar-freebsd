@@ -15,7 +15,8 @@ xmobar xmobar.config-sample
 INSTALLATION
 ============
 
-tar xvfz xmobar-0.5
+tar xvfz xmobar-0.6
+cd xmobar-0.6
 runhaskell Setup.lhs configure --prefix=/usr/local
 runhaskell Setup.lhs build
 runhaskell Setup.lhs haddock (optional for building the code documentation)
@@ -23,6 +24,10 @@ runhaskell Setup.lhs install (possibly to be run as root)
 
 Run with:
 xmobar /path/to/config &
+or
+xmobar &
+if you have the default configuration file saved as:
+~/.xmobarrc
 
 CONFIGURATION
 =============
@@ -72,17 +77,20 @@ execution is not successful an error will be reported.
 The "commands" Configuration Option
 -----------------------------------
 
-The "commands" configuration option is a list of commands'information
+The "commands" configuration option is a list of commands' information
 and arguments to be used by XMobar when parsing the output template.
-Each member of the list consists in a tuple formed by a template
-command (with arguments) and a number (the refresh rate in tenth of
-second).
+Each member of the list consists in a command prefixed by the "Run"
+keyword. Each command has arguments to control the way XMobar is going
+to execute it.
 
 Available template commands are: Weather, Network, Memory, Swap, Cpu,
-Battery, and Exec. This last one is used to execute external programs.
+Battery, and Com. This last one is used to execute external programs.
+
+Other commands can be created as plugins with the Plugin
+infrastructure.
 
 This is an example of a command in the "commands" list:
-(Memory ["-t","Mem: <usedratio>%"], 10)
+Run Memory ["-t","Mem: <usedratio>%"] 10
 
 Internal Commands and Aliases
 -----------------------------
@@ -91,7 +99,8 @@ Each command in the "commands" configuration option list has an alias
 to be used in the template.
 
 Internal commands have default aliases:
-Weather StationID Args
+
+Weather StationID Args RefreshRate
 - aliases to the Station ID: so Weather "LIPB" [] can be used in template as %LIBP%
 - Args: the argument list (see below)
 - Variables that can be used with the "-t"/"--template" argument: 
@@ -100,35 +109,35 @@ Weather StationID Args
 	    "dewPoint", "rh", "pressure"
 - Default template: "<station>: <tempC>C, rh <rh>% (<hour>)"
 
-Network Interface ARGS
+Network Interface Args RefreshRate
 - aliases to the interface name: so Network "eth0" [] can be used as %eth0%
 - Args: the argument list (see below)
 - Variables that can be used with the "-t"/"--template" argument: 
 	    "dev", "rx", "tx"
 - Default template: "<dev>: <rx>|<tx>"
 
-Memory Args
+Memory Args RefreshRate
 - aliases to "memory"
 - Args: the argument list (see below)
 - Variables that can be used with the "-t"/"--template" argument: 
 	    "total", "free", "buffer", "cache", "rest", "used", "usedratio"
 - Default template: "Mem: <usedratio>% (<cache>M)"
 
-Swap Args
+Swap Args RefreshRate
 - aliases to "swap"
 - Args: the argument list (see below)
 - Variables that can be used with the "-t"/"--template" argument: 
 	    "total", "used", "free", "usedratio"
 - Default template: "Swap: <usedratio>%"
 
-Cpu Args
+Cpu Args RefreshRate
 - aliases to "cpu"
 - Args: the argument list (see below)
 - Variables that can be used with the "-t"/"--template" argument: 
 	    "total", "user", "nice", "system", "idle"
 - Default template: "Cpu: <total>"
 
-Battery Args
+Battery Args RefreshRate
 - aliases to "battery"
 - Args: the argument list (see below)
 - Variables that can be used with the "-t"/"--template" argument: 
@@ -148,8 +157,14 @@ These are the arguments that can be used for internal commands in the
 -l color number     --low=color number          Color for the low threshold: es "#0000FF"
 -t output template  --template=output template  Output template of the command.
 
-Commands must be set as a list. Es:
-(Weather "EGPF" ["-t","<station>: <tempC>C"], 36000)
+Commands' arguments must be set as a list. Es:
+Run Weather "EGPF" ["-t","<station>: <tempC>C"] 36000
+
+In this case XMobar will run the weather monitor, getting information
+for the weather station ID EGPF (Glasgow Airport, as a homage to GHC)
+every hour (36000 tenth of seconds), with a template that will output
+something like:
+"Glasgow Airport: 16.0C"
 
 Executing External Commands
 ---------------------------
@@ -157,18 +172,88 @@ Executing External Commands
 In order to execute an external command you can either write the
 command name in the template, in this case it will be executed without
 arguments, or you can configure it in the "commands" configuration
-option list with the Exec template command:
+option list with the Com template command:
 
-Exec ProgarmName Args Alias
+Com ProgarmName Args Alias RefreshRate
 - ProgramName: the name of the program
 - Args: the arguments to be passed to the program at execution time
 - Alias: a name to be used in the template. If the alias is en empty
   string the program name can be used in the template.
 Es:
-(Exec "uname" ["-s","-r"] "", 36000)
+Run Com "uname" ["-s","-r"] "" 36000
 can be used in the output template as %uname%
-(Exec "date" ["+\"%a %b %_d %H:%M\""] "mydate", 600)
+
+Run Com "date" ["+\"%a %b %_d %H:%M\""] "mydate" 600
 can be used in the output template as %mydate%
+
+PLUGINS
+=======
+
+Writing a Plugin
+----------------
+
+Writing a plugin for XMobar should be very simple. You need to create
+a data type with at least one constructor.
+
+Next you must declare this data type an instance of the Exec class, by
+defining the 3 needed methods:
+
+    run :: e -> IO String
+    rate :: e -> Int
+    alias :: e -> String
+
+"run" must produce the IO String that will be displayed by XMobar.
+"rate" is the refresh rate for you plugin (the number of tenth of
+seconds between two succesive runs);
+"alias" is the name to be used in the output template.
+
+That requires importing the plugin API (the Exec class definition),
+that is exported by Plugins.hs. So you just need to import it in your
+module with:
+
+import Plugins
+
+After that your type constructor can be used as an argument for the
+Runnable type constructor "Run" in the "commands" list of the
+configuration options.
+
+This requires importing you plugin into Config.hs and adding you type
+to the type list in the type signature of Config.runnableTypes.
+
+For a vary basic example see Plugins/HelloWorld.hs that is distributed
+with XMobar.
+
+Installing a Plugin
+-------------------
+
+Installing a plugin should require 3 steps. Here we are going to
+install the HelloWorld plugin that comes with XMobar:
+
+1. import the plugin module in Config.hs, by adding: 
+   
+import Plugins.HelloWorld
+
+2. add the plugin data type to the list of data types in the type
+   signauture of "runnableTypes" in Config.hs. For instance, for the
+   HelloWorld plugin, chnage "runnableTypes" into:
+
+runnableTypes :: (Command,(HelloWorld,()))
+runnableTypes = undefined
+
+3. Rebuild and reinstall XMobar. Now test it with:
+
+xmobar Plugins/helloworld.config
+
+As you may see in the example configuration file, the plugin can be
+used by adding, in the "commands" list:
+
+Run HelloWorld
+
+and, in the output template, the alias of the plugin:
+
+%helloWorld%
+
+That's it.
 
 AUTHOR
 ======
@@ -177,6 +262,9 @@ Andrea Rossato <andrea.rossato@unibz.it>
 
 CREDITS
 =======
+
+Thanks to Robert Manea for his help in understanding how X works. He
+gave me suggestions on how to solve many many problems with XMobar.
 
 XMobar incorporates patches from:
 Krzysztof Kosciuszkiewicz
