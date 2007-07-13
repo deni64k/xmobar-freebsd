@@ -14,7 +14,7 @@
 
 module Plugins.HelloWorld where
 
-import Commands
+import Plugins
 
 data HelloWorld = HelloWorld
     deriving (Read)
