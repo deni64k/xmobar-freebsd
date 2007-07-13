@@ -19,6 +19,7 @@ module Config ( -- * Configuration
               , runnableTypes
               ) where
 
+
 import Commands
 import {-# SOURCE #-} Runnable
 
@@ -61,4 +62,4 @@ defaultConfig =
            }
 
 runnableTypes :: (Command,())
-runnableTypes = undefined :: (Command,())
+runnableTypes = undefined
