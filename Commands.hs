@@ -1,4 +1,3 @@
-{-# OPTIONS -fglasgow-exts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  XMobar.Commands
@@ -56,7 +55,7 @@ instance Exec Command where
     alias (Cpu _ _) = "cpu"
     alias (Battery _ _) = "battery"
     alias (Com p _ a _) | p /= "" = if  a == "" then p else a
-                      | otherwise = ""
+                        | otherwise = ""
     rate (Weather _ _ r) = r
     rate (Network _ _ r) = r
     rate (Memory _ r) = r
