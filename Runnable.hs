@@ -12,11 +12,12 @@
 -- The existential type to store the list of commands to be executed.
 -- I must thank Claus Reinke for the help in understanding the mysteries of
 -- reading existential types. The Read instance of Runnable must be credited to 
--- him. See here:
+-- him. 
+-- 
+-- See here:
 -- http:\/\/www.haskell.org\/pipermail\/haskell-cafe\/2007-July\/028227.html
 --
 -----------------------------------------------------------------------------
-
 
 module Runnable where
 
@@ -28,7 +29,6 @@ import Commands
 
 data Runnable = forall r . (Exec r, Read r) => Run r
 
-
 instance Exec Runnable where
      run (Run a) = run a
      rate (Run a) = rate a
@@ -37,8 +37,8 @@ instance Exec Runnable where
 instance Read Runnable where
     readPrec = readRunnable
 
--- read an existential as any of hidden types ts
 class ReadAsAnyOf ts ex where
+    -- | Reads an existential type as any of hidden types ts
     readAsAnyOf :: ts -> ReadPrec ex
 
 instance ReadAsAnyOf () ex where 
@@ -47,8 +47,6 @@ instance ReadAsAnyOf () ex where
 instance (Read t, Exec t, ReadAsAnyOf ts Runnable) => ReadAsAnyOf (t,ts) Runnable where 
     readAsAnyOf ~(t,ts) = r t `mplus` readAsAnyOf ts
               where r ty = do { m <- readPrec; return (Run (m `asTypeOf` ty)) }
-
-
 
 readRunnable :: ReadPrec Runnable
 readRunnable = prec 10 $ do
