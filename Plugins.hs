@@ -8,9 +8,9 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- This module export the API for plugins.
+-- This module exports the API for plugins.
 --
--- Have a look ate Plugins/HelloWorld.hs
+-- Have a look at Plugins\/HelloWorld.hs
 --
 -----------------------------------------------------------------------------
 
