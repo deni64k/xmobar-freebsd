@@ -48,6 +48,10 @@ instance (Read t, Exec t, ReadAsAnyOf ts Runnable) => ReadAsAnyOf (t,ts) Runnabl
     readAsAnyOf ~(t,ts) = r t `mplus` readAsAnyOf ts
               where r ty = do { m <- readPrec; return (Run (m `asTypeOf` ty)) }
 
+-- | The 'Prelude.Read' parser for the 'Runnable' existential type. It
+-- needs an 'Prelude.undefined' with a type signature containing the
+-- list of all possible types hidden within 'Runnable'. See 'Config.runnableTypes'.
+-- Each hidden type must have a 'Prelude.Read' instance.
 readRunnable :: ReadPrec Runnable
 readRunnable = prec 10 $ do
                  Ident "Run" <- lexP

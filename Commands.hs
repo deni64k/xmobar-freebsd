@@ -8,7 +8,13 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- A Command datatype for XMobar status bar for the Xmonad Window Manager 
+-- The 'Exec' class and the 'Command' data type.
+--
+-- The 'Exec' class rappresents the executable types, whose constructors may
+-- appear in the 'Config.commands' field of the 'Config.Config' data type.
+--
+-- The 'Command' data type stores the monitors to be run internally by
+-- XMobar.
 --
 -----------------------------------------------------------------------------
 
@@ -26,6 +32,11 @@ import Monitors.Swap
 import Monitors.Cpu
 import Monitors.Batt
 
+class Exec e where
+    run :: e -> IO String
+    rate :: e -> Int
+    alias :: e -> String
+
 data Command = Com Program Args Alias Rate
              | Weather Station Args Rate
              | Network Interface Args Rate
@@ -41,11 +52,6 @@ type Alias = String
 type Station = String
 type Interface = String
 type Rate = Int
-
-class Exec e where
-    run :: e -> IO String
-    rate :: e -> Int
-    alias :: e -> String
 
 instance Exec Command where
     alias (Weather s _ _) = s

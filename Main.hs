@@ -15,7 +15,8 @@
 module Main ( -- * Main Stuff
               -- $main
               main
-            , readConfig 
+            , readConfig
+            , readDefaultConfig
             ) where
 
 import XMobar

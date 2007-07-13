@@ -19,7 +19,6 @@ module Config ( -- * Configuration
               , runnableTypes
               ) where
 
-
 import Commands
 import {-# SOURCE #-} Runnable
 
@@ -61,5 +60,11 @@ defaultConfig =
            , template = "Uptime: <fc=#00FF00>%uptime%</fc> ** <fc=#FF0000>%date%</fc> %memory%"
            }
 
+-- | This is the list of types that can be hidden inside
+-- 'Runnable.Runnable', the existential type that stores all commands
+-- to be executed by XMobar. It is used by 'Runnable.readRunnable' in
+-- the 'Runnable.Runnable' Read instance. To install a plugin just add
+-- the plugin's type to the list of types appearing in this function's type
+-- signature.
 runnableTypes :: (Command,())
 runnableTypes = undefined
