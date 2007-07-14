@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  XMobar.Main
+-- Module      :  Xmobar.Main
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- The main module of XMobar, a status bar for the Xmonad Window Manager 
+-- The main module of Xmobar, a text based status bar 
 --
 -----------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ module Main ( -- * Main Stuff
             , readDefaultConfig
             ) where
 
-import XMobar
+import Xmobar
 import Parsers
 import Config
 import System.Environment
@@ -37,7 +37,7 @@ main =
        cl <- parseTemplate config (template config)
        var <- execCommands config cl
        (d,w) <- createWin config
-       runXMobar config var d w eventLoop
+       runXmobar config var d w eventLoop
 
 -- | Reads the configuration files or quits with an error
 readConfig :: FilePath -> IO Config

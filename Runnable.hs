@@ -1,7 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 -----------------------------------------------------------------------------
 -- |
--- Module      :  XMobar.Runnable
+-- Module      :  Xmobar.Runnable
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 

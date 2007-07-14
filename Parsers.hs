@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  XMobar.Parsers
+-- Module      :  Xmobar.Parsers
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- Parsers needed for XMobar, a status bar for the Xmonad Window Manager 
+-- Parsers needed for Xmobar, a text based status bar
 --
 -----------------------------------------------------------------------------
 

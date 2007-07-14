@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- A weather monitor for XMobar
+-- A weather monitor for Xmobar
 --
 -----------------------------------------------------------------------------
 

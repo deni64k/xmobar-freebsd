@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- A  swap usage monitor for XMobar
+-- A  swap usage monitor for Xmobar
 --
 -----------------------------------------------------------------------------
 

@@ -1,10 +1,12 @@
 name:               xmobar
-version:            0.6
+version:            0.7
 homepage:           http://gorgias.mine.nu/repos/xmobar/
-synopsis:           A Statusbar for the XMonad Window Manager
-description: 	    Xmobar is a minimal status bar for the XMonad Window Manager.
+synopsis:           A Minimalistic Text Based Status Bar
+description: 	    Xmobar is a minimalistic text based status bar.
 		    .
-                    It was inspired by the Ion3 status bar, and supports similar features.
+                    Inspired by the Ion3 status bar, it supports similar features, 
+		    like dynamic color management, output templates, and extensibility 
+                    through plugins.
 category:           System
 license:            BSD3
 license-file:       LICENSE
@@ -15,7 +17,7 @@ build-depends:      base>=2.0, X11>=1.2.1, mtl>=1.0, unix>=1.0, parsec>=2.0, fil
 executable:         xmobar
 main-is:            Main.hs
 Hs-Source-Dirs:     ./
-Other-Modules:      XMobar, Config, Parsers, Commands, Runnable, Plugins, Monitors.Common, Monitors.Batt 
+Other-Modules:      Xmobar, Config, Parsers, Commands, Runnable, Plugins, Monitors.Common, Monitors.Batt 
 		    Monitors.Weather, Monitors.Swap, Monitors.Mem, Monitors.Cpu, Monitors.Net
 ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s -threaded
 ghc-prof-options:   -prof -auto-all

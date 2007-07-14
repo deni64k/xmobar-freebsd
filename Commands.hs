@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  XMobar.Commands
+-- Module      :  Xmobar.Commands
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -14,7 +14,7 @@
 -- appear in the 'Config.commands' field of the 'Config.Config' data type.
 --
 -- The 'Command' data type stores the monitors to be run internally by
--- XMobar.
+-- Xmobar.
 --
 -----------------------------------------------------------------------------
 

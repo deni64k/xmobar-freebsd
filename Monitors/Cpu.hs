@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- A cpu monitor for XMobar
+-- A cpu monitor for Xmobar
 --
 -----------------------------------------------------------------------------
 

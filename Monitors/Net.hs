@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- A net device monitor for XMobar
+-- A net device monitor for Xmobar
 --
 -----------------------------------------------------------------------------
 

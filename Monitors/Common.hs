@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- Utilities for creating monitors for XMobar
+-- Utilities for creating monitors for Xmobar
 --
 -----------------------------------------------------------------------------
 

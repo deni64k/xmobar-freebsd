@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- A plugin example for XMobar, a status bar for the Xmonad Window Manager 
+-- A plugin example for Xmobar, a text based status bar 
 --
 -----------------------------------------------------------------------------
 

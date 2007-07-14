@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  XMobar.Config
+-- Module      :  Xmobar.Config
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- The configuration module of XMobar, a status bar for the Xmonad Window Manager 
+-- The configuration module of Xmobar, a text based status bar 
 --
 -----------------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ defaultConfig =
 
 -- | This is the list of types that can be hidden inside
 -- 'Runnable.Runnable', the existential type that stores all commands
--- to be executed by XMobar. It is used by 'Runnable.readRunnable' in
+-- to be executed by Xmobar. It is used by 'Runnable.readRunnable' in
 -- the 'Runnable.Runnable' Read instance. To install a plugin just add
 -- the plugin's type to the list of types appearing in this function's type
 -- signature.

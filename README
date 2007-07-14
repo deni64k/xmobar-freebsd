@@ -1,12 +1,14 @@
-XMobar - a status bar for the XMonad Window Manager
+Xmobar - A Minimalistic Text Based Status Bar
 
 ABOUT
 =====
 
-Xmobar is a minimalistic, text based, status bar, designed for the
-XMonad Window Manager.
+Xmobar is a minimalistic, text based, status bar.
 
-It was inspired by the Ion3 status bar, and supports similar features.
+It was inspired by the Ion3 status bar, and supports similar features,
+like dynamic color management, output templates, and extensibility
+through plugins.
+
 See xmobar.config-sample for a sample configuration.
 
 Try it with:
@@ -49,9 +51,9 @@ Other configuration options:
 font: Name of the font to be used
 bgColor: Backgroud color
 fgColor: Default font color
-xPos: x position (origin in the upper left corner) of the XMobar window 
+xPos: x position (origin in the upper left corner) of the Xmobar window 
 yPos: y position
-width: width of the XMobar window 
+width: width of the Xmobar window 
 height: height
 align: text alignment 
 refresh: Refresh rate in tenth of seconds
@@ -63,14 +65,14 @@ template: The output template
 The Output Template
 -------------------
 
-The output template must contain at least one command. XMobar will
+The output template must contain at least one command. Xmobar will
 parse the template and will search for the command to be executed in
 the "commands" configuration option. First an "alias" will be search
 (internal commands such as Weather or Network have default aliasing,
 see below). After that the command name will be tried. If a command is
 found, the arguments specified in the "commands" list will be used. 
 
-If no command is found in the "commands" list, XMobar will try to
+If no command is found in the "commands" list, Xmobar will try to
 execute a program with the name found in the template. If the
 execution is not successful an error will be reported.
    
@@ -78,9 +80,9 @@ The "commands" Configuration Option
 -----------------------------------
 
 The "commands" configuration option is a list of commands' information
-and arguments to be used by XMobar when parsing the output template.
+and arguments to be used by Xmobar when parsing the output template.
 Each member of the list consists in a command prefixed by the "Run"
-keyword. Each command has arguments to control the way XMobar is going
+keyword. Each command has arguments to control the way Xmobar is going
 to execute it.
 
 Available template commands are: Weather, Network, Memory, Swap, Cpu,
@@ -160,7 +162,7 @@ These are the arguments that can be used for internal commands in the
 Commands' arguments must be set as a list. Es:
 Run Weather "EGPF" ["-t","<station>: <tempC>C"] 36000
 
-In this case XMobar will run the weather monitor, getting information
+In this case Xmobar will run the weather monitor, getting information
 for the weather station ID EGPF (Glasgow Airport, as a homage to GHC)
 every hour (36000 tenth of seconds), with a template that will output
 something like:
@@ -192,7 +194,7 @@ PLUGINS
 Writing a Plugin
 ----------------
 
-Writing a plugin for XMobar should be very simple. You need to create
+Writing a plugin for Xmobar should be very simple. You need to create
 a data type with at least one constructor.
 
 Next you must declare this data type an instance of the Exec class, by
@@ -202,9 +204,9 @@ defining the 3 needed methods:
     rate :: e -> Int
     alias :: e -> String
 
-"run" must produce the IO String that will be displayed by XMobar.
+"run" must produce the IO String that will be displayed by Xmobar.
 "rate" is the refresh rate for you plugin (the number of tenth of
-seconds between two succesive runs);
+seconds between two successive runs);
 "alias" is the name to be used in the output template.
 
 That requires importing the plugin API (the Exec class definition),
@@ -221,26 +223,26 @@ This requires importing you plugin into Config.hs and adding you type
 to the type list in the type signature of Config.runnableTypes.
 
 For a vary basic example see Plugins/HelloWorld.hs that is distributed
-with XMobar.
+with Xmobar.
 
 Installing a Plugin
 -------------------
 
 Installing a plugin should require 3 steps. Here we are going to
-install the HelloWorld plugin that comes with XMobar:
+install the HelloWorld plugin that comes with Xmobar:
 
 1. import the plugin module in Config.hs, by adding: 
    
 import Plugins.HelloWorld
 
 2. add the plugin data type to the list of data types in the type
-   signauture of "runnableTypes" in Config.hs. For instance, for the
-   HelloWorld plugin, chnage "runnableTypes" into:
+   signature of "runnableTypes" in Config.hs. For instance, for the
+   HelloWorld plugin, change "runnableTypes" into:
 
 runnableTypes :: (Command,(HelloWorld,()))
 runnableTypes = undefined
 
-3. Rebuild and reinstall XMobar. Now test it with:
+3. Rebuild and reinstall Xmobar. Now test it with:
 
 xmobar Plugins/helloworld.config
 
@@ -264,19 +266,18 @@ CREDITS
 =======
 
 Thanks to Robert Manea for his help in understanding how X works. He
-gave me suggestions on how to solve many many problems with XMobar.
+gave me suggestions on how to solve many problems with Xmobar.
 
-XMobar incorporates patches from:
-Krzysztof Kosciuszkiewicz
+Thanks to Claus Reinke for make me understand existential types (or at
+least for letting me thing I grasp existential types...;-). 
+
+Xmobar incorporates patches from: Krzysztof Kosciuszkiewicz
 
 LINKS
 =====
 
-The XMobar home page:
+The Xmobar home page:
 http://gorgias.mine.nu/repos/xmobar/
 
-XMobars darcs repository:
+Xmobars darcs repository:
 http://gorgias.mine.nu/repos/xmobar/
-
-The XMonad Window Manager
-http://xmonad.org

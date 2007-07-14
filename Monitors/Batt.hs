@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- A battery monitor for XMobar
+-- A battery monitor for Xmobar
 --
 -----------------------------------------------------------------------------
 

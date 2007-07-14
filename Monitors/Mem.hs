@@ -8,7 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- A memory monitor for XMobar
+-- A memory monitor for Xmobar
 --
 -----------------------------------------------------------------------------
 
