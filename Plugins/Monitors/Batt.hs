@@ -15,9 +15,16 @@
 module Plugins.Monitors.Batt where
 
 import qualified Data.ByteString.Lazy.Char8 as B
+import qualified Data.Map as M
+import Data.Maybe
+import Data.Either
+import Control.Monad
+import Text.ParserCombinators.Parsec
 import System.Posix.Files
 
 import Plugins.Monitors.Common
+
+type BattMap = M.Map String Integer
 
 battConfig :: IO MConfig
 battConfig = mkMConfig
@@ -34,25 +41,41 @@ checkFileBatt :: (String, String) -> IO Bool
 checkFileBatt (i,_) =
     fileExist i
 
-readFileBatt :: (String, String) -> IO (B.ByteString, B.ByteString)
+readFileBatt :: (String, String) -> IO BattMap
 readFileBatt (i,s) = 
-    do a <- B.readFile i
-       b <- B.readFile s
-       return (a,b)
+    do a <- catch (B.readFile i) (const $ return B.empty)
+       b <- catch (B.readFile s) (const $ return B.empty)
+       return $ mkMap a b
+
+mkMap :: B.ByteString -> B.ByteString -> BattMap
+mkMap a b = M.fromList . mapMaybe toAssoc $ concatMap B.lines [a, b]
+
+toAssoc bs = case parse parseLine "" (B.unpack bs) of
+                Left _ -> Nothing
+                Right a -> Just a
+
+parseLine = do hd <- many1 $ noneOf ":"
+               char ':'
+               spaces
+               tl <- many1 digit
+               let t = read tl
+               return (hd, t)
 
 parseBATT :: IO Float
 parseBATT =
-    do (a1,b1) <- readFileBatt fileB1
-       c <- checkFileBatt fileB2
-       let sp p s = read $ stringParser p s
-           (fu, pr) = (sp (3,2) a1, sp (2,4) b1)
-       case c of
-         True -> do (a2,b2) <- readFileBatt fileB1
-                    let full = fu + (sp (3,2) a2)
-                        present = pr + (sp (2,4) b2)
-                    return $ present / full
-         _ -> return $ pr / fu
-
+    do m1 <- readFileBatt fileB1
+       m2 <- readFileBatt fileB2
+       let pr1 = M.findWithDefault 0 remKey m1
+           fu1 = M.findWithDefault 0 fullKey m1
+           pr2 = M.findWithDefault 0 remKey m2
+           fu2 = M.findWithDefault 0 fullKey m2
+           pr  = pr1 + pr2
+           fu  = fu1 + fu2
+           pc  = if fu /= 0 then fromInteger pr / fromInteger fu else 0.0
+       return pc
+  where
+    remKey = "remaining capacity"
+    fullKey = "last full capacity"
 
 formatBatt :: Float -> Monitor [String] 
 formatBatt x =
