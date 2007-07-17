@@ -81,10 +81,9 @@ eventLoop =
     do c <- ask
        s <- get
        io $ forkIO $ sendUpdateEvent (display s) (window s) (refresh c)
-       action <- io $ allocaXEvent $ \e ->
-                 do nextEvent (display s) e
-                    return updateWin
-       action
+       io $ allocaXEvent $ \e ->
+           nextEvent (display s) e
+       updateWin
        eventLoop
 
 -- | The function to create the initial window
