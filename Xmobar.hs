@@ -80,7 +80,7 @@ eventLoop :: Xbar ()
 eventLoop =
     do c <- ask
        s <- get
-       io $ forkIO $ sendUpdateEvent (display s) (window s) (refresh c)
+       io $ forkOS $ sendUpdateEvent (display s) (window s) (refresh c)
        io $ allocaXEvent $ \e ->
            nextEvent (display s) e
        updateWin
@@ -194,7 +194,7 @@ execCommands c (x:xs) =
 execCommand :: Config -> (Runnable,String,String) -> IO (ThreadId, MVar String)
 execCommand c com = 
     do var <- newMVar "Updating..."
-       h <- forkIO $ runCommandLoop var c com
+       h <- forkOS $ runCommandLoop var c com
        return (h,var)
 
 runCommandLoop :: MVar String -> Config -> (Runnable,String,String) -> IO ()
