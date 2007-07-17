@@ -19,6 +19,8 @@ module Xmobar (-- * Main Stuff
               , runXbar
               , eventLoop
               , createWin
+              , updateWin
+              , sendUpdateEvent
               -- * Printing
               -- $print
               , drawInWin
@@ -39,6 +41,8 @@ module Xmobar (-- * Main Stuff
 
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Misc
+import Graphics.X11.Xlib.Event
+import Graphics.X11.Xlib.Extras
 
 import Control.Monad.State
 import Control.Monad.Reader
@@ -76,11 +80,11 @@ eventLoop :: Xbar ()
 eventLoop =
     do c <- ask
        s <- get
-       i <- io $ readVariables (vars s)
-       ps <- io $ parseString c i
-       drawInWin ps
-       -- back again: we are never ending
-       io $ tenthSeconds (refresh c)
+       io $ forkIO $ sendUpdateEvent (display s) (window s) (refresh c)
+       action <- io $ allocaXEvent $ \e ->
+                 do nextEvent (display s) e
+                    return updateWin
+       action
        eventLoop
 
 -- | The function to create the initial window
@@ -94,9 +98,25 @@ createWin config =
             (fi $ yPos config) 
             (fi $ width config) 
             (fi $ height config)
+     selectInput dpy win exposureMask
      mapWindow dpy win
      return (dpy,win)
 
+sendUpdateEvent :: Display -> Window -> Int -> IO ()
+sendUpdateEvent dpy w d = 
+    do tenthSeconds d
+       allocaXEvent $ \e -> do
+         setEventType e expose
+         sendEvent dpy w False noEventMask e 
+       sync dpy False
+
+updateWin :: Xbar ()
+updateWin =
+    do c <- ask
+       s <- get
+       i <- io $ readVariables (vars s)
+       ps <- io $ parseString c i
+       drawInWin ps
 
 -- $print
 
