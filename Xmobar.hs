@@ -185,11 +185,7 @@ printStrings p gc fontst offs sl@((s,c,l):xs) =
 -- | Runs a list of programs as independent threads and returns their thread id
 -- and the MVar they will be writing to.
 execCommands :: Config -> [(Runnable,String,String)] -> IO [(ThreadId, MVar String)]
-execCommands _ [] = return []
-execCommands c (x:xs) =
-    do i <- execCommand c x
-       is <- execCommands c xs
-       return $ i : is
+execCommands c xs = mapM (execCommand c) xs
 
 execCommand :: Config -> (Runnable,String,String) -> IO (ThreadId, MVar String)
 execCommand c com = 
