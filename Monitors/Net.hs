@@ -32,7 +32,7 @@ netConfig = mkMConfig
     ["dev", "rx", "tx"]     -- available replacements
 
 
--- takes to element of a list given their indexes
+-- takes two elements of a list given their indexes
 getTwoElementsAt :: Int -> Int -> [a] -> [a]
 getTwoElementsAt x y xs =
     z : [zz]

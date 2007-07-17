@@ -16,7 +16,7 @@
 module Xmobar (-- * Main Stuff
                -- $main
                Xbar
-              , runXmobar
+              , runXbar
               , eventLoop
               , createWin
               -- * Printing
@@ -53,7 +53,7 @@ import Runnable
 --
 -- The Xmobar data type and basic loops and functions.
 
--- | This is just esthetics, stolen from XMonad: see 'runXmobar'
+-- | This is copied from XMonad.
 newtype Xbar a = X (ReaderT Config (StateT XState IO) a)
     deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader Config)
 
@@ -64,11 +64,10 @@ data XState =
            , vars :: [(ThreadId, MVar String)]
            }
 
--- | Totally useless: but it is nice to be able to use get to get the
--- state and ask to get the configuration: functions requires less
--- arguments, after all.
-runXmobar :: Config -> [(ThreadId, MVar String)] -> Display -> Window -> Xbar () -> IO ()
-runXmobar c v d w (X f) = 
+-- | We use get to get the state and ask to get the configuration: whis way 
+-- functions requires less arguments.
+runXbar :: Config -> [(ThreadId, MVar String)] -> Display -> Window -> Xbar () -> IO ()
+runXbar c v d w (X f) = 
     do runStateT (runReaderT f c) (XState d w v)
        return ()
 
