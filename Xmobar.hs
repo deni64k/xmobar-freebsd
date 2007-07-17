@@ -20,7 +20,6 @@ module Xmobar (-- * Main Stuff
               , eventLoop
               , createWin
               , updateWin
-              , sendUpdateEvent
               -- * Printing
               -- $print
               , drawInWin
@@ -39,14 +38,17 @@ module Xmobar (-- * Main Stuff
               , io
               ) where
 
+import Prelude hiding (catch)
 import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Misc
 import Graphics.X11.Xlib.Event
-import Graphics.X11.Xlib.Extras
 
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Concurrent
+import Control.Exception
+
+import System.Posix.Types (Fd(..))
 
 import Config
 import Parsers
@@ -75,16 +77,34 @@ runXbar c v d w (X f) =
     do runStateT (runReaderT f c) (XState d w v)
        return ()
 
+-- | A version of nextEvent that does not block in foreign calls.
+nextEvent' :: Display -> XEventPtr -> IO ()
+nextEvent' d p = do
+    pend <- pending d
+    if pend /= 0
+        then nextEvent d p
+        else do
+            threadWaitRead (Fd fd)
+            nextEvent' d p
+ where
+    fd = connectionNumber d
+
 -- | The event loop
-eventLoop :: Xbar ()
-eventLoop =
-    do c <- ask
-       s <- get
-       io $ forkOS $ sendUpdateEvent (display s) (window s) (refresh c)
-       io $ allocaXEvent $ \e ->
-           nextEvent (display s) e
-       updateWin
-       eventLoop
+eventLoop :: Config -> [(ThreadId, MVar String)] -> Display -> Window -> IO ()
+eventLoop c v d w = do
+    t <- forkIO (block go)
+    timer t
+ where
+    -- interrupt the drawing thread every so often
+    timer t = do
+        tenthSeconds (refresh c)
+        throwTo t (ErrorCall "Xmobar.eventLoop: yield")
+        timer t
+    -- Continuously wait for a timer interrupt or an expose event
+    go = do
+        runXbar c v d w updateWin
+        catch (unblock $ allocaXEvent $ nextEvent' d) (const $ return ())
+        go
 
 -- | The function to create the initial window
 createWin :: Config -> IO (Display, Window)
@@ -100,14 +120,6 @@ createWin config =
      selectInput dpy win exposureMask
      mapWindow dpy win
      return (dpy,win)
-
-sendUpdateEvent :: Display -> Window -> Int -> IO ()
-sendUpdateEvent dpy w d = 
-    do tenthSeconds d
-       allocaXEvent $ \e -> do
-         setEventType e expose
-         sendEvent dpy w False noEventMask e 
-       sync dpy False
 
 updateWin :: Xbar ()
 updateWin =
@@ -190,7 +202,7 @@ execCommands c xs = mapM (execCommand c) xs
 execCommand :: Config -> (Runnable,String,String) -> IO (ThreadId, MVar String)
 execCommand c com = 
     do var <- newMVar "Updating..."
-       h <- forkOS $ runCommandLoop var c com
+       h <- forkIO $ runCommandLoop var c com
        return (h,var)
 
 runCommandLoop :: MVar String -> Config -> (Runnable,String,String) -> IO ()

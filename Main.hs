@@ -37,7 +37,8 @@ main =
        cl <- parseTemplate config (template config)
        var <- execCommands config cl
        (d,w) <- createWin config
-       runXbar config var d w eventLoop
+       eventLoop config var d w
+       return ()
 
 -- | Reads the configuration files or quits with an error
 readConfig :: FilePath -> IO Config
