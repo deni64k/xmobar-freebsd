@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Monitors.Batt
+-- Module      :  Plugins.Monitors.Batt
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -12,12 +12,12 @@
 --
 -----------------------------------------------------------------------------
 
-module Monitors.Batt where
+module Plugins.Monitors.Batt where
 
 import qualified Data.ByteString.Lazy.Char8 as B
 import System.Posix.Files
 
-import Monitors.Common
+import Plugins.Monitors.Common
 
 battConfig :: IO MConfig
 battConfig = mkMConfig

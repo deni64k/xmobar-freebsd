@@ -17,7 +17,8 @@ build-depends:      base>=2.0, X11>=1.2.1, mtl>=1.0, unix>=1.0, parsec>=2.0, fil
 executable:         xmobar
 main-is:            Main.hs
 Hs-Source-Dirs:     ./
-Other-Modules:      Xmobar, Config, Parsers, Commands, Runnable, Plugins, Monitors.Common, Monitors.Batt 
-		    Monitors.Weather, Monitors.Swap, Monitors.Mem, Monitors.Cpu, Monitors.Net
+Other-Modules:      Xmobar, Config, Parsers, Commands, Runnable, Plugins, Plugins.Monitors.Common, 
+		    Plugins.Monitors.Batt Plugins.Monitors.Weather, Plugins.Monitors.Swap, 
+		    Plugins.Monitors.Mem, Plugins.Monitors.Cpu, Plugins.Monitors.Net
 ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s -threaded
 ghc-prof-options:   -prof -auto-all

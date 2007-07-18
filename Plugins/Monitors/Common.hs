@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Monitors.Common
+-- Module      :  Plugins.Monitors.Common
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -12,7 +12,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Monitors.Common ( 
+module Plugins.Monitors.Common ( 
                        -- * Monitors
                        -- $monitor
                          Monitor

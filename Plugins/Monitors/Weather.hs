@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Monitors.Weather
+-- Module      :  Plugins.Monitors.Weather
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -12,9 +12,9 @@
 --
 -----------------------------------------------------------------------------
 
-module Monitors.Weather where
+module Plugins.Monitors.Weather where
 
-import Monitors.Common
+import Plugins.Monitors.Common
 
 import System.Process
 import System.Exit

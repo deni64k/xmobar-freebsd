@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Monitors.Swap
+-- Module      :  Plugins.Monitors.Swap
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -12,9 +12,9 @@
 --
 -----------------------------------------------------------------------------
 
-module Monitors.Swap where
+module Plugins.Monitors.Swap where
 
-import Monitors.Common
+import Plugins.Monitors.Common
 
 import qualified Data.ByteString.Lazy.Char8 as B
 

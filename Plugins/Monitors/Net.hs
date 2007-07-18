@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Monitors.Net
+-- Module      :  Plugins.Monitors.Net
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -12,9 +12,9 @@
 --
 -----------------------------------------------------------------------------
 
-module Monitors.Net where
+module Plugins.Monitors.Net where
 
-import Monitors.Common
+import Plugins.Monitors.Common
 import qualified Data.ByteString.Lazy.Char8 as B
 
 data NetDev = NA

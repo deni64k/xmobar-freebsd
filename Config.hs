@@ -21,6 +21,7 @@ module Config ( -- * Configuration
 
 import Commands
 import {-# SOURCE #-} Runnable
+import Plugins.Monitors
 
 -- $config
 -- Configuration data type and default configuration
@@ -66,5 +67,5 @@ defaultConfig =
 -- the 'Runnable.Runnable' Read instance. To install a plugin just add
 -- the plugin's type to the list of types appearing in this function's type
 -- signature.
-runnableTypes :: (Command,())
+runnableTypes :: (Command,(Monitors,()))
 runnableTypes = undefined

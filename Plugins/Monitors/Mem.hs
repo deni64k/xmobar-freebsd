@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Monitors.Mem
+-- Module      :  Plugins.Monitors.Mem
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -12,9 +12,9 @@
 --
 -----------------------------------------------------------------------------
 
-module Monitors.Mem where
+module Plugins.Monitors.Mem where
 
-import Monitors.Common
+import Plugins.Monitors.Common
 
 memConfig :: IO MConfig
 memConfig = mkMConfig

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Monitors.Cpu
+-- Module      :  Plugins.Monitors.Cpu
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
 -- 
@@ -12,9 +12,9 @@
 --
 -----------------------------------------------------------------------------
 
-module Monitors.Cpu where
+module Plugins.Monitors.Cpu where
 
-import Monitors.Common
+import Plugins.Monitors.Common
 import qualified Data.ByteString.Lazy.Char8 as B
 
 cpuConfig :: IO MConfig
