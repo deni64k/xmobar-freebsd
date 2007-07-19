@@ -16,10 +16,10 @@ module Plugins.Monitors.Batt where
 
 import qualified Data.ByteString.Lazy.Char8 as B
 import qualified Data.Map as M
+import Data.Char
+import Data.List
 import Data.Maybe
-import Data.Either
 import Control.Monad
-import Text.ParserCombinators.Parsec
 import System.Posix.Files
 
 import Plugins.Monitors.Common
@@ -48,18 +48,17 @@ readFileBatt (i,s) =
        return $ mkMap a b
 
 mkMap :: B.ByteString -> B.ByteString -> BattMap
-mkMap a b = M.fromList . mapMaybe toAssoc $ concatMap B.lines [a, b]
+mkMap a b = M.fromList . mapMaybe parseLine $ concatMap B.lines [a, b]
 
-toAssoc bs = case parse parseLine "" (B.unpack bs) of
-                Left _ -> Nothing
-                Right a -> Just a
-
-parseLine = do hd <- many1 $ noneOf ":"
-               char ':'
-               spaces
-               tl <- many1 digit
-               let t = read tl
-               return (hd, t)
+parseLine :: B.ByteString -> Maybe (String, Integer)
+parseLine s =
+    let (k, r) = B.break (==':') s
+        (v, _) = B.span (isDigit) (B.tail r)
+        (ks, vs) = (B.unpack k, B.unpack v)
+    in case (ks, vs) of
+        ([], _) -> Nothing
+        (_, []) -> Nothing
+        _ -> Just (ks, read vs)
 
 parseBATT :: IO Float
 parseBATT =
