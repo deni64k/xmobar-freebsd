@@ -51,14 +51,13 @@ mkMap :: B.ByteString -> B.ByteString -> BattMap
 mkMap a b = M.fromList . mapMaybe parseLine $ concatMap B.lines [a, b]
 
 parseLine :: B.ByteString -> Maybe (String, Integer)
-parseLine s =
+parseLine s = do
     let (k, r) = B.break (==':') s
-        (v, _) = B.span (isDigit) (B.tail r)
+        (_, r') = B.span (isSpace) (B.tail r)
+        (v, _) = B.span (isDigit) r'
         (ks, vs) = (B.unpack k, B.unpack v)
-    in case (ks, vs) of
-        ([], _) -> Nothing
-        (_, []) -> Nothing
-        _ -> Just (ks, read vs)
+    guard $ all (> 0) (map B.length [r, k, v])
+    return (ks, read vs)
 
 parseBATT :: IO Float
 parseBATT =
