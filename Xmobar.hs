@@ -154,13 +154,13 @@ drawInWin str =
               (fi $ height config)
        -- write to the pixmap the new string
        let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
-       p' <- printStrings p gc fontst 1 strWithLenth 
+       printStrings p gc fontst 1 strWithLenth 
        -- copy the pixmap with the new string to the window
-       io $ copyArea dpy p' win gc 0 0 (fi (width config)) (fi (height config)) 0 0
+       io $ copyArea dpy p win gc 0 0 (fi (width config)) (fi (height config)) 0 0
        -- free up everything (we do not want to leak memory!)
        io $ freeFont dpy fontst
        io $ freeGC dpy gc
-       io $ freePixmap dpy p'
+       io $ freePixmap dpy p
        -- resync
        io $ sync dpy True
 
@@ -170,9 +170,9 @@ printStrings :: Drawable
              -> FontStruct
              -> Position
              -> [(String, String, Position)]
-             -> Xbar Pixmap
-printStrings p _ _ _ [] = return p
-printStrings p gc fontst offs sl@((s,c,l):xs) =
+             -> Xbar ()
+printStrings _ _ _ _ [] = return ()
+printStrings d gc fontst offs sl@((s,c,l):xs) =
     do config <- ask
        st <- get
        let (_,asc,_,_) = textExtents fontst s
@@ -188,9 +188,8 @@ printStrings p gc fontst offs sl@((s,c,l):xs) =
        bgcolor <- io $ initColor (display st) (bgColor config)
        io $ setForeground (display st) gc fgcolor
        io $ setBackground (display st) gc bgcolor
-       io $ drawImageString (display st) p gc offset valign s
-       p' <- printStrings p gc fontst (offs + l) xs
-       return p'
+       io $ drawImageString (display st) d gc offset valign s
+       printStrings d gc fontst (offs + l) xs
 
 -- $commands
 
