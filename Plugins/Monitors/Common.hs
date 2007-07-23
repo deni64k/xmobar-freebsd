@@ -270,7 +270,7 @@ showWithColors f x =
        let col = setColor $ f x
            [ll,hh] = map fromIntegral $ sort [l, h] -- consider high < low 
        head $ [col highColor   | x > hh ] ++
-              [col normalColor | x < ll ] ++
+              [col normalColor | x > ll ] ++
               [col lowColor    | True]
 
 -- $threads
