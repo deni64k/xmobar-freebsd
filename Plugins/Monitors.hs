@@ -8,13 +8,7 @@
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- The 'Exec' class and the 'Command' data type.
---
--- The 'Exec' class rappresents the executable types, whose constructors may
--- appear in the 'Config.commands' field of the 'Config.Config' data type.
---
--- The 'Command' data type stores the monitors to be run internally by
--- Xmobar.
+-- The system monitor plugin for Xmobar.
 --
 -----------------------------------------------------------------------------
 
