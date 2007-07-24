@@ -86,15 +86,15 @@ options =
     [ Option ['h','?'] ["help"] (NoArg Help) "This help"
     , Option ['V'] ["version"] (NoArg Version) "Show version information"
     , Option ['f'] ["font"] (ReqArg Font "font name") "The font name"
-    , Option ['B'] ["bgcolor"] (ReqArg BgColor "backgorund color") "The background color. Default balck"
-    , Option ['F'] ["fgcolor"] (ReqArg FgColor "foregorund color") "The foreground color. Default grey"
-    , Option ['x'] ["xpos"] (ReqArg XPos "x position") "The x position. Default 0"
-    , Option ['y'] ["ypos"] (ReqArg YPos "y position") "The y position. Default 0"
+    , Option ['B'] ["bgcolor"] (ReqArg BgColor "bg color") "The background color. Default black"
+    , Option ['F'] ["fgcolor"] (ReqArg FgColor "fg color") "The foreground color. Default grey"
+    , Option ['x'] ["xpos"] (ReqArg XPos "x pos") "The x position. Default 0"
+    , Option ['y'] ["ypos"] (ReqArg YPos "y pos") "The y position. Default 0"
     , Option ['W'] ["width"] (ReqArg Width "width") "The status bar width. Default 1024"
-    , Option ['H'] ["height"] (ReqArg Height "height") "The status bar heigth. Default 15"
-    , Option ['a'] ["align"] (ReqArg Align "text alignement") "The text alignment: center, left or right. Default: left"
-    , Option ['r'] ["refresh"] (ReqArg Refresh "default rate") "The refresh rate in tenth of seconds: dafault 1 sec."
-    , Option ['s'] ["sepchar"] (ReqArg SepChar "separation character") "The charater used to separate commands in the output templae. Default '%'"
+    , Option ['H'] ["height"] (ReqArg Height "height") "The status bar height. Default 15"
+    , Option ['a'] ["align"] (ReqArg Align "align") "The text alignment: center, left or right.\nDefault: left"
+    , Option ['r'] ["refresh"] (ReqArg Refresh "rate") "The refresh rate in tenth of seconds:\ndefault 1 sec."
+    , Option ['s'] ["sepchar"] (ReqArg SepChar "char") "The character used to separate commands in\nthe output template. Default '%'"
     , Option ['t'] ["template"] (ReqArg Template "tempate") "The output template"
     , Option ['c'] ["commands"] (ReqArg Commands  "commands")  "The list of commands to be executed"
     ]
@@ -111,7 +111,7 @@ usage = (usageInfo header options) ++ footer
           footer = "Mail bug reports and suggestions to " ++ mail
 
 version :: String
-version = "Xmobar 0.7 (c) 2007 Andrea Rossato " ++ mail ++ license
+version = "Xmobar 0.7 (C) 2007 Andrea Rossato " ++ mail ++ license
 
 mail :: String
 mail = "<andrea.rossato@unibz.it>\n"
