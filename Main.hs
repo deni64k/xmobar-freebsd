@@ -27,7 +27,7 @@ import Data.IORef
 import System.Console.GetOpt
 import System.Exit
 import System.Environment
-import System.IO.Error
+import System.Posix.Files
 
 -- $main
  
@@ -57,13 +57,13 @@ readConfig f =
          [] -> error ("Corrupt config file: " ++ f)
          _ -> error ("Some problem occured. Aborting...")
 
--- | Read default configuration or quit with an error
+-- | Read default configuration file or load the default config
 readDefaultConfig :: IO Config
 readDefaultConfig = 
     do home <- getEnv "HOME"
        let path = home ++ "/.xmobarrc"
-       catch (readConfig path)
-            (\e -> if isUserError e then ioError e else return defaultConfig)
+       f <- fileExist path
+       if f then readConfig path else return defaultConfig
 
 data Opts = Help
           | Version 
