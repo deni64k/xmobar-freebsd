@@ -80,9 +80,10 @@ template: The output template
 Command Line Options
 --------------------
 
-Xmobar can be either configure with a configuration file or with
+Xmobar can be either configured with a configuration file or with
 command line options. In the second case, the command line options
-will overwrite any options set in the configuration file.
+will overwrite the corresponding options set in the configuration
+file.
 
 Example:
 xmobar -B white -a right -F blue -t '%LIPB%' -c '[Run Weather "LIPB" [] 36000]'
@@ -134,12 +135,16 @@ Each member of the list consists in a command prefixed by the "Run"
 keyword. Each command has arguments to control the way Xmobar is going
 to execute it.
 
-This only internal available command is Com (see below Executing
-External Commands).
+The option consists in a list of commands separated by a comma and
+enclosed by square parenthesis. Example:
 
-By default Xmobar comes with a plugin consisting in a set of system
-monitors. This plugins installs the following internal command:
-Weather, Network, Memory, Swap, Cpu, Battery.
+[Run Memory ["-t","Mem: <usedratio>%"] 10, Run Swap [] 10]
+
+The only internal available command is Com (see below Executing
+External Commands). But by default Xmobar comes with a plugin
+consisting in a set of system monitors. This plugin installs the
+following internal commands: Weather, Network, Memory, Swap, Cpu,
+Battery.
 
 To remove them see below Installing/Removing a Plugin
 
@@ -315,19 +320,19 @@ That's it.
 To remove a plugin, just remove its type from the type signature of
 runnableTypes and remove the imported modules.
 
-To remove the system monitor plugin you need:
+To remove the system monitor plugin:
 
-1. remove the line
+1. remove, from Config.hs, the line
 import Plugins.Monitors
 
-2. change
+2. in Config.hs change
 runnableTypes :: (Command,(Monitors,()))
 runnableTypes = undefined
 to
 runnableTypes :: (Command,())
 runnableTypes = undefined
 
-3. rebuild.
+3. rebuild Xmobar.
 
 AUTHOR
 ======
