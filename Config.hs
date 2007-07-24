@@ -56,9 +56,9 @@ defaultConfig =
            , height = 15
            , align = "left"
            , refresh = 10
-           , commands = [Run $ Memory [] 10]
+           , commands = []
            , sepChar = "%"
-           , template = "Uptime: <fc=#00FF00>%uptime%</fc> ** <fc=#FF0000>%date%</fc> %memory%"
+           , template = "Uptime: <fc=#00FF00>%uptime%</fc> ** <fc=#FF0000>%date%</fc>"
            }
 
 -- | This is the list of types that can be hidden inside
