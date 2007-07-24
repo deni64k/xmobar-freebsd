@@ -84,6 +84,9 @@ Xmobar can be either configure with a configuration file or with
 command line options. In the second case, the command line options
 will overwrite any options set in the configuration file.
 
+Example:
+xmobar -B white -a right -F blue -t '%LIPB%' -c '[Run Weather "LIPB" [] 36000]'
+
 This is the list of command line options (the output of 
 xmobar --help):
 
