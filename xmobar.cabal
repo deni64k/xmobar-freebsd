@@ -1,6 +1,6 @@
 name:               xmobar
 version:            0.7
-homepage:           http://gorgias.mine.nu/repos/xmobar/
+homepage:           http://gorgias.mine.nu/xmobar/
 synopsis:           A Minimalistic Text Based Status Bar
 description: 	    Xmobar is a minimalistic text based status bar.
 		    .
