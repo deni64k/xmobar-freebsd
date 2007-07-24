@@ -51,10 +51,11 @@ main =
 -- | Reads the configuration files or quits with an error
 readConfig :: FilePath -> IO Config
 readConfig f = 
-    do s <- readFile f
+    do file <- fileExist f
+       s <- if file then readFile f else error $ f ++ ": file not found!\n" ++ usage
        case reads s of
          [(config,_)] -> return config
-         [] -> error ("Corrupt config file: " ++ f)
+         [] -> error $ f ++ ": configuration file contains errors!\n" ++ usage
          _ -> error ("Some problem occured. Aborting...")
 
 -- | Read default configuration file or load the default config
@@ -108,7 +109,7 @@ getOpts argv =
 usage :: String
 usage = (usageInfo header options) ++ footer
     where header = "Usage: xmobar [OPTION...] [FILE]\nOptions:"
-          footer = "Mail bug reports and suggestions to " ++ mail
+          footer = "\nMail bug reports and suggestions to " ++ mail
 
 version :: String
 version = "Xmobar 0.7 (C) 2007 Andrea Rossato " ++ mail ++ license
