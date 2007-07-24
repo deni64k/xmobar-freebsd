@@ -17,6 +17,9 @@ module Plugins.Monitors.Batt where
 import qualified Data.ByteString.Lazy.Char8 as B
 import Plugins.Monitors.Common
 
+data Batt = Batt Float 
+          | NA
+
 battConfig :: IO MConfig
 battConfig = mkMConfig
        "Batt: <left>" -- template
@@ -34,7 +37,7 @@ readFileBatt (i,s) =
        b <- catch (B.readFile s) (const $ return B.empty)
        return (a,b)
 
-parseBATT :: IO Float
+parseBATT :: IO Batt
 parseBATT =
     do (a1,b1) <- readFileBatt fileB1
        (a2,b2) <- readFileBatt fileB2
@@ -43,8 +46,9 @@ parseBATT =
                       x -> read x
            (f1, p1) = (sp (3,2) a1, sp (2,4) b1)
            (f2, p2) = (sp (3,2) a2, sp (2,4) b2)
-       return $ (p1 + p2) / (f1 + f2) --present / full
-      
+           left = (p1 + p2) / (f1 + f2) --present / full
+       return $ if isNaN left then NA else Batt left
+
 formatBatt :: Float -> Monitor [String] 
 formatBatt x =
     do let f s = floatToPercent (s / 100)
@@ -54,5 +58,7 @@ formatBatt x =
 runBatt :: [String] -> Monitor String
 runBatt _ =
     do c <- io $ parseBATT
-       l <- formatBatt c
-       parseTemplate l 
+       case c of
+         Batt x -> do l <- formatBatt x
+                      parseTemplate l 
+         NA -> return "N/A"
