@@ -253,9 +253,9 @@ floatToPercent n =
 
 stringParser :: Pos -> B.ByteString -> String
 stringParser (x,y) =
-     li x . words . li y . lines . B.unpack
+     B.unpack . li x . B.words . li y . B.lines 
     where li i l | length l >= i = l !! i 
-                 | otherwise = []
+                 | otherwise = B.empty
 
 setColor :: String -> Selector (Maybe String) -> Monitor String
 setColor str s =
