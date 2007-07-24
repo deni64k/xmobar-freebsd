@@ -255,9 +255,14 @@ mkUnmanagedWindow dpy scr rw x y w h = do
 Utilities, aka stollen without givin' credit stuff.
 -}
 
--- | Get the Pixel value for a named color
+-- | Get the Pixel value for a named color: if an invalid name is
+-- given the black pixel will be returned.
 initColor :: Display -> String -> IO Pixel
-initColor dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
+initColor dpy c =
+    catch (initColor' dpy c) (const $ return $ blackPixel dpy (defaultScreen dpy))
+
+initColor' :: Display -> String -> IO Pixel
+initColor' dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
     where colormap = defaultColormap dpy (defaultScreen dpy)
 
 -- | Short-hand for lifting in the IO monad
