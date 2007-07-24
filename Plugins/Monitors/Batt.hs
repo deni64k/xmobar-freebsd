@@ -16,6 +16,7 @@ module Plugins.Monitors.Batt where
 
 import qualified Data.ByteString.Lazy.Char8 as B
 import Plugins.Monitors.Common
+import System.Posix.Files (fileExist)
 
 data Batt = Batt Float 
           | NA
@@ -33,9 +34,12 @@ fileB2 = ("/proc/acpi/battery/BAT2/info", "/proc/acpi/battery/BAT2/state")
 
 readFileBatt :: (String, String) -> IO (B.ByteString, B.ByteString)
 readFileBatt (i,s) = 
-    do a <- catch (B.readFile i) (const $ return B.empty)
-       b <- catch (B.readFile s) (const $ return B.empty)
+    do a <- rf i
+       b <- rf s
        return (a,b)
+    where rf file = do
+            f <- fileExist file
+            if f then B.readFile file else return B.empty
 
 parseBATT :: IO Batt
 parseBATT =
