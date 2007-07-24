@@ -106,11 +106,21 @@ getOpts argv =
       (_,_,errs) -> error (concat errs ++ usage)
 
 usage :: String
-usage = usageInfo header options
-    where header = "Usage: xmobar [OPTION...] [FILE]"
+usage = (usageInfo header options) ++ footer
+    where header = "Usage: xmobar [OPTION...] [FILE]\nOptions:"
+          footer = "Mail bug reports and suggestions to " ++ mail
 
 version :: String
-version = "Xmobar 0.7 (c) 2007 Andrea Rossato <andrea.rossato@unibz.it>"
+version = "Xmobar 0.7 (c) 2007 Andrea Rossato " ++ mail ++ license
+
+mail :: String
+mail = "<andrea.rossato@unibz.it>\n"
+
+license :: String
+license = "\nThis program is distributed in the hope that it will be useful,\n" ++
+          "but WITHOUT ANY WARRANTY; without even the implied warranty of\n" ++
+          "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n" ++
+          "See the License for more details."
 
 doOpts :: IORef Config -> [Opts] -> IO ()
 doOpts _  [] = return ()
@@ -118,25 +128,28 @@ doOpts conf (o:oo) =
     case o of
       Help -> putStr usage >> exitWith ExitSuccess
       Version -> putStrLn version >> exitWith ExitSuccess
-      Font s -> modifyIORef conf (\c -> c { font = s }) >> doOpts conf oo
-      BgColor s -> modifyIORef conf (\c -> c { bgColor = s }) >> doOpts conf oo
-      FgColor s -> modifyIORef conf (\c -> c { fgColor = s }) >> doOpts conf oo
-      XPos s -> modifyIORef conf (\c -> c { xPos = readInt s c xPos}) >> doOpts conf oo
-      YPos s -> modifyIORef conf (\c -> c { yPos = readInt s c yPos }) >> doOpts conf oo
-      Width s -> modifyIORef conf (\c -> c { width = readInt s c width }) >> doOpts conf oo
-      Height s -> modifyIORef conf (\c -> c { height = readInt s c height }) >> doOpts conf oo
-      Align s -> modifyIORef conf (\c -> c { align = s }) >> doOpts conf oo
-      Refresh s -> modifyIORef conf (\c -> c { refresh = readInt s c refresh }) >> doOpts conf oo
-      SepChar s -> modifyIORef conf (\c -> c { sepChar = s }) >> doOpts conf oo
-      Template s -> modifyIORef conf (\c -> c { template = s }) >> doOpts conf oo
-      Commands s -> do case readCom s of
-                         Right x -> modifyIORef conf ((\v c -> c { commands = v }) x) >> doOpts conf oo 
-                         Left e -> putStr (e ++ usage) >> exitWith (ExitFailure 1)
-    where readCom :: Read a => String -> Either String a
-          readCom str = case readStr str of
-	                  [x] -> Right x
-	                  _  -> Left "xmobar: cannot read list of commands specified with the -c option\n"
-          readInt str c f = case readStr str of
-	                      [x] -> x
-	                      _  -> f c
-          readStr str = [x | (x,t) <- reads str, ("","") <- lex t]
+      Font s -> modifyIORef conf (\c -> c { font = s }) >> go
+      BgColor s -> modifyIORef conf (\c -> c { bgColor = s }) >> go
+      FgColor s -> modifyIORef conf (\c -> c { fgColor = s }) >> go
+      XPos s -> modifyIORef conf (\c -> c { xPos = readInt s c xPos}) >> go
+      YPos s -> modifyIORef conf (\c -> c { yPos = readInt s c yPos }) >> go
+      Width s -> modifyIORef conf (\c -> c { width = readInt s c width }) >> go
+      Height s -> modifyIORef conf (\c -> c { height = readInt s c height }) >> go
+      Align s -> modifyIORef conf (\c -> c { align = s }) >> go
+      Refresh s -> modifyIORef conf (\c -> c { refresh = readInt s c refresh }) >> go
+      SepChar s -> modifyIORef conf (\c -> c { sepChar = s }) >> go
+      Template s -> modifyIORef conf (\c -> c { template = s }) >> go
+      Commands s -> case readCom s of
+                      Right x -> modifyIORef conf (\c -> c { commands = x })>> go 
+                      Left e -> putStr (e ++ usage) >> exitWith (ExitFailure 1)
+    where readCom str =
+              case readStr str of
+	        [x] -> Right x
+	        _  -> Left "xmobar: cannot read list of commands specified with the -c option\n"
+          readInt str c f =
+              case readStr str of
+	        [x] -> x
+	        _  -> f c
+          readStr str =
+              [x | (x,t) <- reads str, ("","") <- lex t]
+          go = doOpts conf oo

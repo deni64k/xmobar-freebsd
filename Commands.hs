@@ -13,8 +13,7 @@
 -- The 'Exec' class rappresents the executable types, whose constructors may
 -- appear in the 'Config.commands' field of the 'Config.Config' data type.
 --
--- The 'Command' data type stores the monitors to be run internally by
--- Xmobar.
+-- The 'Command' data type is for OS commands to be run by Xmobar 
 --
 -----------------------------------------------------------------------------
 
@@ -41,16 +40,17 @@ instance Exec Command where
     alias (Com p _ a _) | p /= "" = if  a == "" then p else a
                         | otherwise = ""
     rate (Com _ _ _ r) = r
-    run (Com prog args _ _) = do (i,o,e,p) <- runInteractiveCommand (prog ++ concat (map (' ':) args))
-                                 exit <- waitForProcess p
-                                 let closeHandles = do hClose o
-                                                       hClose i
-                                                       hClose e
-                                 case exit of
-                                   ExitSuccess -> do str <- hGetLine o
-                                                     closeHandles
-                                                     return str
-                                   _ -> do closeHandles
-                                           return $ "Could not execute command " ++ prog
-
-
+    run (Com prog args _ _) = do 
+                        (i,o,e,p) <- runInteractiveCommand (prog ++ concat (map (' ':) args))
+                        exit <- waitForProcess p
+                        let closeHandles = do 
+                                hClose o
+                                hClose i
+                                hClose e
+                        case exit of
+                          ExitSuccess -> do 
+                                    str <- hGetLine o
+                                    closeHandles
+                                    return str
+                          _ -> do closeHandles
+                                  return $ "Could not execute command " ++ prog
