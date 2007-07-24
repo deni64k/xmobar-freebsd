@@ -17,8 +17,8 @@ xmobar xmobar.config-sample
 INSTALLATION
 ============
 
-tar xvfz xmobar-0.6
-cd xmobar-0.6
+tar xvfz xmobar-0.7
+cd xmobar-0.7
 runhaskell Setup.lhs configure --prefix=/usr/local
 runhaskell Setup.lhs build
 runhaskell Setup.lhs haddock (optional for building the code documentation)
@@ -62,6 +62,37 @@ sepChar: The character to be used for indicating commands in the
          output template (default '%')
 template: The output template 
 
+Command Line Options
+--------------------
+
+Xmobar can be either configure with a configuration file or with
+command line options. In the second case, the command line options
+will overwrite any options set in the configuration file.
+
+This is the list of command line options (the output of 
+xmobar --help):
+
+Usage: xmobar [OPTION...] [FILE]
+Options:
+  -h, -?        --help               This help
+  -V            --version            Show version information
+  -f font name  --font=font name     The font name
+  -B bg color   --bgcolor=bg color   The background color. Default black
+  -F fg color   --fgcolor=fg color   The foreground color. Default grey
+  -x x pos      --xpos=x pos         The x position. Default 0
+  -y y pos      --ypos=y pos         The y position. Default 0
+  -W width      --width=width        The status bar width. Default 1024
+  -H height     --height=height      The status bar height. Default 15
+  -a align      --align=align        The text alignment: center, left or right.
+                                     Default: left
+  -r rate       --refresh=rate       The refresh rate in tenth of seconds:
+                                     default 1 sec.
+  -s char       --sepchar=char       The character used to separate commands in
+                                     the output template. Default '%'
+  -t tempate    --template=tempate   The output template
+  -c commands   --commands=commands  The list of commands to be executed
+Mail bug reports and suggestions to <andrea.rossato@unibz.it>
+
 The Output Template
 -------------------
 
@@ -85,11 +116,17 @@ Each member of the list consists in a command prefixed by the "Run"
 keyword. Each command has arguments to control the way Xmobar is going
 to execute it.
 
-Available template commands are: Weather, Network, Memory, Swap, Cpu,
-Battery, and Com. This last one is used to execute external programs.
+This only internal available command is Com (see below Executing
+External Commands).
+
+By default Xmobar comes with a plugin consisting in a set of system
+monitors. This plugins installs the following internal command:
+Weather, Network, Memory, Swap, Cpu, Battery.
+
+To remove them see below Installing/Removing a Plugin
 
 Other commands can be created as plugins with the Plugin
-infrastructure.
+infrastructure. See below Writing a Plugin
 
 This is an example of a command in the "commands" list:
 Run Memory ["-t","Mem: <usedratio>%"] 10
@@ -225,7 +262,7 @@ to the type list in the type signature of Config.runnableTypes.
 For a vary basic example see Plugins/HelloWorld.hs that is distributed
 with Xmobar.
 
-Installing a Plugin
+Installing/Removing a Plugin
 -------------------
 
 Installing a plugin should require 3 steps. Here we are going to
@@ -239,7 +276,7 @@ import Plugins.HelloWorld
    signature of "runnableTypes" in Config.hs. For instance, for the
    HelloWorld plugin, change "runnableTypes" into:
 
-runnableTypes :: (Command,(HelloWorld,()))
+runnableTypes :: (Command,(Monitors,(HelloWorld,())))
 runnableTypes = undefined
 
 3. Rebuild and reinstall Xmobar. Now test it with:
@@ -257,6 +294,23 @@ and, in the output template, the alias of the plugin:
 
 That's it.
 
+To remove a plugin, just remove its type from the type signature of
+runnableTypes and remove the imported modules.
+
+To remove the system monitor plugin you need:
+
+1. remove the line
+import Plugins.Monitors
+
+2. change
+runnableTypes :: (Command,(Monitors,()))
+runnableTypes = undefined
+to
+runnableTypes :: (Command,())
+runnableTypes = undefined
+
+3. rebuild.
+
 AUTHOR
 ======
 
@@ -265,13 +319,15 @@ Andrea Rossato <andrea.rossato@unibz.it>
 CREDITS
 =======
 
-Thanks to Robert Manea for his help in understanding how X works. He
-gave me suggestions on how to solve many problems with Xmobar.
+Thanks to Robert Manea and Spencer Janssen for their help in
+understanding how X works. He gave me suggestions on how to solve many
+problems with Xmobar.
 
 Thanks to Claus Reinke for make me understand existential types (or at
 least for letting me thing I grasp existential types...;-). 
 
-Xmobar incorporates patches from: Krzysztof Kosciuszkiewicz
+Xmobar incorporates patches from: Krzysztof Kosciuszkiewicz and
+Spencer Janssen. 
 
 LINKS
 =====
@@ -281,3 +337,7 @@ http://gorgias.mine.nu/repos/xmobar/
 
 Xmobars darcs repository:
 http://gorgias.mine.nu/repos/xmobar/
+
+To understand the internal mysteries of Xmobar try reading this:
+http://www.haskell.org/haskellwiki/X_window_programming_in_Haskell
+
