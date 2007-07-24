@@ -140,7 +140,8 @@ drawInWin str =
        bgcolor  <-  io $ initColor dpy $ bgColor config
        gc <- io $ createGC dpy win
        --let's get the fonts
-       fontst <-  io $ loadQueryFont dpy (font config)
+       let lf c = loadQueryFont dpy (font c)
+       fontst <-  io $ catch (lf config) (const $ lf defaultConfig)
        io $ setFont dpy gc (fontFromFontStruct fontst)
        -- create a pixmap to write to and fill it with a rectangle
        p <- io $ createPixmap dpy win 
