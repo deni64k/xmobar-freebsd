@@ -249,12 +249,12 @@ showDigits d n =
 
 floatToPercent :: Float -> String
 floatToPercent n = 
-    showDigits 2 (n*100) ++ "%"
+    showDigits 2 (n * 100) ++ "%"
 
 stringParser :: Pos -> B.ByteString -> String
 stringParser (x,y) =
-     tk x . words . tk y . lines . B.unpack
-    where tk i l | length l >= i = flip (!!) i $ l
+     li x . words . li y . lines . B.unpack
+    where li i l | length l >= i = l !! i 
                  | otherwise = []
 
 setColor :: String -> Selector (Maybe String) -> Monitor String
