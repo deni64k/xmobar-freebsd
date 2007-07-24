@@ -14,6 +14,21 @@ See xmobar.config-sample for a sample configuration.
 Try it with:
 xmobar xmobar.config-sample
 
+DOWNLOAD
+========
+
+You can get the Xmobar source code from Hackage:
+http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
+
+To get the darcs source run:
+darcs get http://gorgias.mine.nu/repos/xmobar/
+
+The latest binary can be found here:
+http://gorgias.mine.nu/xmobar/xmobar-0.7.bin
+
+A recent screen shot can be found here:
+http://gorgias.mine.nu/xmobar/xmobar-0.7.png
+
 INSTALLATION
 ============
 
@@ -263,7 +278,7 @@ For a vary basic example see Plugins/HelloWorld.hs that is distributed
 with Xmobar.
 
 Installing/Removing a Plugin
--------------------
+----------------------------
 
 Installing a plugin should require 3 steps. Here we are going to
 install the HelloWorld plugin that comes with Xmobar:
