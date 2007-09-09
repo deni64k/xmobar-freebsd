@@ -343,11 +343,11 @@ CREDITS
 =======
 
 Thanks to Robert Manea and Spencer Janssen for their help in
-understanding how X works. He gave me suggestions on how to solve many
-problems with Xmobar.
+understanding how X works. They gave me suggestions on how to solve
+many problems with Xmobar.
 
 Thanks to Claus Reinke for make me understand existential types (or at
-least for letting me thing I grasp existential types...;-). 
+least for letting me think I grasp existential types...;-). 
 
 Xmobar incorporates patches from: Krzysztof Kosciuszkiewicz and
 Spencer Janssen. 
