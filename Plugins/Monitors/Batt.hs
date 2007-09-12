@@ -26,6 +26,9 @@ battConfig = mkMConfig
        "Batt: <left>" -- template
        ["left"]       -- available replacements
 
+fileB0 :: (String, String)
+fileB0 = ("/proc/acpi/battery/BAT0/info", "/proc/acpi/battery/BAT0/state")
+
 fileB1 :: (String, String)
 fileB1 = ("/proc/acpi/battery/BAT1/info", "/proc/acpi/battery/BAT1/state")
 
@@ -43,14 +46,16 @@ readFileBatt (i,s) =
 
 parseBATT :: IO Batt
 parseBATT =
-    do (a1,b1) <- readFileBatt fileB1
+    do (a0,b0) <- readFileBatt fileB0
+       (a1,b1) <- readFileBatt fileB1
        (a2,b2) <- readFileBatt fileB2
        let sp p s = case stringParser p s of
                       [] -> 0
                       x -> read x
+           (f0, p0) = (sp (3,2) a0, sp (2,4) b0)
            (f1, p1) = (sp (3,2) a1, sp (2,4) b1)
            (f2, p2) = (sp (3,2) a2, sp (2,4) b2)
-           left = (p1 + p2) / (f1 + f2) --present / full
+           left = (p0 + p1 + p2) / (f0 + f1 + f2) --present / full
        return $ if isNaN left then NA else Batt left
 
 formatBatt :: Float -> Monitor [String] 
