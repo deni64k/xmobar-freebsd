@@ -39,7 +39,7 @@ weatherConfig = mkMConfig
        , "tempF"
        , "dewPoint"
        , "rh"
-       ,"pressure"
+       , "pressure"
        ]
 
 data WeatherInfo =
@@ -52,10 +52,11 @@ data WeatherInfo =
        , wind :: String
        , visibility :: String
        , skyCondition :: String
-       , temperature :: Float
+       , tempC :: Int
+       , tempF :: Int
        , dewPoint :: String
-       , humidity :: Float
-       , pressure :: String
+       , humidity :: Int
+       , pressure :: Int
        } deriving (Show)
 
 pTime :: Parser (String, String, String, String)
@@ -69,15 +70,22 @@ pTime = do y <- getNumbersAsString
            char ' '
            return (y, m, d ,([h]++[hh]++":"++[mi]++mimi))
 
-pTemp :: Parser Float
-pTemp = do manyTill anyChar $ char '('
-           s <- manyTill digit $ (char ' ' <|> char '.')
+pTemp :: Parser (Int, Int)
+pTemp = do f <- manyTill digit $ char ' '
+           manyTill anyChar $ char '('
+           c <- manyTill digit $ (char ' ' <|> char '.')
            skipRestOfLine
-           return $read s
+           return $ (read c, read f)
 
-pRh :: Parser Float
+pRh :: Parser Int
 pRh = do s <- manyTill digit $ (char '%' <|> char '.')
          return $ read s
+
+pPressure :: Parser Int
+pPressure = do manyTill anyChar $ char '('
+               s <- manyTill digit $ char ' '
+               skipRestOfLine
+               return $ read s
 
 parseData :: Parser [WeatherInfo]
 parseData = 
@@ -90,13 +98,14 @@ parseData =
        v <- getAfterString "Visibility: "
        sk <- getAfterString "Sky conditions: "
        skipTillString "Temperature: "
-       temp <- pTemp
+       (tC,tF) <- pTemp
        dp <- getAfterString "Dew Point: "
        skipTillString "Relative Humidity: "
        rh <- pRh
-       p <- getAfterString "Pressure (altimeter): "
+       skipTillString "Pressure (altimeter): "
+       p <- pPressure
        manyTill skipRestOfLine eof
-       return $ [WI st ss y m d h w v sk temp dp rh p]
+       return $ [WI st ss y m d h w v sk tC tF dp rh p]
 
 defUrl :: String
 defUrl = "http://weather.noaa.gov/pub/data/observations/metar/decoded/"
@@ -115,11 +124,10 @@ getData url=
                      return "Could not retrieve data"
 
 formatWeather :: [WeatherInfo] -> Monitor String
-formatWeather [(WI st ss y m d h w v sk temp dp r p)] =
-    do cel <- showWithColors show temp
-       far <- showWithColors (showDigits 1) (((9 / 5) * temp) + 32)
-       rh <- showWithColors show r
-       parseTemplate [st, ss, y, m, d, h, w, v, sk, cel, far, dp, rh , p ]
+formatWeather [(WI st ss y m d h w v sk tC tF dp r p)] =
+    do cel <- showWithColors show tC
+       far <- showWithColors show tF
+       parseTemplate [st, ss, y, m, d, h, w, v, sk, cel, far, dp, show r , show p ]
 formatWeather _ = return "N/A"
 
 runWeather :: [String] -> Monitor String

@@ -265,7 +265,7 @@ setColor str s =
             Just c -> return $
                 "<fc=" ++ c ++ ">" ++ str ++ "</fc>"
 
-showWithColors :: (Float -> String) -> Float -> Monitor String
+showWithColors :: (Num a, Ord a) => (a -> String) -> a -> Monitor String
 showWithColors f x =
     do h <- getConfigValue high
        l <- getConfigValue low
