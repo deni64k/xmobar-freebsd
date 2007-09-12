@@ -249,7 +249,7 @@ showDigits d n =
 
 floatToPercent :: Float -> String
 floatToPercent n = 
-    showDigits 2 (n * 100) ++ "%"
+    showDigits 1 (n * 100) ++ "%"
 
 stringParser :: Pos -> B.ByteString -> String
 stringParser (x,y) =
