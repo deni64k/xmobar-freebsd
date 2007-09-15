@@ -32,6 +32,6 @@ instance Exec Date where
 
 date :: String -> IO String
 date format = do
- t <- toCalendarTime =<< getClockTime
- return $ formatCalendarTime defaultTimeLocale format t
+  t <- toCalendarTime =<< getClockTime
+  return $ formatCalendarTime defaultTimeLocale format t
 
