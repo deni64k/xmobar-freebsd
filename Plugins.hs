@@ -14,7 +14,8 @@
 --
 -----------------------------------------------------------------------------
 
-module Plugins ( Exec (..) 
+module Plugins ( Exec (..)
+               , tenthSeconds
                ) where
 
 import Commands
