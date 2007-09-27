@@ -17,12 +17,12 @@ module Plugins.PipeReader where
 import System.IO
 import Plugins
 
-data PipeReader = PipeReader String
+data PipeReader = PipeReader String String
     deriving (Read, Show)
 
 instance Exec PipeReader where 
-    alias (PipeReader p)    = p
-    start (PipeReader p) cb = do
+    alias (PipeReader _ a)    = a
+    start (PipeReader p _) cb = do
         h <- openFile p ReadMode
         forever (hGetLine h >>= cb)
         where forever a = a >> forever a
