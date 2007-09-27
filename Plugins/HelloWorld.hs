@@ -17,9 +17,9 @@ module Plugins.HelloWorld where
 import Plugins
 
 data HelloWorld = HelloWorld
-    deriving (Read)
+    deriving (Read, Show)
 
 instance Exec HelloWorld where
-    run HelloWorld = return "<fc=red>Hello World!!</fc>"
-    rate HelloWorld = 1000
+    rate HelloWorld = 0
     alias HelloWorld = "helloWorld"
+    start HelloWorld cb = cb "<fc=red>Hello World!!</fc>"
