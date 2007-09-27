@@ -19,38 +19,55 @@
 
 module Commands where
 
+import Control.Concurrent
+import Data.Char
 import System.Process
 import System.Exit
 import System.IO (hClose, hGetLine)
 
-class Exec e where
-    run :: e -> IO String
-    rate :: e -> Int
+class Show e => Exec e where
+    rate  :: e -> Int
+    rate  _ = 10
     alias :: e -> String
+    alias e = takeWhile (not . isSpace) $ show e
+    start :: e -> (String -> IO ()) -> IO ()
 
 data Command = Com Program Args Alias Rate
                deriving (Show,Read,Eq)
 
-type Args = [String]
+type Args    = [String]
 type Program = String
-type Alias = String
-type Rate = Int
+type Alias   = String
+type Rate    = Int
 
 instance Exec Command where
-    alias (Com p _ a _) | p /= "" = if  a == "" then p else a
-                        | otherwise = ""
-    rate (Com _ _ _ r) = r
-    run (Com prog args _ _) = do 
-                        (i,o,e,p) <- runInteractiveCommand (prog ++ concat (map (' ':) args))
-                        exit <- waitForProcess p
-                        let closeHandles = do 
-                                hClose o
-                                hClose i
-                                hClose e
-                        case exit of
-                          ExitSuccess -> do 
-                                    str <- hGetLine o
-                                    closeHandles
-                                    return str
-                          _ -> do closeHandles
-                                  return $ "Could not execute command " ++ prog
+    alias (Com p    _    a _)
+        | p /= ""             = if a == "" then p else a
+        | otherwise           = ""
+    rate  (Com _    _    _ r) = r
+    start (Com prog args _ r) cb = do go
+        where go = do
+                (i,o,e,p) <- runInteractiveCommand (prog ++ concat (map (' ':) args))
+                exit <- waitForProcess p
+                let closeHandles = do 
+                        hClose o
+                        hClose i
+                        hClose e
+                case exit of
+                  ExitSuccess -> do 
+                            str <- hGetLine o
+                            closeHandles
+                            cb str
+                  _ -> do closeHandles
+                          cb $ "Could not execute command " ++ prog
+                tenthSeconds r >> go
+
+-- | Work arount to the Int max bound: since threadDelay takes an Int, it
+-- is not possible to set a thread delay grater than about 45 minutes.
+-- With a little recursion we solve the problem.
+tenthSeconds :: Int -> IO ()
+tenthSeconds s | s >= x = do threadDelay y
+                             tenthSeconds (x - s)
+               | otherwise = threadDelay (s * 100000)
+               where y = (maxBound :: Int)
+                     x = y `div` 100000
