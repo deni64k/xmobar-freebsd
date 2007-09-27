@@ -26,9 +26,7 @@ module Xmobar (-- * Main Stuff
               , printStrings
               -- * Program Execution
               -- $commands
-              , execCommands
               , execCommand
-              , runCommandLoop
               , readVariables
               -- * Unmamaged Windows
               -- $unmanwin
@@ -66,13 +64,13 @@ newtype Xbar a = X (ReaderT Config (StateT XState IO) a)
 -- | The State component of StateT
 data XState = 
     XState { display :: Display
-           , window :: Window
-           , vars :: [(ThreadId, MVar String)]
+           , window  :: Window
+           , vars    :: [(Maybe ThreadId, MVar String)]
            }
 
 -- | We use get to get the state and ask to get the configuration: whis way 
 -- functions requires less arguments.
-runXbar :: Config -> [(ThreadId, MVar String)] -> Display -> Window -> Xbar () -> IO ()
+runXbar :: Config -> [(Maybe ThreadId, MVar String)] -> Display -> Window -> Xbar () -> IO ()
 runXbar c v d w (X f) = 
     do runStateT (runReaderT f c) (XState d w v)
        return ()
@@ -90,7 +88,7 @@ nextEvent' d p = do
     fd = connectionNumber d
 
 -- | The event loop
-eventLoop :: Config -> [(ThreadId, MVar String)] -> Display -> Window -> IO ()
+eventLoop :: Config -> [(Maybe ThreadId, MVar String)] -> Display -> Window -> IO ()
 eventLoop c v d w = do
     t <- forkIO (block go)
     timer t
@@ -111,21 +109,21 @@ createWin :: Config -> IO (Display, Window)
 createWin config =
   do dpy   <- openDisplay ""
      let dflt = defaultScreen dpy
-     rootw  <- rootWindow dpy dflt
-     win <- mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
+     rootw <- rootWindow dpy dflt
+     win   <- mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
             (fi $ xPos config) 
             (fi $ yPos config) 
             (fi $ width config) 
             (fi $ height config)
      selectInput dpy win exposureMask
-     mapWindow dpy win
+     mapWindow   dpy win
      return (dpy,win)
 
 updateWin :: Xbar ()
 updateWin =
-    do c <- ask
-       s <- get
-       i <- io $ readVariables (vars s)
+    do c  <- ask
+       s  <- get
+       i  <- io $ readVariables (vars s)
        ps <- io $ parseString c i
        drawInWin ps
 
@@ -134,14 +132,14 @@ updateWin =
 -- | Draws in and updates the window
 drawInWin :: [(String, String)] -> Xbar ()
 drawInWin str = 
-    do config <- ask
-       st <- get
+    do config  <- ask
+       st      <- get
        let (dpy,win) = (display st, window st)
-       bgcolor  <-  io $ initColor dpy $ bgColor config
-       gc <- io $ createGC dpy win
+       bgcolor <-  io $ initColor dpy $ bgColor config
+       gc      <- io $ createGC dpy win
        --let's get the fonts
        let lf c = loadQueryFont dpy (font c)
-       fontst <-  io $ catch (lf config) (const $ lf defaultConfig)
+       fontst  <-  io $ catch (lf config) (const $ lf defaultConfig)
        io $ setFont dpy gc (fontFromFontStruct fontst)
        -- create a pixmap to write to and fill it with a rectangle
        p <- io $ createPixmap dpy win 
@@ -177,14 +175,14 @@ printStrings d gc fontst offs sl@((s,c,l):xs) =
     do config <- ask
        st <- get
        let (_,asc,_,_) = textExtents fontst s
-           totSLen = foldr (\(_,_,len) -> (+) len) 0 sl
-           valign = (fi (height config) + fi asc) `div` 2
-           remWidth = fi (width config) - fi totSLen
-           offset = case (align config) of
-                      "center" -> (remWidth + offs) `div` 2
-                      "right" -> remWidth - 1
-                      "left" -> offs
-                      _ -> offs
+           totSLen     = foldr (\(_,_,len) -> (+) len) 0 sl
+           valign      = (fi (height config) + fi asc) `div` 2
+           remWidth    = fi (width config) - fi totSLen
+           offset      = case (align config) of
+                           "center" -> (remWidth + offs) `div` 2
+                           "right"  -> remWidth - 1
+                           "left"   -> offs
+                           _        -> offs
        fgcolor <- io $ initColor (display st) c
        bgcolor <- io $ initColor (display st) (bgColor config)
        io $ setForeground (display st) gc fgcolor
@@ -194,34 +192,23 @@ printStrings d gc fontst offs sl@((s,c,l):xs) =
 
 -- $commands
 
--- | Runs a list of programs as independent threads and returns their thread id
--- and the MVar they will be writing to.
-execCommands :: Config -> [(Runnable,String,String)] -> IO [(ThreadId, MVar String)]
-execCommands c xs = mapM (execCommand c) xs
-
-execCommand :: Config -> (Runnable,String,String) -> IO (ThreadId, MVar String)
-execCommand c com = 
-    do var <- newMVar "Updating..."
-       h <- forkIO $ runCommandLoop var c com
-       return (h,var)
-
-runCommandLoop :: MVar String -> Config -> (Runnable,String,String) -> IO ()
-runCommandLoop var conf c@(com,s,ss)
-    | alias com == "" = 
-        do modifyMVar_ var (\_ -> return $ "Could not parse the template")
-           tenthSeconds (refresh conf)
-           runCommandLoop var conf c
-    | otherwise =
-        do str <- run com
-           modifyMVar_ var (\_ -> return $ s ++ str ++ ss)
-           tenthSeconds (rate com) 
-           runCommandLoop var conf c
+-- | Runs a command as an independent thread and returns its thread id
+-- and the MVar the command will be writing to.
+execCommand :: (Runnable,String,String) -> IO (Maybe ThreadId, MVar String)
+execCommand (com,s,ss)
+    | alias com == ""  = do var <- newMVar "Updating..."
+                            modifyMVar_ var (const $ return $ "Could not parse the template")
+                            return (Nothing,var)
+    | otherwise        = do var <- newMVar "Updating..."
+                            let cb str = modifyMVar_ var (\_ -> return $ s ++ str ++ ss)
+                            h <- forkIO $ start com cb
+                            return (Just h,var)
 
 -- | Reads MVars set by 'runCommandLoop'
-readVariables :: [(ThreadId, MVar String)] -> IO String
+readVariables :: [(Maybe ThreadId, MVar String)] -> IO String
 readVariables [] = return ""
 readVariables ((_,v):xs) =
-    do f <- readMVar v
+    do f  <- readMVar v
        fs <- readVariables xs
        return $! f ++ fs
 
@@ -269,16 +256,6 @@ initColor' dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
 -- | Short-hand for lifting in the IO monad
 io :: IO a -> Xbar a
 io = liftIO
-
--- | Work arount to the Int max bound: since threadDelay takes an Int, it
--- is not possible to set a thread delay grater than about 45 minutes.
--- With a little recursion we solve the problem.
-tenthSeconds :: Int -> IO ()
-tenthSeconds s | s >= x = do threadDelay y
-                             tenthSeconds (x - s)
-               | otherwise = threadDelay (s * 100000)
-               where y = (maxBound :: Int)
-                     x = y `div` 100000
 
 -- | Short-hand for 'fromIntegral'
 fi :: (Integral a, Num b) => a -> b
