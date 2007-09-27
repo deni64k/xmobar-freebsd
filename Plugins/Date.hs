@@ -18,20 +18,22 @@
 module Plugins.Date where
 
 import Plugins
+
 import System.Locale
 import System.Time
 
-
 data Date = Date String String Int
-    deriving (Read)
+    deriving (Read, Show)
 
 instance Exec Date where
-    run (Date f _ _) = date f
-    rate (Date _ _ r) = r
-    alias (Date _ a _) = a
+    start (Date f _ r) cb = date f r cb
+    rate  (Date _ _ r)    = r
+    alias (Date _ a _)    = a
 
-date :: String -> IO String
-date format = do
-  t <- toCalendarTime =<< getClockTime
-  return $ formatCalendarTime defaultTimeLocale format t
-
+date :: String -> Int -> (String -> IO ()) -> IO ()
+date format r cb = do go
+    where go = do
+            t <- toCalendarTime =<< getClockTime
+            cb $ formatCalendarTime defaultTimeLocale format t
+            tenthSeconds r >> go
+  
