@@ -32,29 +32,29 @@ data Monitors = Weather Station Args Rate
               | Battery Args Rate
                 deriving (Show,Read,Eq)
 
-type Args = [String]
-type Program = String
-type Alias = String
-type Station = String
+type Args      = [String]
+type Program   = String
+type Alias     = String
+type Station   = String
 type Interface = String
-type Rate = Int
+type Rate      = Int
 
 instance Exec Monitors where
     alias (Weather s _ _) = s
     alias (Network i _ _) = i
-    alias (Memory _ _) = "memory"
-    alias (Swap _ _) = "swap"
-    alias (Cpu _ _) = "cpu"
-    alias (Battery _ _) = "battery"
-    rate (Weather _ _ r) = r
-    rate (Network _ _ r) = r
-    rate (Memory _ r) = r
-    rate (Swap _ r) = r
-    rate (Cpu _ r) = r
-    rate (Battery _ r) = r
-    run (Weather s a _) = runM (a ++ [s]) weatherConfig runWeather 
-    run (Network i a _) = runM (a ++ [i]) netConfig runNet
-    run (Memory args _) = runM args memConfig runMem
-    run (Swap args _) = runM args swapConfig runSwap
-    run (Cpu args _) = runM args cpuConfig runCpu
-    run (Battery args _) = runM args battConfig runBatt
+    alias (Memory    _ _) = "memory"
+    alias (Swap      _ _) = "swap"
+    alias (Cpu       _ _) = "cpu"
+    alias (Battery   _ _) = "battery"
+    rate  (Weather _ _ r) = r
+    rate  (Network _ _ r) = r
+    rate  (Memory    _ r) = r
+    rate  (Swap      _ r) = r
+    rate  (Cpu       _ r) = r
+    rate  (Battery   _ r) = r
+    start (Weather s a r) = runM (a ++ [s]) weatherConfig runWeather r
+    start (Network i a r) = runM (a ++ [i]) netConfig     runNet     r
+    start (Memory    a r) = runM a          memConfig     runMem     r
+    start (Swap      a r) = runM a          swapConfig    runSwap    r
+    start (Cpu       a r) = runM a          cpuConfig     runCpu     r
+    start (Battery   a r) = runM a          battConfig    runBatt    r

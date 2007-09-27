@@ -48,30 +48,27 @@ module Plugins.Monitors.Common (
 
 import Control.Concurrent
 import Control.Monad.Reader
-
 import qualified Data.ByteString.Lazy.Char8 as B
 import Data.IORef
 import qualified Data.Map as Map 
 import Data.List
-
 import Numeric
-
 import Text.ParserCombinators.Parsec
-
 import System.Console.GetOpt
 
+import Plugins
 -- $monitor
 
 type Monitor a = ReaderT MConfig IO a
 
 data MConfig =
     MC { normalColor :: IORef (Maybe String)
-       , low :: IORef Int
-       , lowColor :: IORef (Maybe String)
-       , high :: IORef Int
-       , highColor :: IORef (Maybe String)
-       , template :: IORef String
-       , export :: IORef [String]
+       , low         :: IORef Int
+       , lowColor    :: IORef (Maybe String)
+       , high        :: IORef Int
+       , highColor   :: IORef (Maybe String)
+       , template    :: IORef String
+       , export      :: IORef [String]
        } 
 
 -- | from 'http:\/\/www.haskell.org\/hawiki\/MonadState'
@@ -100,12 +97,12 @@ mkMConfig :: String
           -> IO MConfig
 mkMConfig tmpl exprts =
     do lc <- newIORef Nothing
-       l <- newIORef 33
+       l  <- newIORef 33
        nc <- newIORef Nothing
-       h <- newIORef 66
+       h  <- newIORef 66
        hc <- newIORef Nothing
-       t <- newIORef tmpl
-       e <- newIORef exprts
+       t  <- newIORef tmpl
+       e  <- newIORef exprts
        return $ MC nc l lc h hc t e
 
 data Opts = HighColor String
@@ -117,12 +114,12 @@ data Opts = HighColor String
 
 options :: [OptDescr Opts]
 options =
-    [ Option ['H']  ["High"]  (ReqArg High "number") "The high threshold"
-    , Option ['L']  ["Low"]  (ReqArg Low "number") "The low threshold"
-    , Option ['h']  ["high"]  (ReqArg HighColor "color number") "Color for the high threshold: ex \"#FF0000\""
-    , Option ['n']  ["normal"]  (ReqArg NormalColor "color number") "Color for the normal threshold: ex \"#00FF00\""
-    , Option ['l']  ["low"]  (ReqArg LowColor "color number") "Color for the low threshold: ex \"#0000FF\""
-    , Option ['t']  ["template"]  (ReqArg Template "output template") "Output template."
+    [ Option ['H']  ["High"]     (ReqArg High "number"              ) "The high threshold"
+    , Option ['L']  ["Low"]      (ReqArg Low "number"               ) "The low threshold"
+    , Option ['h']  ["high"]     (ReqArg HighColor "color number"   ) "Color for the high threshold: ex \"#FF0000\""
+    , Option ['n']  ["normal"]   (ReqArg NormalColor "color number" ) "Color for the normal threshold: ex \"#00FF00\""
+    , Option ['l']  ["low"]      (ReqArg LowColor "color number"    ) "Color for the low threshold: ex \"#0000FF\""
+    , Option ['t']  ["template"] (ReqArg Template "output template" ) "Output template."
     ]
 
 doArgs :: [String] 
@@ -130,8 +127,8 @@ doArgs :: [String]
        -> Monitor String
 doArgs args action =
     do case (getOpt Permute options args) of
-         (o, n, []) -> do doConfigOptions o
-                          action n
+         (o, n, []  ) -> do doConfigOptions o
+                            action n
          (_, _, errs) -> return (concat errs)
 
 doConfigOptions :: [Opts] -> Monitor ()
@@ -139,18 +136,22 @@ doConfigOptions [] = io $ return ()
 doConfigOptions (o:oo) =
     do let next = doConfigOptions oo
        case o of
-         High h -> setConfigValue (read h) high >> next
-         Low l -> setConfigValue (read l) low >> next
-         HighColor hc -> setConfigValue (Just hc) highColor >> next
+         High         h -> setConfigValue (read h) high >> next
+         Low          l -> setConfigValue (read l) low >> next
+         HighColor   hc -> setConfigValue (Just hc) highColor >> next
          NormalColor nc -> setConfigValue (Just nc) normalColor >> next
-         LowColor lc -> setConfigValue (Just lc) lowColor >> next
-         Template t -> setConfigValue t template >> next
+         LowColor    lc -> setConfigValue (Just lc) lowColor >> next
+         Template     t -> setConfigValue t template >> next
 
-runM :: [String] -> IO MConfig -> ([String] -> Monitor String) -> IO String
-runM args conf action =
-    do c <- conf
-       let ac = doArgs args action
-       runReaderT ac c
+runM :: [String] -> IO MConfig -> ([String] -> Monitor String) -> Int -> (String -> IO ()) -> IO ()
+runM args conf action r cb = do go
+    where go = do
+            c <- conf
+            let ac = doArgs args action
+            s <- runReaderT ac c
+            cb s
+            tenthSeconds r
+            go
 
 io :: IO a -> Monitor a
 io = liftIO
