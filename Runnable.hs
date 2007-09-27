@@ -27,12 +27,15 @@ import Text.ParserCombinators.ReadPrec
 import Config (runnableTypes)
 import Commands
 
-data Runnable = forall r . (Exec r, Read r) => Run r
+data Runnable = forall r . (Exec r, Read r, Show r) => Run r
 
 instance Exec Runnable where
-     run (Run a) = run a
-     rate (Run a) = rate a
+     start (Run a) = start a
+     rate  (Run a) = rate  a
      alias (Run a) = alias a
+
+instance Show Runnable where
+    show (Run x) = show x
 
 instance Read Runnable where
     readPrec = readRunnable
@@ -44,7 +47,7 @@ class ReadAsAnyOf ts ex where
 instance ReadAsAnyOf () ex where 
     readAsAnyOf ~() = mzero
 
-instance (Read t, Exec t, ReadAsAnyOf ts Runnable) => ReadAsAnyOf (t,ts) Runnable where 
+instance (Show t, Read t, Exec t, ReadAsAnyOf ts Runnable) => ReadAsAnyOf (t,ts) Runnable where 
     readAsAnyOf ~(t,ts) = r t `mplus` readAsAnyOf ts
               where r ty = do { m <- readPrec; return (Run (m `asTypeOf` ty)) }
 
