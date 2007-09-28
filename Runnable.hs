@@ -31,7 +31,6 @@ data Runnable = forall r . (Exec r, Read r, Show r) => Run r
 
 instance Exec Runnable where
      start (Run a) = start a
-     rate  (Run a) = rate  a
      alias (Run a) = alias a
 
 instance Show Runnable where
