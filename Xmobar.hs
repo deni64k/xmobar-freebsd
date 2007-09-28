@@ -135,21 +135,21 @@ drawInWin str =
     do config  <- ask
        st      <- get
        let (dpy,win) = (display st, window st)
-       bgcolor <-  io $ initColor dpy $ bgColor config
+       bgcolor <- io $ initColor dpy $ bgColor config
        gc      <- io $ createGC dpy win
        --let's get the fonts
        let lf c = loadQueryFont dpy (font c)
-       fontst  <-  io $ catch (lf config) (const $ lf defaultConfig)
+       fontst  <- io $ catch (lf config) (const $ lf defaultConfig)
        io $ setFont dpy gc (fontFromFontStruct fontst)
        -- create a pixmap to write to and fill it with a rectangle
-       p <- io $ createPixmap dpy win 
-            (fi (width config)) 
-            (fi (height config)) 
-            (defaultDepthOfScreen (defaultScreenOfDisplay dpy))
+       p       <- io $ createPixmap dpy win 
+                         (fi (width  config)) 
+                         (fi (height config)) 
+                         (defaultDepthOfScreen (defaultScreenOfDisplay dpy))
        -- the fgcolor of the rectangle will be the bgcolor of the window
        io $ setForeground dpy gc bgcolor
        io $ fillRectangle dpy p gc 0 0 
-              (fi $ width config) 
+              (fi $ width  config) 
               (fi $ height config)
        -- write to the pixmap the new string
        let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
@@ -157,8 +157,8 @@ drawInWin str =
        -- copy the pixmap with the new string to the window
        io $ copyArea dpy p win gc 0 0 (fi (width config)) (fi (height config)) 0 0
        -- free up everything (we do not want to leak memory!)
-       io $ freeFont dpy fontst
-       io $ freeGC dpy gc
+       io $ freeFont   dpy fontst
+       io $ freeGC     dpy gc
        io $ freePixmap dpy p
        -- resync
        io $ sync dpy True
