@@ -46,12 +46,6 @@ instance Exec Monitors where
     alias (Swap      _ _) = "swap"
     alias (Cpu       _ _) = "cpu"
     alias (Battery   _ _) = "battery"
-    rate  (Weather _ _ r) = r
-    rate  (Network _ _ r) = r
-    rate  (Memory    _ r) = r
-    rate  (Swap      _ r) = r
-    rate  (Cpu       _ r) = r
-    rate  (Battery   _ r) = r
     start (Weather s a r) = runM (a ++ [s]) weatherConfig runWeather r
     start (Network i a r) = runM (a ++ [i]) netConfig     runNet     r
     start (Memory    a r) = runM a          memConfig     runMem     r

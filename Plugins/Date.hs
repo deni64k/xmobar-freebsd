@@ -27,7 +27,6 @@ data Date = Date String String Int
 
 instance Exec Date where
     start (Date f _ r) cb = date f r cb
-    rate  (Date _ _ r)    = r
     alias (Date _ a _)    = a
 
 date :: String -> Int -> (String -> IO ()) -> IO ()
