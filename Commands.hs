@@ -26,8 +26,6 @@ import System.Exit
 import System.IO (hClose, hGetLine)
 
 class Show e => Exec e where
-    rate  :: e -> Int
-    rate  _ = 10
     alias :: e -> String
     alias e = takeWhile (not . isSpace) $ show e
     start :: e -> (String -> IO ()) -> IO ()
@@ -44,7 +42,6 @@ instance Exec Command where
     alias (Com p    _    a _)
         | p /= ""             = if a == "" then p else a
         | otherwise           = ""
-    rate  (Com _    _    _ r) = r
     start (Com prog args _ r) cb = do go
         where go = do
                 (i,o,e,p) <- runInteractiveCommand (prog ++ concat (map (' ':) args))
