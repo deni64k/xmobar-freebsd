@@ -24,6 +24,7 @@ import {-# SOURCE #-} Runnable
 import Plugins.Monitors
 import Plugins.Date
 import Plugins.PipeReader
+import Plugins.StdinReader
 
 -- $config
 -- Configuration data type and default configuration
@@ -69,5 +70,5 @@ defaultConfig =
 -- the 'Runnable.Runnable' Read instance. To install a plugin just add
 -- the plugin's type to the list of types appearing in this function's type
 -- signature.
-runnableTypes :: (Command,(Monitors,(Date,(PipeReader,()))))
+runnableTypes :: (Command,(Monitors,(Date,(PipeReader,(StdinReader,())))))
 runnableTypes = undefined
