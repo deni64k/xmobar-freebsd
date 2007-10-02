@@ -110,83 +110,83 @@ startCommand (com,s,ss)
 
 -- | The function to create the initial window
 createWin :: Config -> IO (Display, Window)
-createWin conf =
-  do dpy   <- openDisplay ""
-     let dflt = defaultScreen dpy
-     rootw <- rootWindow dpy dflt
-     win   <- mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
-            (fi $ xPos   conf) 
-            (fi $ yPos   conf) 
-            (fi $ width  conf) 
-            (fi $ height conf)
-     selectInput dpy win exposureMask
-     mapWindow   dpy win
-     return     (dpy,win)
+createWin conf = do
+  dpy   <- openDisplay ""
+  let dflt = defaultScreen dpy
+  rootw <- rootWindow dpy dflt
+  win   <- mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
+           (fi $ xPos   conf) 
+           (fi $ yPos   conf) 
+           (fi $ width  conf) 
+           (fi $ height conf)
+  selectInput dpy win exposureMask
+  mapWindow   dpy win
+  return     (dpy,win)
 
 updateWin :: TVar String -> X ()
-updateWin v =
-    do c  <- asks config
-       i  <- io $ atomically $ readTVar v
-       ps <- io $ parseString c i
-       drawInWin ps
+updateWin v = do
+  c  <- asks config
+  i  <- io $ atomically $ readTVar v
+  ps <- io $ parseString c i
+  drawInWin ps
 
 -- $print
 
 -- | Draws in and updates the window
 drawInWin :: [(String, String)] -> X ()
-drawInWin str = 
-    do r <- ask
-       let (conf,(d,w)) = (config &&& display &&& window) r
-       bgcolor <- io $ initColor d $ bgColor conf
-       gc      <- io $ createGC  d w
-       --let's get the fonts
-       let lf c = loadQueryFont d (font c)
-       fontst  <- io $ catch (lf conf) (const $ lf defaultConfig)
-       io $ setFont d gc (fontFromFontStruct fontst)
-       -- create a pixmap to write to and fill it with a rectangle
-       p <- io $ createPixmap d w 
-                 (fi (width  conf)) 
-                 (fi (height conf)) 
-                 (defaultDepthOfScreen (defaultScreenOfDisplay d))
-       -- the fgcolor of the rectangle will be the bgcolor of the window
-       io $ setForeground d gc bgcolor
-       io $ fillRectangle d p gc 0 0 
-              (fi $ width  conf) 
-              (fi $ height conf)
-       -- write to the pixmap the new string
-       let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
-       printStrings p gc fontst 1 strWithLenth 
-       -- copy the pixmap with the new string to the window
-       io $ copyArea   d p w gc 0 0 (fi (width conf)) (fi (height conf)) 0 0
-       -- free up everything (we do not want to leak memory!)
-       io $ freeFont   d fontst
-       io $ freeGC     d gc
-       io $ freePixmap d p
-       -- resync
-       io $ sync d True
+drawInWin str = do
+  r <- ask
+  let (conf,(d,w)) = (config &&& display &&& window) r
+  bgcolor <- io $ initColor d $ bgColor conf
+  gc      <- io $ createGC  d w
+  --let's get the fonts
+  let lf c = loadQueryFont d (font c)
+  fontst  <- io $ catch (lf conf) (const $ lf defaultConfig)
+  io $ setFont d gc (fontFromFontStruct fontst)
+  -- create a pixmap to write to and fill it with a rectangle
+  p <- io $ createPixmap d w 
+            (fi (width  conf)) 
+            (fi (height conf)) 
+            (defaultDepthOfScreen (defaultScreenOfDisplay d))
+  -- the fgcolor of the rectangle will be the bgcolor of the window
+  io $ setForeground d gc bgcolor
+  io $ fillRectangle d p gc 0 0 
+       (fi $ width  conf) 
+       (fi $ height conf)
+  -- write to the pixmap the new string
+  let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
+  printStrings p gc fontst 1 strWithLenth 
+  -- copy the pixmap with the new string to the window
+  io $ copyArea   d p w gc 0 0 (fi (width conf)) (fi (height conf)) 0 0
+  -- free up everything (we do not want to leak memory!)
+  io $ freeFont   d fontst
+  io $ freeGC     d gc
+  io $ freePixmap d p
+  -- resync
+  io $ sync d True
 
 -- | An easy way to print the stuff we need to print
 printStrings :: Drawable -> GC -> FontStruct -> Position
              -> [(String, String, Position)] -> X ()
 printStrings _ _ _ _ [] = return ()
-printStrings dr gc fontst offs sl@((s,c,l):xs) =
-    do r <- ask
-       let (conf,d)    = (config &&& display) r
-           (_,asc,_,_) = textExtents fontst s
-           totSLen     = foldr (\(_,_,len) -> (+) len) 0 sl
-           valign      = (fi (height conf) + fi asc) `div` 2
-           remWidth    = fi (width conf) - fi totSLen
-           offset      = case (align conf) of
-                           "center" -> (remWidth + offs) `div` 2
-                           "right"  -> remWidth - 1
-                           "left"   -> offs
-                           _        -> offs
-       fgcolor <- io $ initColor d c
-       bgcolor <- io $ initColor d (bgColor conf)
-       io $ setForeground d gc fgcolor
-       io $ setBackground d gc bgcolor
-       io $ drawImageString d dr gc offset valign s
-       printStrings dr gc fontst (offs + l) xs
+printStrings dr gc fontst offs sl@((s,c,l):xs) = do
+  r <- ask
+  let (conf,d)    = (config &&& display) r
+      (_,asc,_,_) = textExtents fontst s
+      totSLen     = foldr (\(_,_,len) -> (+) len) 0 sl
+      valign      = (fi (height conf) + fi asc) `div` 2
+      remWidth    = fi (width conf) - fi totSLen
+      offset      = case (align conf) of
+                      "center" -> (remWidth + offs) `div` 2
+                      "right"  -> remWidth - 1
+                      "left"   -> offs
+                      _        -> offs
+  fgcolor <- io $ initColor d c
+  bgcolor <- io $ initColor d (bgColor conf)
+  io $ setForeground d gc fgcolor
+  io $ setBackground d gc bgcolor
+  io $ drawImageString d dr gc offset valign s
+  printStrings dr gc fontst (offs + l) xs
 
 {- $unmanwin
 
