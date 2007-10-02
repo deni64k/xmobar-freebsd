@@ -39,7 +39,6 @@ data Config =
            , width          :: Int        -- ^ Window width
            , height         :: Int        -- ^ Window height
            , align          :: String     -- ^ text alignment
-           , refresh        :: Int        -- ^ Refresh rate in tenth of seconds
            , commands       :: [Runnable] -- ^ For setting the command, the command argujments 
                                           --   and refresh rate for the programs to run (optional)
            , sepChar        :: String     -- ^ The character to be used for indicating
@@ -58,7 +57,6 @@ defaultConfig =
            , width    = 1024
            , height   = 15
            , align    = "left"
-           , refresh  = 10
            , commands = []
            , sepChar  = "%"
            , template = "Uptime: <fc=#00FF00>%uptime%</fc> ** <fc=#FF0000>%date%</fc>"
