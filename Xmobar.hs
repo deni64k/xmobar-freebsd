@@ -15,24 +15,22 @@
 
 module Xmobar (-- * Main Stuff
                -- $main
-               Xbar
-              , runXbar
+               X, XConf (..), runX
               , eventLoop
-              , createWin
-              , updateWin
+              -- * Program Execution
+              -- $command
+              , startCommand
+              -- * Window Management
+              -- $window
+              , createWin, updateWin
               -- * Printing
               -- $print
-              , drawInWin
-              , printStrings
-              -- * Program Execution
-              -- $commands
-              , startCommand
+              , drawInWin, printStrings
               -- * Unmamaged Windows
               -- $unmanwin
               , mkUnmanagedWindow
               -- * Useful Utilities
-              , initColor
-              , io
+              , initColor, io, nextEvent', fi
               ) where
 
 import Prelude hiding (catch)
@@ -40,7 +38,7 @@ import Graphics.X11.Xlib
 import Graphics.X11.Xlib.Misc
 import Graphics.X11.Xlib.Event
 
-import Control.Monad.State
+import Control.Arrow ((&&&))
 import Control.Monad.Reader
 import Control.Concurrent
 import Control.Concurrent.STM
@@ -56,32 +54,29 @@ import Runnable
 --
 -- The Xmobar data type and basic loops and functions.
 
--- | This is copied from XMonad.
-newtype Xbar a = X (ReaderT Config (StateT XState IO) a)
-    deriving (Functor, Monad, MonadIO, MonadState XState, MonadReader Config)
+-- | The X type is a ReaderT
+type X = ReaderT XConf IO
 
--- | The State component of StateT
-data XState = 
-    XState { display :: Display
-           , window  :: Window
-           }
+-- | The ReaderT inner component
+data XConf =
+    XConf { display :: Display
+          , window  :: Window
+          , config  :: Config
+         }
 
--- | We use get to get the state and ask to get the configuration: whis way 
--- functions requires less arguments.
-runXbar :: Config -> Display -> Window -> Xbar () -> IO ()
-runXbar c d w (X f) = 
-    do runStateT (runReaderT f c) (XState d w)
-       return ()
+-- | Runs the ReaderT
+runX :: Config -> Display -> Window -> X () -> IO ()
+runX c d w f = runReaderT f (XConf d w c)
 
 -- | The event loop
 eventLoop :: Config -> [(Maybe ThreadId, TVar String)] -> Display -> Window -> IO ()
 eventLoop c v d w = do
     tv <- atomically $ newTVar []
-    t    <- forkIO (block $ go tv)
-    timer t tv
+    t  <- forkIO (block $ go tv)
+    checker t tv
  where
     -- interrupt the drawing thread every time a var is updated
-    timer t tvar = do
+    checker t tvar = do
       nval <- atomically $ do
               ov <- readTVar tvar
               nv <- mapM readTVar (map snd v)
@@ -89,21 +84,14 @@ eventLoop c v d w = do
       atomically $ writeTVar tvar nval
       threadDelay 1000
       throwTo t (ErrorCall "Xmobar.eventLoop: yield")
-      timer t tvar
+      checker t tvar
     -- Continuously wait for a timer interrupt or an expose event
     go tvar = do
-      runXbar c d w (updateWin tvar)
+      runX c d w (updateWin tvar)
       catch (unblock $ allocaXEvent $ nextEvent' d) (const $ return ())
       go tvar
 
-updateWin :: TVar String -> Xbar ()
-updateWin v =
-    do i  <- io $ atomically $ readTVar v
-       c  <- ask
-       ps <- io $ parseString c i
-       drawInWin ps
-
--- $commands 
+-- $command
 
 -- | Runs a command as an independent thread and returns its thread id
 -- and the TVar the command will be writing to.
@@ -118,88 +106,91 @@ startCommand (com,s,ss)
                             return (Just h,var)
     where is = "Updating... "
 
+-- $window
+
 -- | The function to create the initial window
 createWin :: Config -> IO (Display, Window)
-createWin config =
+createWin conf =
   do dpy   <- openDisplay ""
      let dflt = defaultScreen dpy
      rootw <- rootWindow dpy dflt
      win   <- mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
-            (fi $ xPos   config) 
-            (fi $ yPos   config) 
-            (fi $ width  config) 
-            (fi $ height config)
+            (fi $ xPos   conf) 
+            (fi $ yPos   conf) 
+            (fi $ width  conf) 
+            (fi $ height conf)
      selectInput dpy win exposureMask
      mapWindow   dpy win
-     return (dpy,win)
+     return     (dpy,win)
+
+updateWin :: TVar String -> X ()
+updateWin v =
+    do c  <- asks config
+       i  <- io $ atomically $ readTVar v
+       ps <- io $ parseString c i
+       drawInWin ps
 
 -- $print
 
 -- | Draws in and updates the window
-drawInWin :: [(String, String)] -> Xbar ()
+drawInWin :: [(String, String)] -> X ()
 drawInWin str = 
-    do config  <- ask
-       st      <- get
-       let (dpy,win) = (display st, window st)
-       bgcolor <- io $ initColor dpy $ bgColor config
-       gc      <- io $ createGC dpy win
+    do r <- ask
+       let (conf,(d,w)) = (config &&& display &&& window) r
+       bgcolor <- io $ initColor d $ bgColor conf
+       gc      <- io $ createGC  d w
        --let's get the fonts
-       let lf c = loadQueryFont dpy (font c)
-       fontst  <- io $ catch (lf config) (const $ lf defaultConfig)
-       io $ setFont dpy gc (fontFromFontStruct fontst)
+       let lf c = loadQueryFont d (font c)
+       fontst  <- io $ catch (lf conf) (const $ lf defaultConfig)
+       io $ setFont d gc (fontFromFontStruct fontst)
        -- create a pixmap to write to and fill it with a rectangle
-       p       <- io $ createPixmap dpy win 
-                         (fi (width  config)) 
-                         (fi (height config)) 
-                         (defaultDepthOfScreen (defaultScreenOfDisplay dpy))
+       p <- io $ createPixmap d w 
+                 (fi (width  conf)) 
+                 (fi (height conf)) 
+                 (defaultDepthOfScreen (defaultScreenOfDisplay d))
        -- the fgcolor of the rectangle will be the bgcolor of the window
-       io $ setForeground dpy gc bgcolor
-       io $ fillRectangle dpy p gc 0 0 
-              (fi $ width  config) 
-              (fi $ height config)
+       io $ setForeground d gc bgcolor
+       io $ fillRectangle d p gc 0 0 
+              (fi $ width  conf) 
+              (fi $ height conf)
        -- write to the pixmap the new string
        let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
        printStrings p gc fontst 1 strWithLenth 
        -- copy the pixmap with the new string to the window
-       io $ copyArea dpy p win gc 0 0 (fi (width config)) (fi (height config)) 0 0
+       io $ copyArea   d p w gc 0 0 (fi (width conf)) (fi (height conf)) 0 0
        -- free up everything (we do not want to leak memory!)
-       io $ freeFont   dpy fontst
-       io $ freeGC     dpy gc
-       io $ freePixmap dpy p
+       io $ freeFont   d fontst
+       io $ freeGC     d gc
+       io $ freePixmap d p
        -- resync
-       io $ sync dpy True
+       io $ sync d True
 
 -- | An easy way to print the stuff we need to print
-printStrings :: Drawable 
-             -> GC
-             -> FontStruct
-             -> Position
-             -> [(String, String, Position)]
-             -> Xbar ()
+printStrings :: Drawable -> GC -> FontStruct -> Position
+             -> [(String, String, Position)] -> X ()
 printStrings _ _ _ _ [] = return ()
-printStrings d gc fontst offs sl@((s,c,l):xs) =
-    do config <- ask
-       st     <- get
-       let (_,asc,_,_) = textExtents fontst s
+printStrings dr gc fontst offs sl@((s,c,l):xs) =
+    do r <- ask
+       let (conf,d)    = (config &&& display) r
+           (_,asc,_,_) = textExtents fontst s
            totSLen     = foldr (\(_,_,len) -> (+) len) 0 sl
-           valign      = (fi (height config) + fi asc) `div` 2
-           remWidth    = fi (width config) - fi totSLen
-           offset      = case (align config) of
+           valign      = (fi (height conf) + fi asc) `div` 2
+           remWidth    = fi (width conf) - fi totSLen
+           offset      = case (align conf) of
                            "center" -> (remWidth + offs) `div` 2
                            "right"  -> remWidth - 1
                            "left"   -> offs
                            _        -> offs
-       fgcolor <- io $ initColor (display st) c
-       bgcolor <- io $ initColor (display st) (bgColor config)
-       io $ setForeground (display st) gc fgcolor
-       io $ setBackground (display st) gc bgcolor
-       io $ drawImageString (display st) d gc offset valign s
-       printStrings d gc fontst (offs + l) xs
+       fgcolor <- io $ initColor d c
+       bgcolor <- io $ initColor d (bgColor conf)
+       io $ setForeground d gc fgcolor
+       io $ setBackground d gc bgcolor
+       io $ drawImageString d dr gc offset valign s
+       printStrings dr gc fontst (offs + l) xs
 
 {- $unmanwin
 
-This is a way to create unmamaged window. It was a mistery in Haskell. 
-Till I've found out...;-)
+This is a way to create unmamaged window.
 
 -}
 
@@ -214,17 +205,16 @@ mkUnmanagedWindow :: Display
                   -> Dimension
                   -> IO Window
 mkUnmanagedWindow dpy scr rw x y w h = do
-  let visual = defaultVisualOfScreen scr
+  let visual   = defaultVisualOfScreen scr
       attrmask = cWOverrideRedirect
-  win <- allocaSetWindowAttributes $ 
+  allocaSetWindowAttributes $ 
          \attributes -> do
            set_override_redirect attributes True
            createWindow dpy rw x y w h 0 (defaultDepthOfScreen scr) 
                         inputOutput visual attrmask attributes                                
-  return win
 
 {- $utility
-Utilities, aka stollen without givin' credit stuff.
+Utilities
 -}
 
 -- | Get the Pixel value for a named color: if an invalid name is
@@ -250,7 +240,7 @@ nextEvent' d p = do
     fd = connectionNumber d
 
 -- | Short-hand for lifting in the IO monad
-io :: IO a -> Xbar a
+io :: IO a -> X a
 io = liftIO
 
 -- | Short-hand for 'fromIntegral'

@@ -36,16 +36,16 @@ main :: IO ()
 main = 
     do args     <- getArgs
        (o,file) <- getOpts args
-       conf     <- case file of
+       c        <- case file of
                      [cfgfile] -> readConfig cfgfile
                      _         -> readDefaultConfig
-       c        <- newIORef conf
-       doOpts c o
-       config   <- readIORef c
-       cl       <- parseTemplate config (template config)
+       civ      <- newIORef c
+       doOpts civ o
+       conf     <- readIORef civ
+       cl       <- parseTemplate conf (template conf)
        vars     <- mapM startCommand cl
-       (d,w)    <- createWin config
-       eventLoop config vars d w
+       (d,w)    <- createWin conf
+       eventLoop conf vars d w
        return ()
 
 -- | Reads the configuration files or quits with an error
@@ -54,9 +54,9 @@ readConfig f =
     do file <- fileExist f
        s    <- if file then readFile f else error $ f ++ ": file not found!\n" ++ usage
        case reads s of
-         [(config,_)] -> return config
+         [(conf,_)] -> return conf
          [] -> error $ f ++ ": configuration file contains errors!\n" ++ usage
-         _ -> error ("Some problem occured. Aborting...")
+         _  -> error ("Some problem occured. Aborting...")
 
 -- | Read default configuration file or load the default config
 readDefaultConfig :: IO Config
