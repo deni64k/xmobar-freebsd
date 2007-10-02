@@ -32,11 +32,11 @@ http://gorgias.mine.nu/xmobar/xmobar-0.7.png
 INSTALLATION
 ============
 
-tar xvfz xmobar-0.7
-cd xmobar-0.7
+tar xvfz xmobar-0.8
+cd xmobar-0.8
 runhaskell Setup.lhs configure --prefix=/usr/local
 runhaskell Setup.lhs build
-runhaskell Setup.lhs haddock (optional for building the code documentation)
+runhaskell Setup.lhs haddock --executables (optional for building the code documentation)
 runhaskell Setup.lhs install (possibly to be run as root)
 
 Run with:
@@ -71,7 +71,6 @@ yPos: y position
 width: width of the Xmobar window 
 height: height
 align: text alignment 
-refresh: Refresh rate in tenth of seconds
 commands: For setting the options of the programs to run (optional)
 sepChar: The character to be used for indicating commands in the
          output template (default '%')
@@ -104,8 +103,6 @@ Options:
   -H height     --height=height      The status bar height. Default 15
   -a align      --align=align        The text alignment: center, left or right.
                                      Default: left
-  -r rate       --refresh=rate       The refresh rate in tenth of seconds:
-                                     default 1 sec.
   -s char       --sepchar=char       The character used to separate commands in
                                      the output template. Default '%'
   -t tempate    --template=tempate   The output template
@@ -119,12 +116,13 @@ The output template must contain at least one command. Xmobar will
 parse the template and will search for the command to be executed in
 the "commands" configuration option. First an "alias" will be search
 (internal commands such as Weather or Network have default aliasing,
-see below). After that the command name will be tried. If a command is
-found, the arguments specified in the "commands" list will be used. 
+see below). After that, the command name will be tried. If a command
+is found, the arguments specified in the "commands" list will be used.
 
-If no command is found in the "commands" list, Xmobar will try to
-execute a program with the name found in the template. If the
-execution is not successful an error will be reported.
+If no command is found in the "commands" list, Xmobar will ask the
+operating system to execute a program with the name found in the
+template. If the execution is not successful an error will be
+reported.
    
 The "commands" Configuration Option
 -----------------------------------
@@ -139,28 +137,30 @@ The option consists in a list of commands separated by a comma and
 enclosed by square parenthesis. Example:
 
 [Run Memory ["-t","Mem: <usedratio>%"] 10, Run Swap [] 10]
+to run the Memory monitor plugin with the specified template, and the
+swap monitor plugin, with default options, every second.
 
 The only internal available command is Com (see below Executing
-External Commands). But by default Xmobar comes with a plugin
-consisting in a set of system monitors. This plugin installs the
-following internal commands: Weather, Network, Memory, Swap, Cpu,
-Battery.
+External Commands). All other commands are provided by plugins. Xmobar
+comes with some plugins, providing a set of system monitors, a
+standard input reader, an unix named pipe reade, and a configurable
+date plugin. These plugins install the following internal commands:
+Weather, Network, Memory, Swap, Cpu, Battery, Date, StdinReader, and
+PipeReader.
 
 To remove them see below Installing/Removing a Plugin
 
 Other commands can be created as plugins with the Plugin
 infrastructure. See below Writing a Plugin
 
-This is an example of a command in the "commands" list:
-Run Memory ["-t","Mem: <usedratio>%"] 10
+System Monitor Plugins
+----------------------
 
-Internal Commands and Aliases
------------------------------
+This is the description of the system monitor plugins that are
+installed by default.
 
-Each command in the "commands" configuration option list has an alias
-to be used in the template.
-
-Internal commands have default aliases:
+Each monitor has an alias to be used in the output template. Monitors
+have default aliases.
 
 Weather StationID Args RefreshRate
 - aliases to the Station ID: so Weather "LIPB" [] can be used in template as %LIBP%
@@ -206,8 +206,8 @@ Battery Args RefreshRate
 	    "left"
 - Default template: "Batt: <left>"
 
-Internal Commands Arguments
----------------------------
+Monitor Plugins Commands Arguments
+----------------------------------
 
 These are the arguments that can be used for internal commands in the
 "commands" configuration option:
@@ -248,6 +248,15 @@ can be used in the output template as %uname%
 Run Com "date" ["+\"%a %b %_d %H:%M\""] "mydate" 600
 can be used in the output template as %mydate%
 
+Other Plugins
+-------------
+
+Date Args Alias RefreshRate
+
+StdinReader
+
+PipeReader "/path/to/pipe" Alias
+  
 PLUGINS
 =======
 
@@ -258,16 +267,14 @@ Writing a plugin for Xmobar should be very simple. You need to create
 a data type with at least one constructor.
 
 Next you must declare this data type an instance of the Exec class, by
-defining the 3 needed methods:
+defining the 1 needed method (start) and one optional one (alias):
 
-    run :: e -> IO String
-    rate :: e -> Int
+    start :: e -> (String -IO ()) -> IO ()
     alias :: e -> String
 
-"run" must produce the IO String that will be displayed by Xmobar.
-"rate" is the refresh rate for you plugin (the number of tenth of
-seconds between two successive runs);
-"alias" is the name to be used in the output template.
+"start" must receive a callback to be used to display the String
+produced by the plugin. "alias" is the name to be used in the output
+template. Default alias will be the data type constructor.
 
 That requires importing the plugin API (the Exec class definition),
 that is exported by Plugins.hs. So you just need to import it in your
@@ -279,11 +286,11 @@ After that your type constructor can be used as an argument for the
 Runnable type constructor "Run" in the "commands" list of the
 configuration options.
 
-This requires importing you plugin into Config.hs and adding you type
+This requires importing your plugin into Config.hs and adding you type
 to the type list in the type signature of Config.runnableTypes.
 
-For a vary basic example see Plugins/HelloWorld.hs that is distributed
-with Xmobar.
+For a very basic example see Plugins/HelloWorld.hs or the other
+plugins that are distributed with Xmobar.
 
 Installing/Removing a Plugin
 ----------------------------
@@ -363,4 +370,3 @@ http://gorgias.mine.nu/repos/xmobar/
 
 To understand the internal mysteries of Xmobar try reading this:
 http://www.haskell.org/haskellwiki/X_window_programming_in_Haskell
-
