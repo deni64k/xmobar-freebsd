@@ -33,38 +33,37 @@ import System.Posix.Files
  
 -- | The main entry point
 main :: IO ()
-main = 
-    do args     <- getArgs
-       (o,file) <- getOpts args
-       c        <- case file of
-                     [cfgfile] -> readConfig cfgfile
-                     _         -> readDefaultConfig
-       civ      <- newIORef c
-       doOpts civ o
-       conf     <- readIORef civ
-       cl       <- parseTemplate conf (template conf)
-       vars     <- mapM startCommand cl
-       (d,w)    <- createWin conf
-       eventLoop conf vars d w
-       return ()
+main = do
+  args     <- getArgs
+  (o,file) <- getOpts args
+  c        <- case file of
+                [cfgfile] -> readConfig cfgfile
+                _         -> readDefaultConfig
+  civ      <- newIORef c
+  doOpts civ o
+  conf     <- readIORef civ
+  cl       <- parseTemplate conf (template conf)
+  vars     <- mapM startCommand cl
+  (d,w)    <- createWin conf
+  eventLoop conf vars d w
 
 -- | Reads the configuration files or quits with an error
 readConfig :: FilePath -> IO Config
-readConfig f = 
-    do file <- fileExist f
-       s    <- if file then readFile f else error $ f ++ ": file not found!\n" ++ usage
-       case reads s of
-         [(conf,_)] -> return conf
-         [] -> error $ f ++ ": configuration file contains errors!\n" ++ usage
-         _  -> error ("Some problem occured. Aborting...")
+readConfig f = do
+  file <- fileExist f
+  s    <- if file then readFile f else error $ f ++ ": file not found!\n" ++ usage
+  case reads s of
+    [(conf,_)] -> return conf
+    []         -> error $ f ++ ": configuration file contains errors!\n" ++ usage
+    _          -> error ("Some problem occured. Aborting...")
 
 -- | Read default configuration file or load the default config
 readDefaultConfig :: IO Config
-readDefaultConfig = 
-    do home <- getEnv "HOME"
-       let path = home ++ "/.xmobarrc"
-       f <- fileExist path
-       if f then readConfig path else return defaultConfig
+readDefaultConfig = do
+  home <- getEnv "HOME"
+  let path = home ++ "/.xmobarrc"
+  f <- fileExist path
+  if f then readConfig path else return defaultConfig
 
 data Opts = Help
           | Version 
