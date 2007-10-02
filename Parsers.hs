@@ -43,9 +43,9 @@ formatting template.
 parseString :: Config -> String -> IO [(String, String)]
 parseString config s = 
     case (parse (stringParser config) "" s) of
-      Left _ -> return [("Could not parse string: " ++ s
-                        , (fgColor config))]
-      Right x  -> return x
+      Left _  -> return [("Could not parse string: " ++ s
+                         , (fgColor config))]
+      Right x -> return x
 
 -- | Gets the string and combines the needed parsers
 stringParser :: Config -> Parser [(String, String)]
@@ -83,9 +83,9 @@ colorSpec =
 -- | Parses the output template string
 templateStringParser :: Config -> Parser (String,String,String)
 templateStringParser c =
-    do{ s <- many $ noneOf (sepChar c)
-      ; (com,_,_) <- templateCommandParser c
-      ; ss <- many $ noneOf (sepChar c)
+    do{ s         <- many $ noneOf (sepChar c)
+      ; (com,_,_) <- templateCommandParser  c
+      ; ss        <- many $ noneOf (sepChar c)
       ; return (com, s, ss)
       } 
 
@@ -107,10 +107,10 @@ templateParser c = many (templateStringParser c)
 parseTemplate :: Config -> String -> IO [(Runnable,String,String)]
 parseTemplate config s = 
     do str <- case (parse (templateParser config) "" s) of
-                Left _ -> return [("","","")]
-                Right x  -> return x
+                Left _  -> return [("","","")]
+                Right x -> return x
        let comList = map alias (commands config)
-           m = Map.fromList $ zip comList (commands config)
+           m       = Map.fromList $ zip comList (commands config)
        return $ combine config m str
 
 -- | Given a finite "Map" and a parsed templatet produces the
@@ -119,5 +119,5 @@ combine :: Config -> Map.Map String Runnable -> [(String, String, String)] -> [(
 combine _ _ [] = []
 combine config m ((ts,s,ss):xs) = 
     [(com, s, ss)] ++ combine config m xs
-        where com = Map.findWithDefault dflt ts m
-              dflt = Run $ Com ts [] [] (refresh config) --"<" ++ ts ++ " not found!>"
+        where com  = Map.findWithDefault dflt ts m
+              dflt = Run $ Com ts [] [] 10
