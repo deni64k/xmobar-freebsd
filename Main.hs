@@ -39,13 +39,13 @@ main =
        conf     <- case file of
                      [cfgfile] -> readConfig cfgfile
                      _         -> readDefaultConfig
-       c        <- newIORef conf 
+       c        <- newIORef conf
        doOpts c o
        config   <- readIORef c
        cl       <- parseTemplate config (template config)
-       var      <- mapM execCommand cl
+       vars     <- mapM startCommand cl
        (d,w)    <- createWin config
-       eventLoop config var d w
+       eventLoop config vars d w
        return ()
 
 -- | Reads the configuration files or quits with an error
@@ -76,7 +76,6 @@ data Opts = Help
           | Width    String
           | Height   String
           | Align    String
-          | Refresh  String
           | Commands String
           | SepChar  String
           | Template String 
@@ -94,7 +93,6 @@ options =
     , Option ['W'     ] ["width"    ] (ReqArg Width "width"        ) "The status bar width. Default 1024"
     , Option ['H'     ] ["height"   ] (ReqArg Height "height"      ) "The status bar height. Default 15"
     , Option ['a'     ] ["align"    ] (ReqArg Align "align"        ) "The text alignment: center, left or right.\nDefault: left"
-    , Option ['r'     ] ["refresh"  ] (ReqArg Refresh "rate"       ) "The refresh rate in tenth of seconds:\ndefault 1 sec."
     , Option ['s'     ] ["sepchar"  ] (ReqArg SepChar "char"       ) "The character used to separate commands in\nthe output template. Default '%'"
     , Option ['t'     ] ["template" ] (ReqArg Template "tempate"   ) "The output template"
     , Option ['c'     ] ["commands" ] (ReqArg Commands  "commands" ) "The list of commands to be executed"
@@ -137,7 +135,6 @@ doOpts conf (o:oo) =
       Width    s -> modifyIORef conf (\c -> c { width    = readInt s c width   }) >> go
       Height   s -> modifyIORef conf (\c -> c { height   = readInt s c height  }) >> go
       Align    s -> modifyIORef conf (\c -> c { align    = s                   }) >> go
-      Refresh  s -> modifyIORef conf (\c -> c { refresh  = readInt s c refresh }) >> go
       SepChar  s -> modifyIORef conf (\c -> c { sepChar  = s                   }) >> go
       Template s -> modifyIORef conf (\c -> c { template = s                   }) >> go
       Commands s -> case readCom s of
