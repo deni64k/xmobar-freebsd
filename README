@@ -267,27 +267,47 @@ Writing a plugin for Xmobar should be very simple. You need to create
 a data type with at least one constructor.
 
 Next you must declare this data type an instance of the Exec class, by
-defining the 1 needed method (alternatively "start" or "run") and one
-optional one (alias):
+defining the 1 needed method (alternatively "start" or "run") and 2
+optional ones (alias and rate):
 
     start :: e -> (String -> IO ()) -> IO ()
     run   :: e -> IO String
+    rate  :: e -> Int
     alias :: e -> String
 
 "start" must receive a callback to be used to display the String
 produced by the plugin. This method can be used for plugins that need
-to perform asynchronous actions, or that need to set a refresh rate.
-See Plugins/Date.hs or Plugins/PipeReader.hs for examples. 
+to perform asynchronous actions. See Plugins/PipeReader.hs for an
+example.
 
-"run" can be used for simpler plugins, that must be run every second.
-See Plugins/HelloWorld.hs for an example.
+"run" can be used for simpler plugins. If you define only "run" the
+plugin will be run every second. To overwrite this default you just
+need to implement "rate", which must return the number of tenth of
+seconds between every successive runs. See Plugins/HelloWorld.hs for
+an example of a plugin that runs just once, and Plugins/Date.hs for
+one that implements "rate".
+
+Notice that Date could be implemented as:
+instance Exec Date where
+    alias (Date _ a _) = a
+    start (Date f _ r) = date f r
+
+date :: String -> Int -> (String -> IO ()) -> IO ()
+date format r callback = do go
+    where go = do
+            t <- toCalendarTime =<< getClockTime
+            callback $ formatCalendarTime defaultTimeLocale format t
+            tenthSeconds r >> go
+
+This implementation is equivalent to the one you can read in
+Plugins/Date.hs
 
 "alias" is the name to be used in the output template. Default alias
 will be the data type constructor.
 
-That requires importing the plugin API (the Exec class definition),
-that is exported by Plugins.hs. So you just need to import it in your
-module with:
+Implementing a plugin requires importing the plugin API (the Exec
+class definition), that is exported by Plugins.hs. So you just need to
+import it in your module with:
 
 import Plugins
 
