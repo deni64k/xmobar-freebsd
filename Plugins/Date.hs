@@ -26,13 +26,11 @@ data Date = Date String String Int
     deriving (Read, Show)
 
 instance Exec Date where
-    start (Date f _ r) cb = date f r cb
-    alias (Date _ a _)    = a
+    alias (Date _ a _) = a
+    run   (Date f _ _) = date f
+    rate  (Date _ _ r) = r
 
-date :: String -> Int -> (String -> IO ()) -> IO ()
-date format r cb = do go
-    where go = do
-            t <- toCalendarTime =<< getClockTime
-            cb $ formatCalendarTime defaultTimeLocale format t
-            tenthSeconds r >> go
-  
+date :: String -> IO String
+date format = do 
+  t <- toCalendarTime =<< getClockTime
+  return $ formatCalendarTime defaultTimeLocale format t
