@@ -267,14 +267,23 @@ Writing a plugin for Xmobar should be very simple. You need to create
 a data type with at least one constructor.
 
 Next you must declare this data type an instance of the Exec class, by
-defining the 1 needed method (start) and one optional one (alias):
+defining the 1 needed method (alternatively "start" or "run") and one
+optional one (alias):
 
-    start :: e -> (String -IO ()) -> IO ()
+    start :: e -> (String -> IO ()) -> IO ()
+    run   :: e -> IO String
     alias :: e -> String
 
 "start" must receive a callback to be used to display the String
-produced by the plugin. "alias" is the name to be used in the output
-template. Default alias will be the data type constructor.
+produced by the plugin. This method can be used for plugins that need
+to perform asynchronous actions, or that need to set a refresh rate.
+See Plugins/Date.hs or Plugins/PipeReader.hs for examples. 
+
+"run" can be used for simpler plugins, that must be run every second.
+See Plugins/HelloWorld.hs for an example.
+
+"alias" is the name to be used in the output template. Default alias
+will be the data type constructor.
 
 That requires importing the plugin API (the Exec class definition),
 that is exported by Plugins.hs. So you just need to import it in your
