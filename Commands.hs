@@ -28,7 +28,13 @@ import System.IO (hClose, hGetLine)
 class Show e => Exec e where
     alias :: e -> String
     alias e = takeWhile (not . isSpace) $ show e
+    run :: e -> IO String
+    run _ = return ""
     start :: e -> (String -> IO ()) -> IO ()
+    start e cb = go
+        where go = do
+                run e >>= cb
+                tenthSeconds 10 >> go
 
 data Command = Com Program Args Alias Rate
                deriving (Show,Read,Eq)
