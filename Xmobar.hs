@@ -84,13 +84,13 @@ eventLoop c v d w = do
               guard (nv /= ov)
               writeTVar tvar nv
               return nv
-      throwTo t (ErrorCall "Xmobar.eventLoop: yield")
+      throwDynTo t ()
       checker t tvar nval
 
     -- Continuously wait for a timer interrupt or an expose event
     go tvar = do
       runX c d w (updateWin tvar)
-      catch (unblock $ allocaXEvent $ nextEvent' d) (const $ return ())
+      catchDyn (unblock $ allocaXEvent $ nextEvent' d) (\() -> return ())
       go tvar
 
 -- $command
