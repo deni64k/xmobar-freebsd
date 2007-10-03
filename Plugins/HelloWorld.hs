@@ -20,6 +20,5 @@ data HelloWorld = HelloWorld
     deriving (Read, Show)
 
 instance Exec HelloWorld where
-    rate  HelloWorld    = 0
-    alias HelloWorld    = "helloWorld"
-    start HelloWorld cb = cb "<fc=red>Hello World!!</fc>"
+    alias HelloWorld = "helloWorld"
+    run   HelloWorld = return "<fc=red>Hello World!!</fc>"
