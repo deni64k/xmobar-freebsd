@@ -71,20 +71,22 @@ runX c d w f = runReaderT f (XConf d w c)
 -- | The event loop
 eventLoop :: Config -> [(Maybe ThreadId, TVar String)] -> Display -> Window -> IO ()
 eventLoop c v d w = do
+    b  <- newEmptyMVar
     tv <- atomically $ newTVar []
-    t  <- forkIO (block $ go tv)
-    checker t tv
+    t  <- forkIO (block $ do putMVar b (); go tv)
+    takeMVar b
+    checker t tv ""
  where
     -- interrupt the drawing thread every time a var is updated
-    checker t tvar = do
+    checker t tvar ov = do
       nval <- atomically $ do
-              ov <- readTVar tvar
-              nv <- mapM readTVar (map snd v)
-              if concat nv == ov then retry else return (concat nv)
-      atomically $ writeTVar tvar nval
-      threadDelay 1000
+              nv <- fmap concat $ mapM readTVar (map snd v)
+              guard (nv /= ov)
+              writeTVar tvar nv
+              return nv
       throwTo t (ErrorCall "Xmobar.eventLoop: yield")
-      checker t tvar
+      checker t tvar nval
+
     -- Continuously wait for a timer interrupt or an expose event
     go tvar = do
       runX c d w (updateWin tvar)
