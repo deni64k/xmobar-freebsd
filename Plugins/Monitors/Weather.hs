@@ -71,11 +71,11 @@ pTime = do y <- getNumbersAsString
            return (y, m, d ,([h]++[hh]++":"++[mi]++mimi))
 
 pTemp :: Parser (Int, Int)
-pTemp = do f <- manyTill digit $ char ' '
+pTemp = do f <- manyTill (digit <|> char '.') $ char ' '
            manyTill anyChar $ char '('
            c <- manyTill digit $ (char ' ' <|> char '.')
            skipRestOfLine
-           return $ (read c, read f)
+           return $ (floor (read c :: Double), floor (read f :: Double))
 
 pRh :: Parser Int
 pRh = do s <- manyTill digit $ (char '%' <|> char '.')
