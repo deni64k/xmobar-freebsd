@@ -70,11 +70,12 @@ runX c d w f = runReaderT f (XConf d w c)
 
 -- | The event loop
 eventLoop :: Config -> [(Maybe ThreadId, TVar String)] -> Display -> Window -> IO ()
-eventLoop c v d w = block $ do
+eventLoop c v d w = do
+    b  <- newEmptyMVar
     tv <- atomically $ newTVar []
-    t  <- myThreadId
-    forkIO $ checker t tv ""
-    go tv
+    t  <- forkIO (block $ do putMVar b (); go tv)
+    takeMVar b
+    checker t tv ""
  where
     -- interrupt the drawing thread every time a var is updated
     checker t tvar ov = do
