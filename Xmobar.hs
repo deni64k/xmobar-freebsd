@@ -183,10 +183,17 @@ printStrings dr gc fontst offs sl@((s,c,l):xs) = do
                       "right"  -> remWidth - 1
                       "left"   -> offs
                       _        -> offs
-  fgcolor <- io $ initColor d c
-  bgcolor <- io $ initColor d (bgColor conf)
-  io $ setForeground d gc fgcolor
-  io $ setBackground d gc bgcolor
+  (fc,bc) <- case (break (==',') c) of
+               (f,',':b) -> do
+                 fgc <- io $ initColor d f
+                 bgc <- io $ initColor d b
+                 return (fgc,bgc) 
+               (f,_) -> do
+                 fgc <- io $ initColor d f
+                 bgc <- io $ initColor d (bgColor conf)
+                 return (fgc,bgc) 
+  io $ setForeground d gc fc
+  io $ setBackground d gc bc
   io $ drawImageString d dr gc offset valign s
   printStrings dr gc fontst (offs + l) xs
 
@@ -223,7 +230,7 @@ Utilities
 -- given the black pixel will be returned.
 initColor :: Display -> String -> IO Pixel
 initColor dpy c =
-    catch (initColor' dpy c) (const $ return $ blackPixel dpy (defaultScreen dpy))
+    catch (initColor' dpy c) (const . return . blackPixel dpy $ (defaultScreen dpy))
 
 initColor' :: Display -> String -> IO Pixel
 initColor' dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
