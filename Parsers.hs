@@ -74,11 +74,7 @@ colorsAndText config =
 -- | Parses a color specification (hex or named)
 colorSpec :: Parser String
 colorSpec =
-    do { c <- char '#'
-       ; s <- count 6 hexDigit
-       ; return $ c:s
-       }
-    <|> many1 alphaNum
+    many1 (alphaNum <|> char ',' <|> char '#')
 
 -- | Parses the output template string
 templateStringParser :: Config -> Parser (String,String,String)
