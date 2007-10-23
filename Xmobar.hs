@@ -174,9 +174,9 @@ printStrings _ _ _ _ [] = return ()
 printStrings dr gc fontst offs sl@((s,c,l):xs) = do
   r <- ask
   let (conf,d)    = (config &&& display) r
-      (_,asc,_,_) = textExtents fontst s
+      (_,asc,dsc,_) = textExtents fontst s
       totSLen     = foldr (\(_,_,len) -> (+) len) 0 sl
-      valign      = (fi (height conf) + fi asc) `div` 2
+      valign      = (fi (height conf) + fi (asc) - fi dsc) `div` 2
       remWidth    = fi (width conf) - fi totSLen
       offset      = case (align conf) of
                       "center" -> (remWidth + offs) `div` 2
