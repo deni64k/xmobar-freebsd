@@ -41,6 +41,11 @@ main = do
   c        <- case file of
                 [cfgfile] -> readConfig cfgfile
                 _         -> readDefaultConfig
+
+  -- listen for ConfigureEvents on the root window, for xrandr support:
+  rootw <- rootWindow d (defaultScreen d)
+  selectInput d rootw structureNotifyMask
+
   civ      <- newIORef c
   doOpts civ o
   conf     <- readIORef civ
