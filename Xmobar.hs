@@ -35,14 +35,15 @@ module Xmobar (-- * Main Stuff
 
 import Prelude hiding (catch)
 import Graphics.X11.Xlib
-import Graphics.X11.Xlib.Misc
-import Graphics.X11.Xlib.Event
+import Graphics.X11.Xlib.Extras
+import Graphics.X11.Xinerama
 
 import Control.Arrow ((&&&))
 import Control.Monad.Reader
 import Control.Concurrent
 import Control.Concurrent.STM
-import Control.Exception
+import Control.Exception hiding (handle)
+import Data.Bits
 import System.Posix.Types (Fd(..))
 
 import Config
@@ -70,12 +71,11 @@ runX c d w f = runReaderT f (XConf d w c)
 
 -- | The event loop
 eventLoop :: Config -> [(Maybe ThreadId, TVar String)] -> Display -> Window -> IO ()
-eventLoop c v d w = do
-    b  <- newEmptyMVar
+eventLoop c v d w = block $ do
     tv <- atomically $ newTVar []
-    t  <- forkIO (block $ do putMVar b (); go tv)
-    takeMVar b
-    checker t tv ""
+    t <- myThreadId
+    ct <- forkIO (checker t tv "" `catch` \_ -> return ())
+    go tv ct   
  where
     -- interrupt the drawing thread every time a var is updated
     checker t tvar ov = do
@@ -88,10 +88,26 @@ eventLoop c v d w = do
       checker t tvar nval
 
     -- Continuously wait for a timer interrupt or an expose event
-    go tvar = do
-      runX c d w (updateWin tvar)
-      catchDyn (unblock $ allocaXEvent $ nextEvent' d) (\() -> return ())
-      go tvar
+    go tv ct = do
+      catchDyn (unblock $ allocaXEvent $ \e ->
+                    handle tv ct =<< (nextEvent' d e >> getEvent e))
+               (\() -> runX c d w (updateWin tv) >> return ())
+      go tv ct
+
+    -- event hanlder
+    handle _ ct (ConfigureEvent {ev_window = win}) = do
+      rootw <- rootWindow d (defaultScreen d)
+      when (win == rootw) $ block $ do
+                      (Rectangle _ _ wid _):_ <- getScreenInfo d
+                      let nw = min wid $ fi (width c)
+                      killThread ct
+                      destroyWindow d w
+                      w' <- createWin d (c {width = fi nw})
+                      eventLoop (c {width = fi nw}) v d w'
+
+    handle tvar _ (ExposeEvent {}) = runX c d w (updateWin tvar)
+
+    handle _ _ _  = return ()
 
 -- $command
 
@@ -100,7 +116,7 @@ eventLoop c v d w = do
 startCommand :: (Runnable,String,String) -> IO (Maybe ThreadId, TVar String)
 startCommand (com,s,ss)
     | alias com == ""  = do var <- atomically $ newTVar is
-                            atomically $ writeTVar var ("Could not parse the template")
+                            atomically $ writeTVar var "Could not parse the template"
                             return (Nothing,var)
     | otherwise        = do var <- atomically $ newTVar is
                             let cb str = atomically $ writeTVar var (s ++ str ++ ss)
@@ -111,19 +127,36 @@ startCommand (com,s,ss)
 -- $window
 
 -- | The function to create the initial window
-createWin :: Config -> IO (Display, Window)
-createWin conf = do
-  dpy   <- openDisplay ""
-  let dflt = defaultScreen dpy
-  rootw <- rootWindow dpy dflt
-  win   <- mkUnmanagedWindow dpy (defaultScreenOfDisplay dpy) rootw 
-           (fi $ xPos   conf) 
-           (fi $ yPos   conf) 
-           (fi $ width  conf) 
-           (fi $ height conf)
-  selectInput dpy win exposureMask
-  mapWindow   dpy win
-  return     (dpy,win)
+createWin :: Display -> Config -> IO Window
+createWin d c = do
+  let dflt = defaultScreen d
+  (Rectangle _ _ wid _):_ <- getScreenInfo d
+  rootw <- rootWindow d dflt
+  w     <- mkUnmanagedWindow d (defaultScreenOfDisplay d) rootw 
+           (fi $ xPos   c) 
+           (fi $ yPos   c) 
+           (min wid $ fi $ width  c)
+           (fi $ height c) True
+  selectInput d w (exposureMask .|. structureNotifyMask)
+  mapWindow   d w
+  setProperties c d w
+  return w
+
+setProperties :: Config -> Display -> Window -> IO ()
+setProperties c d w = do
+  a1 <- internAtom d "_NET_WM_STRUT"            False
+  c1 <- internAtom d "CARDINAL"                 False
+  a2 <- internAtom d "_NET_WM_WINDOW_TYPE"      False
+  c2 <- internAtom d "ATOM"                     False
+  v  <- internAtom d "_NET_WM_WINDOW_TYPE_DOCK" False
+  changeProperty32 d w a1 c1 propModeReplace $ map fi $ getStrutValues c
+  changeProperty32 d w a2 c2 propModeReplace [v]
+
+getStrutValues :: Config -> [Int]
+getStrutValues c
+    | yPos c == 0 = [0,0,height c,0]
+    | yPos c  > 0 = [0,0,0,height c]
+    | otherwise   = [0,0,height c,0]
 
 updateWin :: TVar String -> X ()
 updateWin v = do
@@ -147,8 +180,8 @@ drawInWin str = do
   io $ setFont d gc (fontFromFontStruct fontst)
   -- create a pixmap to write to and fill it with a rectangle
   p <- io $ createPixmap d w 
-            (fi (width  conf)) 
-            (fi (height conf)) 
+            (fi $ width  conf)
+            (fi $ height conf)
             (defaultDepthOfScreen (defaultScreenOfDisplay d))
   -- the fgcolor of the rectangle will be the bgcolor of the window
   io $ setForeground d gc bgcolor
@@ -212,13 +245,14 @@ mkUnmanagedWindow :: Display
                   -> Position
                   -> Dimension
                   -> Dimension
+                  -> Bool
                   -> IO Window
-mkUnmanagedWindow dpy scr rw x y w h = do
+mkUnmanagedWindow dpy scr rw x y w h o = do
   let visual   = defaultVisualOfScreen scr
       attrmask = cWOverrideRedirect
   allocaSetWindowAttributes $ 
          \attributes -> do
-           set_override_redirect attributes True
+           set_override_redirect attributes o
            createWindow dpy rw x y w h 0 (defaultDepthOfScreen scr) 
                         inputOutput visual attrmask attributes                                
 
