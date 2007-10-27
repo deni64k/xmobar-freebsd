@@ -24,6 +24,7 @@ import Parsers
 import Config
 
 import Data.IORef
+import Graphics.X11.Xlib
 import System.Console.GetOpt
 import System.Exit
 import System.Environment
@@ -34,6 +35,7 @@ import System.Posix.Files
 -- | The main entry point
 main :: IO ()
 main = do
+  d   <- openDisplay ""
   args     <- getArgs
   (o,file) <- getOpts args
   c        <- case file of
@@ -44,7 +46,7 @@ main = do
   conf     <- readIORef civ
   cl       <- parseTemplate conf (template conf)
   vars     <- mapM startCommand cl
-  (d,w)    <- createWin conf
+  w        <- createWin d conf
   eventLoop conf vars d w
 
 -- | Reads the configuration files or quits with an error
