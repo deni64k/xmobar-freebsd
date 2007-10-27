@@ -21,13 +21,13 @@ You can get the Xmobar source code from Hackage:
 http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
 
 To get the darcs source run:
-darcs get http://gorgias.mine.nu/repos/xmobar/
+darcs get http://code.haskell.org/xmobar/
 
 The latest binary can be found here:
-http://gorgias.mine.nu/xmobar/xmobar-0.7.bin
+http://code.haskell.org/~arossato/xmobar-0.8.bin
 
 A recent screen shot can be found here:
-http://gorgias.mine.nu/xmobar/xmobar-0.7.png
+http://code.haskell.org/~arossato/xmobar-0.8.jpg
 
 INSTALLATION
 ============
