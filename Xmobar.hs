@@ -115,14 +115,14 @@ eventLoop xc@(XConf d _ w fs c) v = block $ do
 -- and the TVar the command will be writing to.
 startCommand :: (Runnable,String,String) -> IO (Maybe ThreadId, TVar String)
 startCommand (com,s,ss)
-    | alias com == ""  = do var <- atomically $ newTVar is
-                            atomically $ writeTVar var "Could not parse the template"
-                            return (Nothing,var)
-    | otherwise        = do var <- atomically $ newTVar is
-                            let cb str = atomically $ writeTVar var (s ++ str ++ ss)
-                            h <- forkIO $ start com cb
-                            return (Just h,var)
-    where is = "Updating... "
+    | alias com == "" = do var <- atomically $ newTVar is
+                           atomically $ writeTVar var "Could not parse the template"
+                           return (Nothing,var)
+    | otherwise       = do var <- atomically $ newTVar is
+                           let cb str = atomically $ writeTVar var (s ++ str ++ ss)
+                           h <- forkIO $ start com cb
+                           return (Just h,var)
+    where is = s ++ "Updating..." ++ ss
 
 -- $window
 
@@ -160,20 +160,29 @@ getStrutValues h c
     | position c == Bottom = [0, 0, 0   , fi h]
     | otherwise            = [0, 0, 0   , 0   ]
 
-
 updateWin :: TVar String -> X ()
 updateWin v = do
-  c  <- asks config
-  r  <- asks rect
-  i  <- io $ atomically $ readTVar v
-  ps <- io $ parseString c i
-  drawInWin r ps
+  xc <- ask
+  let (conf,rec) = (config &&& rect) xc
+      [lc,rc]    = if length (alignSep conf) == 2 
+                   then alignSep conf 
+                   else alignSep defaultConfig
+  i <- io $ atomically $ readTVar v
+  let [l,c,r] = if (lc `elem` i && rc `elem` i)
+                then let (le,_:re) = break (==lc) i
+                         (ce,_:ri) = break (==rc) re
+                     in [le,ce,ri]
+                else [i,[],[]]
+  ps <- io $ mapM (parseString conf) [l,c,r]
+  drawInWin rec ps
 
 -- $print
 
+data Align = C | L | R
+
 -- | Draws in and updates the window
-drawInWin :: Rectangle -> [(String, String)] -> X ()
-drawInWin (Rectangle _ _ wid ht) str = do
+drawInWin :: Rectangle -> [[(String, String)]] -> X ()
+drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   r <- ask
   let (c,d ) = (config &&& display) r
       (w,fs) = (window &&& fontS  ) r
@@ -188,21 +197,23 @@ drawInWin (Rectangle _ _ wid ht) str = do
   io $ setForeground d gc bgcolor
   io $ fillRectangle d p gc 0 0 wid ht
   -- write to the pixmap the new string
-  let strWithLenth = map (\(s,cl) -> (s,cl,textWidth fs s)) str
-  printStrings p gc fs 1 strWithLenth 
+  let strWithLenth str = map (\(s,cl) -> (s,cl,textWidth fs s)) str
+  printStrings p gc fs 1 L $ strWithLenth left
+  printStrings p gc fs 1 R $ strWithLenth right
+  printStrings p gc fs 1 C $ strWithLenth center
   -- copy the pixmap with the new string to the window
   io $ copyArea   d p w gc 0 0 wid ht 0 0
   -- free up everything (we do not want to leak memory!)
   io $ freeGC     d gc
   io $ freePixmap d p
   -- resync
-  io $ sync d True
+  io $ sync       d True
 
 -- | An easy way to print the stuff we need to print
 printStrings :: Drawable -> GC -> FontStruct -> Position
-             -> [(String, String, Position)] -> X ()
-printStrings _ _ _ _ [] = return ()
-printStrings dr gc fontst offs sl@((s,c,l):xs) = do
+             -> Align -> [(String, String, Position)] -> X ()
+printStrings _ _ _ _ _ [] = return ()
+printStrings dr gc fontst offs a sl@((s,c,l):xs) = do
   r <- ask
   let (conf,d)    = (config &&& display) r
       (Rectangle _ _ wid ht ) = rect r
@@ -210,11 +221,10 @@ printStrings dr gc fontst offs sl@((s,c,l):xs) = do
       totSLen     = foldr (\(_,_,len) -> (+) len) 0 sl
       valign      = (fi ht + fi as - fi ds) `div` 2
       remWidth    = fi wid - fi totSLen
-      offset      = case (align conf) of
-                      "center" -> (remWidth + offs) `div` 2
-                      "right"  -> remWidth - 1
-                      "left"   -> offs
-                      _        -> offs
+      offset      = case a of
+                      C -> (remWidth + offs) `div` 2
+                      R -> remWidth - 1
+                      L -> offs
   (fc,bc) <- case (break (==',') c) of
                (f,',':b) -> do
                  fgc <- io $ initColor d f
@@ -227,7 +237,7 @@ printStrings dr gc fontst offs sl@((s,c,l):xs) = do
   io $ setForeground d gc fc
   io $ setBackground d gc bc
   io $ drawImageString d dr gc offset valign s
-  printStrings dr gc fontst (offs + l) xs
+  printStrings dr gc fontst (offs + l) a xs
 
 {- $unmanwin
 
