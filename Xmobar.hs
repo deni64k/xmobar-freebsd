@@ -61,17 +61,19 @@ type X = ReaderT XConf IO
 -- | The ReaderT inner component
 data XConf =
     XConf { display :: Display
+          , rect    :: Rectangle
           , window  :: Window
+          , fontS   :: FontStruct
           , config  :: Config
          }
 
 -- | Runs the ReaderT
-runX :: Config -> Display -> Window -> X () -> IO ()
-runX c d w f = runReaderT f (XConf d w c)
+runX :: XConf -> X () -> IO ()
+runX xc f = runReaderT f xc
 
 -- | The event loop
-eventLoop :: Config -> [(Maybe ThreadId, TVar String)] -> Display -> Window -> IO ()
-eventLoop c v d w = block $ do
+eventLoop :: XConf -> [(Maybe ThreadId, TVar String)] -> IO ()
+eventLoop xc@(XConf d _ w fs c) v = block $ do
     tv <- atomically $ newTVar []
     t <- myThreadId
     ct <- forkIO (checker t tv "" `catch` \_ -> return ())
@@ -91,21 +93,19 @@ eventLoop c v d w = block $ do
     go tv ct = do
       catchDyn (unblock $ allocaXEvent $ \e ->
                     handle tv ct =<< (nextEvent' d e >> getEvent e))
-               (\() -> runX c d w (updateWin tv) >> return ())
+               (\() -> runX xc (updateWin tv) >> return ())
       go tv ct
 
     -- event hanlder
     handle _ ct (ConfigureEvent {ev_window = win}) = do
       rootw <- rootWindow d (defaultScreen d)
       when (win == rootw) $ block $ do
-                      (Rectangle _ _ wid _):_ <- getScreenInfo d
-                      let nw = min wid $ fi (width c)
                       killThread ct
                       destroyWindow d w
-                      w' <- createWin d (c {width = fi nw})
-                      eventLoop (c {width = fi nw}) v d w'
+                      (r',w') <- createWin d fs c
+                      eventLoop (XConf d r' w' fs c) v
 
-    handle tvar _ (ExposeEvent {}) = runX c d w (updateWin tvar)
+    handle tvar _ (ExposeEvent {}) = runX xc (updateWin tvar)
 
     handle _ _ _  = return ()
 
@@ -127,74 +127,72 @@ startCommand (com,s,ss)
 -- $window
 
 -- | The function to create the initial window
-createWin :: Display -> Config -> IO Window
-createWin d c = do
+createWin :: Display -> FontStruct -> Config -> IO (Rectangle,Window)
+createWin d fs c = do
   let dflt = defaultScreen d
-  (Rectangle _ _ wid _):_ <- getScreenInfo d
+  Rectangle rx ry rw rh:_ <- getScreenInfo d
   rootw <- rootWindow d dflt
-  w     <- mkUnmanagedWindow d (defaultScreenOfDisplay d) rootw 
-           (fi $ xPos   c) 
-           (fi $ yPos   c) 
-           (min wid $ fi $ width  c)
-           (fi $ height c) True
-  selectInput d w (exposureMask .|. structureNotifyMask)
-  mapWindow   d w
-  setProperties c d w
-  return w
+  let (_,as,ds,_) = textExtents fs []
+      ht          = as + ds + 2
+      (x,y,w,h,o) = case position c of
+                     Top                -> (rx,ry             ,rw,fi ht,True)
+                     Bottom             -> (rx,ry + fi rh - ht,rw,fi ht,True)
+                     Static cx cy cw ch -> (fi cx,fi cy,fi cw,fi ch,True)
+  win <- mkUnmanagedWindow d (defaultScreenOfDisplay d) rootw x y w h o
+  selectInput       d win (exposureMask .|. structureNotifyMask)
+  mapWindow         d win
+  setProperties h c d win
+  return (Rectangle x y w h,win)
 
-setProperties :: Config -> Display -> Window -> IO ()
-setProperties c d w = do
+setProperties :: Dimension -> Config -> Display -> Window -> IO ()
+setProperties h c d w = do
   a1 <- internAtom d "_NET_WM_STRUT"            False
   c1 <- internAtom d "CARDINAL"                 False
   a2 <- internAtom d "_NET_WM_WINDOW_TYPE"      False
   c2 <- internAtom d "ATOM"                     False
   v  <- internAtom d "_NET_WM_WINDOW_TYPE_DOCK" False
-  changeProperty32 d w a1 c1 propModeReplace $ map fi $ getStrutValues c
+  changeProperty32 d w a1 c1 propModeReplace $ map fi $ getStrutValues h c
   changeProperty32 d w a2 c2 propModeReplace [v]
 
-getStrutValues :: Config -> [Int]
-getStrutValues c
-    | yPos c == 0 = [0,0,height c,0]
-    | yPos c  > 0 = [0,0,0,height c]
-    | otherwise   = [0,0,height c,0]
+getStrutValues :: Dimension -> Config -> [Int]
+getStrutValues h c
+    | position c == Top    = [0, 0, fi h, 0   ]
+    | position c == Bottom = [0, 0, 0   , fi h]
+    | otherwise            = [0, 0, 0   , 0   ]
+
 
 updateWin :: TVar String -> X ()
 updateWin v = do
   c  <- asks config
+  r  <- asks rect
   i  <- io $ atomically $ readTVar v
   ps <- io $ parseString c i
-  drawInWin ps
+  drawInWin r ps
 
 -- $print
 
 -- | Draws in and updates the window
-drawInWin :: [(String, String)] -> X ()
-drawInWin str = do
+drawInWin :: Rectangle -> [(String, String)] -> X ()
+drawInWin (Rectangle _ _ wid ht) str = do
   r <- ask
-  let (conf,(d,w)) = (config &&& display &&& window) r
-  bgcolor <- io $ initColor d $ bgColor conf
+  let (c,d ) = (config &&& display) r
+      (w,fs) = (window &&& fontS  ) r
+  bgcolor <- io $ initColor d $ bgColor c
   gc      <- io $ createGC  d w
   --let's get the fonts
-  let lf c = loadQueryFont d (font c)
-  fontst  <- io $ catch (lf conf) (const $ lf defaultConfig)
-  io $ setFont d gc (fontFromFontStruct fontst)
+  io $ setFont d gc (fontFromFontStruct fs)
   -- create a pixmap to write to and fill it with a rectangle
-  p <- io $ createPixmap d w 
-            (fi $ width  conf)
-            (fi $ height conf)
+  p <- io $ createPixmap d w wid ht
             (defaultDepthOfScreen (defaultScreenOfDisplay d))
   -- the fgcolor of the rectangle will be the bgcolor of the window
   io $ setForeground d gc bgcolor
-  io $ fillRectangle d p gc 0 0 
-       (fi $ width  conf) 
-       (fi $ height conf)
+  io $ fillRectangle d p gc 0 0 wid ht
   -- write to the pixmap the new string
-  let strWithLenth = map (\(s,c) -> (s,c,textWidth fontst s)) str
-  printStrings p gc fontst 1 strWithLenth 
+  let strWithLenth = map (\(s,cl) -> (s,cl,textWidth fs s)) str
+  printStrings p gc fs 1 strWithLenth 
   -- copy the pixmap with the new string to the window
-  io $ copyArea   d p w gc 0 0 (fi (width conf)) (fi (height conf)) 0 0
+  io $ copyArea   d p w gc 0 0 wid ht 0 0
   -- free up everything (we do not want to leak memory!)
-  io $ freeFont   d fontst
   io $ freeGC     d gc
   io $ freePixmap d p
   -- resync
@@ -207,10 +205,11 @@ printStrings _ _ _ _ [] = return ()
 printStrings dr gc fontst offs sl@((s,c,l):xs) = do
   r <- ask
   let (conf,d)    = (config &&& display) r
-      (_,asc,dsc,_) = textExtents fontst s
+      (Rectangle _ _ wid ht ) = rect r
+      (_,as,ds,_) = textExtents fontst s
       totSLen     = foldr (\(_,_,len) -> (+) len) 0 sl
-      valign      = (fi (height conf) + fi (asc) - fi dsc) `div` 2
-      remWidth    = fi (width conf) - fi totSLen
+      valign      = (fi ht + fi as - fi ds) `div` 2
+      remWidth    = fi wid - fi totSLen
       offset      = case (align conf) of
                       "center" -> (remWidth + offs) `div` 2
                       "right"  -> remWidth - 1
