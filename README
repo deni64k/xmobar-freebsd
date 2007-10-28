@@ -66,10 +66,7 @@ Other configuration options:
 font: Name of the font to be used
 bgColor: Backgroud color
 fgColor: Default font color
-xPos: x position (origin in the upper left corner) of the Xmobar window 
-yPos: y position
-width: width of the Xmobar window 
-height: height
+position: Top, Bottom or Static (with x, y, width and height)
 align: text alignment 
 commands: For setting the options of the programs to run (optional)
 sepChar: The character to be used for indicating commands in the
@@ -97,10 +94,8 @@ Options:
   -f font name  --font=font name     The font name
   -B bg color   --bgcolor=bg color   The background color. Default black
   -F fg color   --fgcolor=fg color   The foreground color. Default grey
-  -x x pos      --xpos=x pos         The x position. Default 0
-  -y y pos      --ypos=y pos         The y position. Default 0
-  -W width      --width=width        The status bar width. Default 1024
-  -H height     --height=height      The status bar height. Default 15
+  -o            --top                Place Xmobar at the top of the screen
+  -b            --bottom             Place Xmobar at the bottom of the screen
   -a align      --align=align        The text alignment: center, left or right.
                                      Default: left
   -s char       --sepchar=char       The character used to separate commands in
