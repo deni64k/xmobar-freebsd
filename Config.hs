@@ -36,11 +36,11 @@ data Config =
            , bgColor        :: String     -- ^ Backgroud color
            , fgColor        :: String     -- ^ Default font color
            , position       :: XPosition  -- ^ Top Bottom or Static
-           , align          :: String     -- ^ text alignment
            , commands       :: [Runnable] -- ^ For setting the command, the command argujments 
                                           --   and refresh rate for the programs to run (optional)
            , sepChar        :: String     -- ^ The character to be used for indicating
                                           --   commands in the output template (default '%')
+           , alignSep       :: String     -- ^ Separators for left, center and right text alignment
            , template       :: String     -- ^ The output template 
            } deriving (Read)
 
@@ -53,10 +53,10 @@ defaultConfig =
            , bgColor  = "#000000"
            , fgColor  = "#BFBFBF"
            , position = Top
-           , align    = "left"
            , commands = []
            , sepChar  = "%"
-           , template = "Uptime: <fc=#00FF00>%uptime%</fc> ** <fc=#FF0000>%date%</fc>"
+           , alignSep = "}{"
+           , template = "Uptime: <fc=#00FF00>%uptime%</fc> }{ <fc=#FF0000>%date%</fc>"
            }
 
 -- | This is the list of types that can be hidden inside
