@@ -15,6 +15,7 @@
 module Config ( -- * Configuration
                 -- $config
                 Config (..)
+              , XPosition (..)
               , defaultConfig
               , runnableTypes
               ) where
@@ -34,10 +35,7 @@ data Config =
     Config { font           :: String     -- ^ Font
            , bgColor        :: String     -- ^ Backgroud color
            , fgColor        :: String     -- ^ Default font color
-           , xPos           :: Int        -- ^ x Window position (origin in the upper left corner) 
-           , yPos           :: Int        -- ^ y Window position 
-           , width          :: Int        -- ^ Window width
-           , height         :: Int        -- ^ Window height
+           , position       :: XPosition  -- ^ Top Bottom or Static
            , align          :: String     -- ^ text alignment
            , commands       :: [Runnable] -- ^ For setting the command, the command argujments 
                                           --   and refresh rate for the programs to run (optional)
@@ -46,16 +44,15 @@ data Config =
            , template       :: String     -- ^ The output template 
            } deriving (Read)
 
+data XPosition = Top | Bottom | Static {xpos, ypos, width, height :: Int} deriving ( Read, Eq )
+
 -- | The default configuration values
 defaultConfig :: Config
 defaultConfig =
     Config { font     = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
            , bgColor  = "#000000"
            , fgColor  = "#BFBFBF"
-           , xPos     = 0
-           , yPos     = 0
-           , width    = 1024
-           , height   = 15
+           , position = Top
            , align    = "left"
            , commands = []
            , sepChar  = "%"
