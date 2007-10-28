@@ -49,10 +49,13 @@ main = do
   civ      <- newIORef c
   doOpts civ o
   conf     <- readIORef civ
+  let loadFont = loadQueryFont d . font
+  fs       <- catch (loadFont conf) (const $ loadFont defaultConfig)
   cl       <- parseTemplate conf (template conf)
   vars     <- mapM startCommand cl
-  w        <- createWin d conf
-  eventLoop conf vars d w
+  (r,w)    <- createWin d fs conf
+  eventLoop (XConf d r w fs c) vars
+  freeFont d fs
 
 -- | Reads the configuration files or quits with an error
 readConfig :: FilePath -> IO Config
@@ -77,10 +80,8 @@ data Opts = Help
           | Font     String
           | BgColor  String
           | FgColor  String
-          | XPos     String
-          | YPos     String
-          | Width    String
-          | Height   String
+          | T
+          | B
           | Align    String
           | Commands String
           | SepChar  String
@@ -94,10 +95,8 @@ options =
     , Option ['f'     ] ["font"     ] (ReqArg Font "font name"     ) "The font name"
     , Option ['B'     ] ["bgcolor"  ] (ReqArg BgColor "bg color"   ) "The background color. Default black"
     , Option ['F'     ] ["fgcolor"  ] (ReqArg FgColor "fg color"   ) "The foreground color. Default grey"
-    , Option ['x'     ] ["xpos"     ] (ReqArg XPos "x pos"         ) "The x position. Default 0"
-    , Option ['y'     ] ["ypos"     ] (ReqArg YPos "y pos"         ) "The y position. Default 0"
-    , Option ['W'     ] ["width"    ] (ReqArg Width "width"        ) "The status bar width. Default 1024"
-    , Option ['H'     ] ["height"   ] (ReqArg Height "height"      ) "The status bar height. Default 15"
+    , Option ['o'     ] ["top"      ] (NoArg T                     ) "Place Xmobar at the top of the screen"
+    , Option ['b'     ] ["bottom"   ] (NoArg B                     ) "Place Xmobar at the bottom of the screen"
     , Option ['a'     ] ["align"    ] (ReqArg Align "align"        ) "The text alignment: center, left or right.\nDefault: left"
     , Option ['s'     ] ["sepchar"  ] (ReqArg SepChar "char"       ) "The character used to separate commands in\nthe output template. Default '%'"
     , Option ['t'     ] ["template" ] (ReqArg Template "tempate"   ) "The output template"
@@ -136,10 +135,8 @@ doOpts conf (o:oo) =
       Font     s -> modifyIORef conf (\c -> c { font     = s                   }) >> go
       BgColor  s -> modifyIORef conf (\c -> c { bgColor  = s                   }) >> go
       FgColor  s -> modifyIORef conf (\c -> c { fgColor  = s                   }) >> go
-      XPos     s -> modifyIORef conf (\c -> c { xPos     = readInt s c xPos    }) >> go
-      YPos     s -> modifyIORef conf (\c -> c { yPos     = readInt s c yPos    }) >> go
-      Width    s -> modifyIORef conf (\c -> c { width    = readInt s c width   }) >> go
-      Height   s -> modifyIORef conf (\c -> c { height   = readInt s c height  }) >> go
+      T          -> modifyIORef conf (\c -> c { position = Top                 }) >> go
+      B          -> modifyIORef conf (\c -> c { position = Bottom              }) >> go
       Align    s -> modifyIORef conf (\c -> c { align    = s                   }) >> go
       SepChar  s -> modifyIORef conf (\c -> c { sepChar  = s                   }) >> go
       Template s -> modifyIORef conf (\c -> c { template = s                   }) >> go
@@ -149,11 +146,7 @@ doOpts conf (o:oo) =
     where readCom str =
               case readStr str of
 	        [x] -> Right x
-	        _  -> Left "xmobar: cannot read list of commands specified with the -c option\n"
-          readInt str c f =
-              case readStr str of
-	        [x] -> x
-	        _  -> f c
+	        _   -> Left "xmobar: cannot read list of commands specified with the -c option\n"
           readStr str =
               [x | (x,t) <- reads str, ("","") <- lex t]
           go = doOpts conf oo
