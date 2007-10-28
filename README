@@ -67,10 +67,13 @@ font: Name of the font to be used
 bgColor: Backgroud color
 fgColor: Default font color
 position: Top, Bottom or Static (with x, y, width and height)
-align: text alignment 
 commands: For setting the options of the programs to run (optional)
 sepChar: The character to be used for indicating commands in the
          output template (default '%')
+alignSep: a 2 character string for aligning text in the output
+    template. The text before the first character will be align to
+    left, the text in between the 2 characters will be centered, and
+    the text after the second character will be align to the right.
 template: The output template 
 
 Command Line Options
@@ -96,8 +99,8 @@ Options:
   -F fg color   --fgcolor=fg color   The foreground color. Default grey
   -o            --top                Place Xmobar at the top of the screen
   -b            --bottom             Place Xmobar at the bottom of the screen
-  -a align      --align=align        The text alignment: center, left or right.
-                                     Default: left
+  -a alignsep   --alignsep=alignsep  Separators for left, center and right text
+                                     alignment. Default: '}{'
   -s char       --sepchar=char       The character used to separate commands in
                                      the output template. Default '%'
   -t tempate    --template=tempate   The output template
