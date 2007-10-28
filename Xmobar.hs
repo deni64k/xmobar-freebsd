@@ -168,11 +168,12 @@ updateWin v = do
                    then alignSep conf 
                    else alignSep defaultConfig
   i <- io $ atomically $ readTVar v
-  let [l,c,r] = if (lc `elem` i && rc `elem` i)
-                then let (le,_:re) = break (==lc) i
-                         (ce,_:ri) = break (==rc) re
-                     in [le,ce,ri]
-                else [i,[],[]]
+  let def     = [i,[],[]]
+      [l,c,r] = case break (==lc) i of
+                  (le,_:re) -> case break (==rc) re of
+                                 (ce,_:ri) -> [le,ce,ri]
+                                 _         -> def
+                  _         -> def
   ps <- io $ mapM (parseString conf) [l,c,r]
   drawInWin rec ps
 
