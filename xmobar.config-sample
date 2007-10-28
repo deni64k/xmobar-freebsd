@@ -1,10 +1,7 @@
 Config { font = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
        , bgColor = "black"
        , fgColor = "grey"
-       , xPos = 0
-       , yPos = 0
-       , width = 1024
-       , height = 15
+       , position = Static { xpos = 0 , ypos = 0, width = 1024, height = 15 }
        , align = "right"
        , commands = [ Run Weather "EGPF" ["-t","<station>: <tempC>C","-L","18","-H","25","--normal","green","--high","red","--low","lightblue"] 36000
                     , Run Network "eth0" ["-L","0","-H","32","--normal","green","--high","red"] 10
