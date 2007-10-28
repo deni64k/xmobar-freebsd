@@ -54,7 +54,7 @@ main = do
   cl       <- parseTemplate conf (template conf)
   vars     <- mapM startCommand cl
   (r,w)    <- createWin d fs conf
-  eventLoop (XConf d r w fs c) vars
+  eventLoop (XConf d r w fs conf) vars
   freeFont d fs
 
 -- | Reads the configuration files or quits with an error
@@ -82,7 +82,7 @@ data Opts = Help
           | FgColor  String
           | T
           | B
-          | Align    String
+          | AlignSep String
           | Commands String
           | SepChar  String
           | Template String 
@@ -90,17 +90,17 @@ data Opts = Help
     
 options :: [OptDescr Opts]
 options =
-    [ Option ['h','?' ] ["help"     ] (NoArg  Help                 ) "This help"
-    , Option ['V'     ] ["version"  ] (NoArg  Version              ) "Show version information"
-    , Option ['f'     ] ["font"     ] (ReqArg Font "font name"     ) "The font name"
-    , Option ['B'     ] ["bgcolor"  ] (ReqArg BgColor "bg color"   ) "The background color. Default black"
-    , Option ['F'     ] ["fgcolor"  ] (ReqArg FgColor "fg color"   ) "The foreground color. Default grey"
-    , Option ['o'     ] ["top"      ] (NoArg T                     ) "Place Xmobar at the top of the screen"
-    , Option ['b'     ] ["bottom"   ] (NoArg B                     ) "Place Xmobar at the bottom of the screen"
-    , Option ['a'     ] ["align"    ] (ReqArg Align "align"        ) "The text alignment: center, left or right.\nDefault: left"
-    , Option ['s'     ] ["sepchar"  ] (ReqArg SepChar "char"       ) "The character used to separate commands in\nthe output template. Default '%'"
-    , Option ['t'     ] ["template" ] (ReqArg Template "tempate"   ) "The output template"
-    , Option ['c'     ] ["commands" ] (ReqArg Commands  "commands" ) "The list of commands to be executed"
+    [ Option ['h','?' ] ["help"     ] (NoArg  Help                ) "This help"
+    , Option ['V'     ] ["version"  ] (NoArg  Version             ) "Show version information"
+    , Option ['f'     ] ["font"     ] (ReqArg Font     "font name") "The font name"
+    , Option ['B'     ] ["bgcolor"  ] (ReqArg BgColor  "bg color" ) "The background color. Default black"
+    , Option ['F'     ] ["fgcolor"  ] (ReqArg FgColor  "fg color" ) "The foreground color. Default grey"
+    , Option ['o'     ] ["top"      ] (NoArg  T                   ) "Place Xmobar at the top of the screen"
+    , Option ['b'     ] ["bottom"   ] (NoArg  B                   ) "Place Xmobar at the bottom of the screen"
+    , Option ['a'     ] ["alignsep" ] (ReqArg AlignSep "alignsep" ) "Separators for left, center and right text\nalignment. Default: '}{'"
+    , Option ['s'     ] ["sepchar"  ] (ReqArg SepChar  "char"     ) "The character used to separate commands in\nthe output template. Default '%'"
+    , Option ['t'     ] ["template" ] (ReqArg Template "tempate"  ) "The output template"
+    , Option ['c'     ] ["commands" ] (ReqArg Commands "commands" ) "The list of commands to be executed"
     ]
 
 getOpts :: [String] -> IO ([Opts], [String])
@@ -132,16 +132,16 @@ doOpts conf (o:oo) =
     case o of
       Help       -> putStr   usage   >> exitWith ExitSuccess
       Version    -> putStrLn version >> exitWith ExitSuccess
-      Font     s -> modifyIORef conf (\c -> c { font     = s                   }) >> go
-      BgColor  s -> modifyIORef conf (\c -> c { bgColor  = s                   }) >> go
-      FgColor  s -> modifyIORef conf (\c -> c { fgColor  = s                   }) >> go
-      T          -> modifyIORef conf (\c -> c { position = Top                 }) >> go
-      B          -> modifyIORef conf (\c -> c { position = Bottom              }) >> go
-      Align    s -> modifyIORef conf (\c -> c { align    = s                   }) >> go
-      SepChar  s -> modifyIORef conf (\c -> c { sepChar  = s                   }) >> go
-      Template s -> modifyIORef conf (\c -> c { template = s                   }) >> go
+      Font     s -> modifyIORef conf (\c -> c { font     = s      }) >> go
+      BgColor  s -> modifyIORef conf (\c -> c { bgColor  = s      }) >> go
+      FgColor  s -> modifyIORef conf (\c -> c { fgColor  = s      }) >> go
+      T          -> modifyIORef conf (\c -> c { position = Top    }) >> go
+      B          -> modifyIORef conf (\c -> c { position = Bottom }) >> go
+      AlignSep s -> modifyIORef conf (\c -> c { alignSep = s      }) >> go
+      SepChar  s -> modifyIORef conf (\c -> c { sepChar  = s      }) >> go
+      Template s -> modifyIORef conf (\c -> c { template = s      }) >> go
       Commands s -> case readCom s of
-                      Right x -> modifyIORef conf (\c -> c { commands = x })>> go 
+                      Right x -> modifyIORef conf (\c -> c { commands = x }) >> go 
                       Left e  -> putStr (e ++ usage) >> exitWith (ExitFailure 1)
     where readCom str =
               case readStr str of
