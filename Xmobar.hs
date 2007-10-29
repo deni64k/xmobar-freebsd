@@ -65,7 +65,7 @@ data XConf =
           , window  :: Window
           , fontS   :: FontStruct
           , config  :: Config
-         }
+          }
 
 -- | Runs the ReaderT
 runX :: XConf -> X () -> IO ()
@@ -198,7 +198,7 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   io $ setForeground d gc bgcolor
   io $ fillRectangle d p gc 0 0 wid ht
   -- write to the pixmap the new string
-  let strWithLenth str = map (\(s,cl) -> (s,cl,textWidth fs s)) str
+  let strWithLenth = map (\(s,cl) -> (s,cl,textWidth fs s))
   printStrings p gc fs 1 L $ strWithLenth left
   printStrings p gc fs 1 R $ strWithLenth right
   printStrings p gc fs 1 C $ strWithLenth center
@@ -216,16 +216,16 @@ printStrings :: Drawable -> GC -> FontStruct -> Position
 printStrings _ _ _ _ _ [] = return ()
 printStrings dr gc fontst offs a sl@((s,c,l):xs) = do
   r <- ask
-  let (conf,d)    = (config &&& display) r
-      (Rectangle _ _ wid ht ) = rect r
-      (_,as,ds,_) = textExtents fontst s
-      totSLen     = foldr (\(_,_,len) -> (+) len) 0 sl
-      valign      = (fi ht + fi as - fi ds) `div` 2
-      remWidth    = fi wid - fi totSLen
-      offset      = case a of
-                      C -> (remWidth + offs) `div` 2
-                      R -> remWidth - 1
-                      L -> offs
+  let (conf,d)             = (config &&& display) r
+      Rectangle _ _ wid ht = rect r
+      (_,as,ds,_)          = textExtents fontst s
+      totSLen              = foldr (\(_,_,len) -> (+) len) 0 sl
+      valign               = (fi ht + fi as - fi ds) `div` 2
+      remWidth             = fi wid - fi totSLen
+      offset               = case a of
+                               C -> (remWidth + offs) `div` 2
+                               R -> remWidth - 1
+                               L -> offs
   (fc,bc) <- case (break (==',') c) of
                (f,',':b) -> do
                  fgc <- io $ initColor d f
