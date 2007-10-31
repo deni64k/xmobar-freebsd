@@ -1,353 +1,383 @@
-Xmobar - A Minimalistic Text Based Status Bar
+% Xmobar - A Minimalistic Text Based Status Bar
+% Andrea Rossato
 
-ABOUT
-=====
+About
+-----
 
-Xmobar is a minimalistic, text based, status bar.
+[Xmobar] is a minimalistic, text based, status bar.
 
 It was inspired by the Ion3 status bar, and supports similar features,
 like dynamic color management, output templates, and extensibility
 through plugins.
 
-See xmobar.config-sample for a sample configuration.
+See `xmobar.config-sample`, distributed with the source code, for a
+sample configuration.
 
-Try it with:
-xmobar xmobar.config-sample
+Download
+--------
 
-DOWNLOAD
-========
-
-You can get the Xmobar source code from Hackage:
-http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
+You can get the [Xmobar] source code from [Hackage].
 
 To get the darcs source run:
-darcs get http://code.haskell.org/xmobar/
+
+        darcs get http://code.haskell.org/xmobar/
 
 The latest binary can be found here:
-http://code.haskell.org/~arossato/xmobar-0.8.bin
+
+        http://code.haskell.org/~arossato/xmobar/xmobar-0.8.bin
 
 A recent screen shot can be found here:
-http://code.haskell.org/~arossato/xmobar-0.8.png
 
-INSTALLATION
-============
+        http://code.haskell.org/~arossato/xmobar/xmobar-0.8.png
 
-tar xvfz xmobar-0.8
-cd xmobar-0.8
-runhaskell Setup.lhs configure --prefix=/usr/local
-runhaskell Setup.lhs build
-runhaskell Setup.lhs haddock --executables (optional for building the code documentation)
-runhaskell Setup.lhs install (possibly to be run as root)
+Installation
+------------
+
+To install simply run:
+
+        tar xvfz xmobar-0.8
+        cd xmobar-0.8
+        runhaskell Setup.lhs configure --prefix=/usr/local
+        runhaskell Setup.lhs build
+        runhaskell Setup.lhs haddock --executables # optional
+        runhaskell Setup.lhs install # possibly to be run as root
 
 Run with:
-xmobar /path/to/config &
+
+        xmobar /path/to/config &
+
 or
-xmobar &
-if you have the default configuration file saved as:
-~/.xmobarrc
 
-CONFIGURATION
-=============
+        xmobar &
 
-Quick Start
------------
+if you have the default configuration file saved as `~/.xmobarrc`
 
-See xmobar.config-sample for an example.
+Configuration
+-------------
+
+### Quick Start
+
+See `xmobar.config-sample` for an example.
 
 For the output template:
 
-- %command% will execute command and print the output. The output may
-  contain markups to change the characters' color.
+- `%command%` will execute command and print the output. The output
+  may contain markups to change the characters' color.
 
-- <fc=#FF0000>string</fc> will print "string" with #FF0000 color (red).
+- `<fc=#FF0000>string</fc>` will print `string` with `#FF0000` color
+  (red).
 
 Other configuration options:
 
-font: Name of the font to be used
-bgColor: Backgroud color
-fgColor: Default font color
-position: Top, Bottom or Static (with x, y, width and height)
-commands: For setting the options of the programs to run (optional)
-sepChar: The character to be used for indicating commands in the
-         output template (default '%')
-alignSep: a 2 character string for aligning text in the output
-    template. The text before the first character will be align to
-    left, the text in between the 2 characters will be centered, and
-    the text after the second character will be align to the right.
-template: The output template 
+`font`
+:    Name of the font to be used
 
-Command Line Options
---------------------
+`bgColor` 
+:    Backgroud color
 
-Xmobar can be either configured with a configuration file or with
+`fgColor` 
+:    Default font color
+
+`position`
+:     Top, Bottom or Static (with x, y, width and height)
+
+`commands`
+:    For setting the options of the programs to run (optional)
+
+`sepChar` 
+:    The character to be used for indicating commands in the output
+     template (default '%')
+
+`alignSep`
+:    a 2 character string for aligning text in the output template. The
+     text before the first character will be align to left, the text in
+     between the 2 characters will be centered, and the text after the
+     second character will be align to the right. 
+
+`template`
+:    The output template
+
+### Command Line Options
+
+[Xmobar] can be either configured with a configuration file or with
 command line options. In the second case, the command line options
 will overwrite the corresponding options set in the configuration
 file.
 
 Example:
-xmobar -B white -a right -F blue -t '%LIPB%' -c '[Run Weather "LIPB" [] 36000]'
+
+    xmobar -B white -a right -F blue -t '%LIPB%' -c '[Run Weather "LIPB" [] 36000]'
 
 This is the list of command line options (the output of 
 xmobar --help):
 
-Usage: xmobar [OPTION...] [FILE]
-Options:
-  -h, -?        --help               This help
-  -V            --version            Show version information
-  -f font name  --font=font name     The font name
-  -B bg color   --bgcolor=bg color   The background color. Default black
-  -F fg color   --fgcolor=fg color   The foreground color. Default grey
-  -o            --top                Place Xmobar at the top of the screen
-  -b            --bottom             Place Xmobar at the bottom of the screen
-  -a alignsep   --alignsep=alignsep  Separators for left, center and right text
-                                     alignment. Default: '}{'
-  -s char       --sepchar=char       The character used to separate commands in
-                                     the output template. Default '%'
-  -t tempate    --template=tempate   The output template
-  -c commands   --commands=commands  The list of commands to be executed
-Mail bug reports and suggestions to <andrea.rossato@unibz.it>
+    Usage: xmobar [OPTION...] [FILE]
+    Options:
+      -h, -?        --help               This help
+      -V            --version            Show version information
+      -f font name  --font=font name     The font name
+      -B bg color   --bgcolor=bg color   The background color. Default black
+      -F fg color   --fgcolor=fg color   The foreground color. Default grey
+      -o            --top                Place Xmobar at the top of the screen
+      -b            --bottom             Place Xmobar at the bottom of the screen
+      -a alignsep   --alignsep=alignsep  Separators for left, center and right text
+                                         alignment. Default: '}{'
+      -s char       --sepchar=char       The character used to separate commands in
+                                         the output template. Default '%'
+      -t tempate    --template=tempate   The output template
+      -c commands   --commands=commands  The list of commands to be executed
+    Mail bug reports and suggestions to <andrea.rossato@unibz.it>
 
-The Output Template
--------------------
+### The Output Template
 
-The output template must contain at least one command. Xmobar will
+The output template must contain at least one command. [Xmobar] will
 parse the template and will search for the command to be executed in
-the "commands" configuration option. First an "alias" will be search
-(internal commands such as Weather or Network have default aliasing,
-see below). After that, the command name will be tried. If a command
-is found, the arguments specified in the "commands" list will be used.
+the `commands` configuration option. First an `alias` will be searched
+(plugins such as Weather or Network have default aliases, see below).
+After that, the command name will be tried. If a command is found, the
+arguments specified in the `commands` list will be used.
 
-If no command is found in the "commands" list, Xmobar will ask the
+If no command is found in the `commands` list, [Xmobar] will ask the
 operating system to execute a program with the name found in the
 template. If the execution is not successful an error will be
 reported.
    
-The "commands" Configuration Option
------------------------------------
+### The `commands` Configuration Option
 
-The "commands" configuration option is a list of commands' information
-and arguments to be used by Xmobar when parsing the output template.
-Each member of the list consists in a command prefixed by the "Run"
-keyword. Each command has arguments to control the way Xmobar is going
+The `commands` configuration option is a list of commands information
+and arguments to be used by [Xmobar] when parsing the output template.
+Each member of the list consists in a command prefixed by the `Run`
+keyword. Each command has arguments to control the way [Xmobar] is going
 to execute it.
 
 The option consists in a list of commands separated by a comma and
-enclosed by square parenthesis. Example:
+enclosed by square parenthesis.
 
-[Run Memory ["-t","Mem: <usedratio>%"] 10, Run Swap [] 10]
+Example:
+
+    [Run Memory ["-t","Mem: <usedratio>%"] 10, Run Swap [] 10]
+
 to run the Memory monitor plugin with the specified template, and the
 swap monitor plugin, with default options, every second.
 
-The only internal available command is Com (see below Executing
-External Commands). All other commands are provided by plugins. Xmobar
+The only internal available command is `Com` (see below Executing
+External Commands). All other commands are provided by plugins. [Xmobar]
 comes with some plugins, providing a set of system monitors, a
 standard input reader, an unix named pipe reade, and a configurable
 date plugin. These plugins install the following internal commands:
-Weather, Network, Memory, Swap, Cpu, Battery, Date, StdinReader, and
-PipeReader.
+`Weather`, `Network`, `Memory`, `Swap`, `Cpu`, `Battery`, `Date`,
+`StdinReader`, and `PipeReader`.
 
 To remove them see below Installing/Removing a Plugin
 
 Other commands can be created as plugins with the Plugin
 infrastructure. See below Writing a Plugin
 
-System Monitor Plugins
-----------------------
+### System Monitor Plugins
 
 This is the description of the system monitor plugins that are
 installed by default.
 
-Each monitor has an alias to be used in the output template. Monitors
-have default aliases.
+Each monitor has an `alias` to be used in the output template.
+Monitors have default aliases.
 
-Weather StationID Args RefreshRate
-- aliases to the Station ID: so Weather "LIPB" [] can be used in template as %LIBP%
+`Weather StationID Args RefreshRate`
+
+- aliases to the Station ID: so `Weather "LIPB" []` can be used in template as `%LIBP%`
 - Args: the argument list (see below)
-- Variables that can be used with the "-t"/"--template" argument: 
-	    "station", "stationState", "year", "month", "day", "hour",
-	    "wind", "visibility", "skyCondition", "tempC", "tempF",
-	    "dewPoint", "rh", "pressure"
-- Default template: "<station>: <tempC>C, rh <rh>% (<hour>)"
+- Variables that can be used with the `-t`/`--template` argument: 
+	    `station`, `stationState`, `year`, `month`, `day`, `hour`,
+	    `wind`, `visibility`, `skyCondition`, `tempC`, `tempF`,
+	    `dewPoint`, `rh`, `pressure`
+- Default template: `<station>: <tempC>C, rh <rh>% (<hour>)`
 
-Network Interface Args RefreshRate
-- aliases to the interface name: so Network "eth0" [] can be used as %eth0%
+`Network Interface Args RefreshRate`
+
+- aliases to the interface name: so `Network "eth0" []` can be used as `%eth0%`
 - Args: the argument list (see below)
-- Variables that can be used with the "-t"/"--template" argument: 
-	    "dev", "rx", "tx"
-- Default template: "<dev>: <rx>|<tx>"
+- Variables that can be used with the `-t`/`--template` argument: 
+	    `dev`, `rx`, `tx`
+- Default template: `<dev>: <rx>|<tx>`
 
-Memory Args RefreshRate
-- aliases to "memory"
+`Memory Args RefreshRate`
+
+- aliases to `memory`
 - Args: the argument list (see below)
-- Variables that can be used with the "-t"/"--template" argument: 
-	    "total", "free", "buffer", "cache", "rest", "used", "usedratio"
-- Default template: "Mem: <usedratio>% (<cache>M)"
+- Variables that can be used with the `-t`/`--template` argument: 
+	    `total`, `free`, `buffer`, `cache`, `rest`, `used`, `usedratio`
+- Default template: `Mem: <usedratio>% (<cache>M)`
 
-Swap Args RefreshRate
-- aliases to "swap"
+`Swap Args RefreshRate`
+
+- aliases to `swap`
 - Args: the argument list (see below)
-- Variables that can be used with the "-t"/"--template" argument: 
-	    "total", "used", "free", "usedratio"
-- Default template: "Swap: <usedratio>%"
+- Variables that can be used with the `-t`/`--template` argument: 
+	    `total`, `used`, `free`, `usedratio`
+- Default template: `Swap: <usedratio>%`
 
-Cpu Args RefreshRate
-- aliases to "cpu"
+`Cpu Args RefreshRate`
+
+- aliases to `cpu`
 - Args: the argument list (see below)
-- Variables that can be used with the "-t"/"--template" argument: 
-	    "total", "user", "nice", "system", "idle"
-- Default template: "Cpu: <total>"
+- Variables that can be used with the `-t`/`--template` argument: 
+	    `total`, `user`, `nice`, `system`, `idle`
+- Default template: `Cpu: <total>`
 
-Battery Args RefreshRate
-- aliases to "battery"
+`Battery Args RefreshRate`
+
+- aliases to `battery`
 - Args: the argument list (see below)
-- Variables that can be used with the "-t"/"--template" argument: 
-	    "left"
-- Default template: "Batt: <left>"
+- Variables that can be used with the `-t`/`--template` argument: 
+	    `left`
+- Default template: `Batt: <left>`
 
-Monitor Plugins Commands Arguments
-----------------------------------
+### Monitor Plugins Commands Arguments
 
 These are the arguments that can be used for internal commands in the
-"commands" configuration option:
+`commands` configuration option:
 
--H number           --High=number               The high threshold
--L number           --Low=number                The low threshold
--h color number     --high=color number         Color for the high threshold: es "#FF0000"
--n color number     --normal=color number       Color for the normal threshold: es "#00FF00"
--l color number     --low=color number          Color for the low threshold: es "#0000FF"
--t output template  --template=output template  Output template of the command.
+    -H number           --High=number               The high threshold
+    -L number           --Low=number                The low threshold
+    -h color number     --high=color number         Color for the high threshold: es "#FF0000"
+    -n color number     --normal=color number       Color for the normal threshold: es "#00FF00"
+    -l color number     --low=color number          Color for the low threshold: es "#0000FF"
+    -t output template  --template=output template  Output template of the command.
 
 Commands' arguments must be set as a list. Es:
-Run Weather "EGPF" ["-t","<station>: <tempC>C"] 36000
 
-In this case Xmobar will run the weather monitor, getting information
+    Run Weather "EGPF" ["-t","<station>: <tempC>C"] 36000
+
+In this case [Xmobar] will run the weather monitor, getting information
 for the weather station ID EGPF (Glasgow Airport, as a homage to GHC)
 every hour (36000 tenth of seconds), with a template that will output
 something like:
-"Glasgow Airport: 16.0C"
 
-Executing External Commands
----------------------------
+    Glasgow Airport: 16.0C
+
+### Executing External Commands
 
 In order to execute an external command you can either write the
 command name in the template, in this case it will be executed without
 arguments, or you can configure it in the "commands" configuration
 option list with the Com template command:
 
-Com ProgarmName Args Alias RefreshRate
+`Com ProgarmName Args Alias RefreshRate`
+
 - ProgramName: the name of the program
 - Args: the arguments to be passed to the program at execution time
 - Alias: a name to be used in the template. If the alias is en empty
   string the program name can be used in the template.
+
 Es:
-Run Com "uname" ["-s","-r"] "" 36000
-can be used in the output template as %uname%
 
-Run Com "date" ["+\"%a %b %_d %H:%M\""] "mydate" 600
-can be used in the output template as %mydate%
+        Run Com "uname" ["-s","-r"] "" 36000
 
-Other Plugins
--------------
+can be used in the output template as `%uname%`
 
-Date Args Alias RefreshRate
+        Run Com "date" ["+\"%a %b %_d %H:%M\""] "mydate" 600
 
-StdinReader
+can be used in the output template as `%mydate%`
 
-PipeReader "/path/to/pipe" Alias
-  
-PLUGINS
-=======
+### Other Plugins
 
-Writing a Plugin
-----------------
+`Date Args Alias RefreshRate`
 
-Writing a plugin for Xmobar should be very simple. You need to create
+`StdinReader`
+
+`PipeReader "/path/to/pipe" Alias`
+
+Plugins
+-------
+
+### Writing a Plugin
+
+Writing a plugin for [Xmobar] should be very simple. You need to create
 a data type with at least one constructor.
 
-Next you must declare this data type an instance of the Exec class, by
-defining the 1 needed method (alternatively "start" or "run") and 2
+Next you must declare this data type an instance of the `Exec` class, by
+defining the 1 needed method (alternatively `start` or `run`) and 2
 optional ones (alias and rate):
 
-    start :: e -> (String -> IO ()) -> IO ()
-    run   :: e -> IO String
-    rate  :: e -> Int
-    alias :: e -> String
+        start :: e -> (String -> IO ()) -> IO ()
+        run   :: e -> IO String
+        rate  :: e -> Int
+        alias :: e -> String
 
-"start" must receive a callback to be used to display the String
+`start` must receive a callback to be used to display the `String`
 produced by the plugin. This method can be used for plugins that need
-to perform asynchronous actions. See Plugins/PipeReader.hs for an
+to perform asynchronous actions. See `Plugins/PipeReader.hs` for an
 example.
 
-"run" can be used for simpler plugins. If you define only "run" the
+`run` can be used for simpler plugins. If you define only `run` the
 plugin will be run every second. To overwrite this default you just
-need to implement "rate", which must return the number of tenth of
-seconds between every successive runs. See Plugins/HelloWorld.hs for
-an example of a plugin that runs just once, and Plugins/Date.hs for
-one that implements "rate".
+need to implement `rate`, which must return the number of tenth of
+seconds between every successive runs. See `Plugins/HelloWorld.hs` for
+an example of a plugin that runs just once, and `Plugins/Date.hs` for
+one that implements `rate`.
 
 Notice that Date could be implemented as:
-instance Exec Date where
-    alias (Date _ a _) = a
-    start (Date f _ r) = date f r
 
-date :: String -> Int -> (String -> IO ()) -> IO ()
-date format r callback = do go
-    where go = do
-            t <- toCalendarTime =<< getClockTime
-            callback $ formatCalendarTime defaultTimeLocale format t
-            tenthSeconds r >> go
+        instance Exec Date where
+            alias (Date _ a _) = a
+            start (Date f _ r) = date f r
+        
+        date :: String -> Int -> (String -> IO ()) -> IO ()
+        date format r callback = do go
+            where go = do
+                    t <- toCalendarTime =<< getClockTime
+                    callback $ formatCalendarTime defaultTimeLocale format t
+                    tenthSeconds r >> go
 
 This implementation is equivalent to the one you can read in
-Plugins/Date.hs
+`Plugins/Date.hs`.
 
-"alias" is the name to be used in the output template. Default alias
+`alias` is the name to be used in the output template. Default alias
 will be the data type constructor.
 
-Implementing a plugin requires importing the plugin API (the Exec
-class definition), that is exported by Plugins.hs. So you just need to
-import it in your module with:
+Implementing a plugin requires importing the plugin API (the `Exec`
+class definition), that is exported by `Plugins.hs`. So you just need
+to import it in your module with:
 
-import Plugins
+        import Plugins
 
 After that your type constructor can be used as an argument for the
-Runnable type constructor "Run" in the "commands" list of the
+Runnable type constructor `Run` in the `commands` list of the
 configuration options.
 
-This requires importing your plugin into Config.hs and adding you type
-to the type list in the type signature of Config.runnableTypes.
+This requires importing your plugin into `Config.hs` and adding you
+type to the type list in the type signature of `Config.runnableTypes`.
 
-For a very basic example see Plugins/HelloWorld.hs or the other
-plugins that are distributed with Xmobar.
+For a very basic example see `Plugins/HelloWorld.hs` or the other
+plugins that are distributed with [Xmobar].
 
-Installing/Removing a Plugin
-----------------------------
+### Installing/Removing a Plugin
 
 Installing a plugin should require 3 steps. Here we are going to
-install the HelloWorld plugin that comes with Xmobar:
+install the HelloWorld plugin that comes with [Xmobar]:
 
-1. import the plugin module in Config.hs, by adding: 
+1. import the plugin module in `Config.hs`, by adding: 
    
-import Plugins.HelloWorld
+        import Plugins.HelloWorld
 
 2. add the plugin data type to the list of data types in the type
-   signature of "runnableTypes" in Config.hs. For instance, for the
-   HelloWorld plugin, change "runnableTypes" into:
+   signature of `runnableTypes` in `Config.hs`. For instance, for the
+   HelloWorld plugin, change `runnableTypes` into:
 
-runnableTypes :: (Command,(Monitors,(HelloWorld,())))
-runnableTypes = undefined
+        runnableTypes :: (Command,(Monitors,(HelloWorld,())))
+        runnableTypes = undefined
 
-3. Rebuild and reinstall Xmobar. Now test it with:
+3. Rebuild and reinstall [Xmobar]. Now test it with:
 
-xmobar Plugins/helloworld.config
+        xmobar Plugins/helloworld.config
 
 As you may see in the example configuration file, the plugin can be
-used by adding, in the "commands" list:
+used by adding, in the `commands` list:
 
-Run HelloWorld
+        Run HelloWorld
 
 and, in the output template, the alias of the plugin:
 
-%helloWorld%
+        %helloWorld%
 
 That's it.
 
@@ -356,44 +386,62 @@ runnableTypes and remove the imported modules.
 
 To remove the system monitor plugin:
 
-1. remove, from Config.hs, the line
-import Plugins.Monitors
+1. remove, from `Config.hs`, the line
 
-2. in Config.hs change
-runnableTypes :: (Command,(Monitors,()))
-runnableTypes = undefined
-to
-runnableTypes :: (Command,())
-runnableTypes = undefined
+        import Plugins.Monitors
 
-3. rebuild Xmobar.
+2. in `Config.hs` change
 
-AUTHOR
-======
+         runnableTypes :: (Command,(Monitors,()))
+         runnableTypes = undefined
 
-Andrea Rossato <andrea.rossato@unibz.it>
+    to
 
-CREDITS
-=======
+         runnableTypes :: (Command,())
+         runnableTypes = undefined
+
+3. rebuild [Xmobar].
+
+Credits
+-------
 
 Thanks to Robert Manea and Spencer Janssen for their help in
 understanding how X works. They gave me suggestions on how to solve
-many problems with Xmobar.
+many problems with [Xmobar].
 
 Thanks to Claus Reinke for make me understand existential types (or at
 least for letting me think I grasp existential types...;-). 
 
-Xmobar incorporates patches from: Krzysztof Kosciuszkiewicz, Spencer
+[Xmobar] incorporates patches from: Krzysztof Kosciuszkiewicz, Spencer
 Janssen, Jens Petersen, Dmitry Kurochkin, and Lennart Kolmodin.
 
-LINKS
-=====
+Useful links
+------------
 
-The Xmobar home page:
-http://gorgias.mine.nu/repos/xmobar/
+The [Xmobar] home page
 
-Xmobars darcs repository:
-http://gorgias.mine.nu/repos/xmobar/
+[Xmobars darcs repository]
 
-To understand the internal mysteries of Xmobar try reading this:
-http://www.haskell.org/haskellwiki/X_window_programming_in_Haskell
+To understand the internal mysteries of Xmobar you may try reading
+this tutorial [on X Window Programming in Haskell].
+
+Author
+------
+
+Andrea Rossato 
+
+`andrea.rossato at unibz.it`
+
+Legal
+-----
+
+This software is released under a BSD-style license. See LICENSE for
+more details.
+
+Copyright &copy; 2007 Andrea Rossato
+
+[Hackage]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
+[Xmobar]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
+[Xmobars darcs repository]: http://gorgias.mine.nu/repos/xmobar/
+[on X Window Programming in Haskell]: http://www.haskell.org/haskellwiki/X_window_programming_in_Haskell
+
