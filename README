@@ -79,7 +79,15 @@ Other configuration options:
 :    Default font color
 
 `position`
-:     Top, Bottom or Static (with x, y, width and height)
+:     Top, Bottom or Static (with x, y, width and height).
+
+:     For example:
+
+:          position = Static { xpos = 0 , ypos = 0, width = 1024, height = 15 }
+
+:     or
+
+:         position = Top
 
 `commands`
 :    For setting the options of the programs to run (optional)
