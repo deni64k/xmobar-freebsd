@@ -4,7 +4,8 @@
 About
 -----
 
-[Xmobar] is a minimalistic, text based, status bar.
+[Xmobar] is a minimalistic, text based, status bar. It was designed to
+work with the [XMonad] Window Manager.
 
 It was inspired by the [Ion3] status bar, and supports similar features,
 like dynamic color management, output templates, and extensibility
@@ -428,6 +429,8 @@ Useful links
 
 The [Xmobar] home page
 
+The [XMonad] home page
+
 [Xmobars darcs repository]
 
 To understand the internal mysteries of Xmobar you may try reading
@@ -453,3 +456,4 @@ Copyright &copy; 2007 Andrea Rossato
 [Xmobars darcs repository]: http://code.haskell.org/xmobar
 [on X Window Programming in Haskell]: http://www.haskell.org/haskellwiki/X_window_programming_in_Haskell
 [Ion3]: http://modeemi.fi/~tuomov/ion/
+[XMonad]: http://xmonad.org
