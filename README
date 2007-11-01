@@ -11,6 +11,8 @@ It was inspired by the [Ion3] status bar, and supports similar features,
 like dynamic color management, output templates, and extensibility
 through plugins.
 
+[This is a screen shot] of my desktop with [XMonad] and [Xmobar].
+
 See `xmobar.config-sample`, distributed with the source code, for a
 sample configuration.
 
@@ -74,7 +76,7 @@ Other configuration options:
 :    Name of the font to be used
 
 `bgColor` 
-:    Backgroud color
+:    Background color
 
 `fgColor` 
 :    Default font color
@@ -170,9 +172,9 @@ to run the Memory monitor plugin with the specified template, and the
 swap monitor plugin, with default options, every second.
 
 The only internal available command is `Com` (see below Executing
-External Commands). All other commands are provided by plugins. [Xmobar]
-comes with some plugins, providing a set of system monitors, a
-standard input reader, an unix named pipe reade, and a configurable
+External Commands). All other commands are provided by plugins.
+[Xmobar] comes with some plugins, providing a set of system monitors,
+a standard input reader, an Unix named pipe reader, and a configurable
 date plugin. These plugins install the following internal commands:
 `Weather`, `Network`, `Memory`, `Swap`, `Cpu`, `Battery`, `Date`,
 `StdinReader`, and `PipeReader`.
@@ -451,6 +453,7 @@ more details.
 
 Copyright &copy; 2007 Andrea Rossato
 
+[This is a screen shot]: http://haskell.org/sitewiki/images/a/ae/Arossato-config.png
 [Hackage]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
 [Xmobar]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
 [Xmobars darcs repository]: http://code.haskell.org/xmobar
