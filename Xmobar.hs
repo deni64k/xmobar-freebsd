@@ -152,7 +152,7 @@ setProperties h c d w = do
   c2 <- internAtom d "ATOM"                     False
   v  <- internAtom d "_NET_WM_WINDOW_TYPE_DOCK" False
   changeProperty32 d w a1 c1 propModeReplace $ map fi $ getStrutValues h c
-  changeProperty32 d w a2 c2 propModeReplace [v]
+  changeProperty32 d w a2 c2 propModeReplace [fromIntegral v]
 
 getStrutValues :: Dimension -> Config -> [Int]
 getStrutValues h c
