@@ -130,19 +130,37 @@ startCommand (com,s,ss)
 createWin :: Display -> FontStruct -> Config -> IO (Rectangle,Window)
 createWin d fs c = do
   let dflt = defaultScreen d
-  Rectangle rx ry rw rh:_ <- getScreenInfo d
+  r:_   <- getScreenInfo d
   rootw <- rootWindow d dflt
   let (_,as,ds,_) = textExtents fs []
       ht          = as + ds + 2
-      (x,y,w,h,o) = case position c of
-                     Top                -> (rx,ry             ,rw,fi ht,True)
-                     Bottom             -> (rx,ry + fi rh - ht,rw,fi ht,True)
-                     Static cx cy cw ch -> (fi cx,fi cy,fi cw,fi ch,True)
+      (x,y,w,h,o) = setPosition (position c) r (fi ht)
   win <- mkUnmanagedWindow d (defaultScreenOfDisplay d) rootw x y w h o
   selectInput       d win (exposureMask .|. structureNotifyMask)
   setProperties h c d win
   mapWindow         d win
   return (Rectangle x y w h,win)
+
+setPosition :: XPosition -> Rectangle -> Dimension -> (Position,Position,Dimension,Dimension,Bool)
+setPosition p (Rectangle rx ry rw rh) ht =
+    case p of
+    Top A              -> (rx      , ry    , rw   , h    , True)
+    Top (L i)          -> (rx      , ry    , nw i , h    , True) 
+    Top (R i)          -> (right  i, ry    , nw i , h    , True)
+    Top (C i)          -> (center i, ry    , nw i , h    , True)
+    Bottom A           -> (rx      , ny    , rw   , h    , True)
+    Bottom (L i)       -> (rx      , ny    , nw i , h    , True)
+    Bottom (R i)       -> (right  i, ny    , nw i , h    , True)
+    Bottom (C i)       -> (center i, ny    , nw i , h    , True)
+    Static cx cy cw ch -> (fi cx   , fi cy , fi cw, fi ch, True)
+    where
+      ny       = ry + fi (rh - ht)
+      center i = rx + (fi $ div (remwid i) 2)
+      right  i = rx + (fi $ remwid i)
+      remwid i = rw - pw (fi i)
+      pw i     = rw * i `div` 100
+      nw       = fi . pw . fi
+      h        = fi ht
 
 setProperties :: Dimension -> Config -> Display -> Window -> IO ()
 setProperties h c d w = do
@@ -155,10 +173,11 @@ setProperties h c d w = do
   changeProperty32 d w a2 c2 propModeReplace [fromIntegral v]
 
 getStrutValues :: Dimension -> Config -> [Int]
-getStrutValues h c
-    | position c == Top    = [0, 0, fi h, 0   ]
-    | position c == Bottom = [0, 0, 0   , fi h]
-    | otherwise            = [0, 0, 0   , 0   ]
+getStrutValues h c =
+    case position c of
+    Top    _ -> [0, 0, fi h, 0   ]
+    Bottom _ -> [0, 0, 0   , fi h]
+    _        -> [0, 0, 0   , 0   ]
 
 updateWin :: TVar String -> X ()
 updateWin v = do
@@ -179,7 +198,7 @@ updateWin v = do
 
 -- $print
 
-data Align = C | L | R
+data Align = Ce | Le | Ri
 
 -- | Draws in and updates the window
 drawInWin :: Rectangle -> [[(String, String)]] -> X ()
@@ -199,9 +218,9 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   io $ fillRectangle d p gc 0 0 wid ht
   -- write to the pixmap the new string
   let strWithLenth = map (\(s,cl) -> (s,cl,textWidth fs s))
-  printStrings p gc fs 1 L $ strWithLenth left
-  printStrings p gc fs 1 R $ strWithLenth right
-  printStrings p gc fs 1 C $ strWithLenth center
+  printStrings p gc fs 1 Le $ strWithLenth left
+  printStrings p gc fs 1 Ri $ strWithLenth right
+  printStrings p gc fs 1 Ce $ strWithLenth center
   -- copy the pixmap with the new string to the window
   io $ copyArea   d p w gc 0 0 wid ht 0 0
   -- free up everything (we do not want to leak memory!)
@@ -223,9 +242,9 @@ printStrings dr gc fontst offs a sl@((s,c,l):xs) = do
       valign               = (fi ht + fi as - fi ds) `div` 2
       remWidth             = fi wid - fi totSLen
       offset               = case a of
-                               C -> (remWidth + offs) `div` 2
-                               R -> remWidth - 1
-                               L -> offs
+                               Ce -> (remWidth + offs) `div` 2
+                               Ri -> remWidth - 1
+                               Le -> offs
   (fc,bc) <- case (break (==',') c) of
                (f,',':b) -> do
                  fgc <- io $ initColor d f
