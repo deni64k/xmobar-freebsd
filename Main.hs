@@ -132,14 +132,14 @@ doOpts conf (o:oo) =
     case o of
       Help       -> putStr   usage   >> exitWith ExitSuccess
       Version    -> putStrLn version >> exitWith ExitSuccess
-      Font     s -> modifyIORef conf (\c -> c { font     = s      }) >> go
-      BgColor  s -> modifyIORef conf (\c -> c { bgColor  = s      }) >> go
-      FgColor  s -> modifyIORef conf (\c -> c { fgColor  = s      }) >> go
-      T          -> modifyIORef conf (\c -> c { position = Top    }) >> go
-      B          -> modifyIORef conf (\c -> c { position = Bottom }) >> go
-      AlignSep s -> modifyIORef conf (\c -> c { alignSep = s      }) >> go
-      SepChar  s -> modifyIORef conf (\c -> c { sepChar  = s      }) >> go
-      Template s -> modifyIORef conf (\c -> c { template = s      }) >> go
+      Font     s -> modifyIORef conf (\c -> c { font     = s       }) >> go
+      BgColor  s -> modifyIORef conf (\c -> c { bgColor  = s       }) >> go
+      FgColor  s -> modifyIORef conf (\c -> c { fgColor  = s       }) >> go
+      T          -> modifyIORef conf (\c -> c { position = Top A   }) >> go
+      B          -> modifyIORef conf (\c -> c { position = Bottom A}) >> go
+      AlignSep s -> modifyIORef conf (\c -> c { alignSep = s       }) >> go
+      SepChar  s -> modifyIORef conf (\c -> c { sepChar  = s       }) >> go
+      Template s -> modifyIORef conf (\c -> c { template = s       }) >> go
       Commands s -> case readCom s of
                       Right x -> modifyIORef conf (\c -> c { commands = x }) >> go 
                       Left e  -> putStr (e ++ usage) >> exitWith (ExitFailure 1)
