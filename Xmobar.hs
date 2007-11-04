@@ -144,14 +144,14 @@ createWin d fs c = do
 setPosition :: XPosition -> Rectangle -> Dimension -> (Position,Position,Dimension,Dimension,Bool)
 setPosition p (Rectangle rx ry rw rh) ht =
     case p of
-    Top A              -> (rx      , ry    , rw   , h    , True)
-    Top (L i)          -> (rx      , ry    , nw i , h    , True) 
-    Top (R i)          -> (right  i, ry    , nw i , h    , True)
-    Top (C i)          -> (center i, ry    , nw i , h    , True)
-    Bottom A           -> (rx      , ny    , rw   , h    , True)
-    Bottom (L i)       -> (rx      , ny    , nw i , h    , True)
-    Bottom (R i)       -> (right  i, ny    , nw i , h    , True)
-    Bottom (C i)       -> (center i, ny    , nw i , h    , True)
+    Top                -> (rx      , ry    , rw   , h    , True)
+    TopW (L i)         -> (rx      , ry    , nw i , h    , True) 
+    TopW (R i)         -> (right  i, ry    , nw i , h    , True)
+    TopW (C i)         -> (center i, ry    , nw i , h    , True)
+    Bottom             -> (rx      , ny    , rw   , h    , True)
+    BottomW (L i)      -> (rx      , ny    , nw i , h    , True)
+    BottomW (R i)      -> (right  i, ny    , nw i , h    , True)
+    BottomW (C i)      -> (center i, ny    , nw i , h    , True)
     Static cx cy cw ch -> (fi cx   , fi cy , fi cw, fi ch, True)
     where
       ny       = ry + fi (rh - ht)
@@ -175,9 +175,9 @@ setProperties h c d w = do
 getStrutValues :: Dimension -> Config -> [Int]
 getStrutValues h c =
     case position c of
-    Top    _ -> [0, 0, fi h, 0   ]
-    Bottom _ -> [0, 0, 0   , fi h]
-    _        -> [0, 0, 0   , 0   ]
+    Top    -> [0, 0, fi h, 0   ]
+    Bottom -> [0, 0, 0   , fi h]
+    _      -> [0, 0, 0   , 0   ]
 
 updateWin :: TVar String -> X ()
 updateWin v = do
