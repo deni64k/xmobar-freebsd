@@ -140,8 +140,8 @@ createWin d fs c = do
                      Static cx cy cw ch -> (fi cx,fi cy,fi cw,fi ch,True)
   win <- mkUnmanagedWindow d (defaultScreenOfDisplay d) rootw x y w h o
   selectInput       d win (exposureMask .|. structureNotifyMask)
-  mapWindow         d win
   setProperties h c d win
+  mapWindow         d win
   return (Rectangle x y w h,win)
 
 setProperties :: Dimension -> Config -> Display -> Window -> IO ()
