@@ -15,7 +15,7 @@
 module Config ( -- * Configuration
                 -- $config
                 Config (..)
-              , XPosition (..)
+              , XPosition (..), Width (..)
               , defaultConfig
               , runnableTypes
               ) where
@@ -44,7 +44,8 @@ data Config =
            , template       :: String     -- ^ The output template 
            } deriving (Read)
 
-data XPosition = Top | Bottom | Static {xpos, ypos, width, height :: Int} deriving ( Read, Eq )
+data XPosition = Top Width | Bottom Width | Static {xpos, ypos, width, height :: Int} deriving ( Read, Eq )
+data Width = A | L Int | R Int | C Int deriving ( Read, Eq )
 
 -- | The default configuration values
 defaultConfig :: Config
@@ -52,7 +53,7 @@ defaultConfig =
     Config { font     = "-misc-fixed-*-*-*-*-10-*-*-*-*-*-*-*"
            , bgColor  = "#000000"
            , fgColor  = "#BFBFBF"
-           , position = Top
+           , position = Top A
            , commands = []
            , sepChar  = "%"
            , alignSep = "}{"
