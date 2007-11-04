@@ -145,20 +145,20 @@ setPosition :: XPosition -> Rectangle -> Dimension -> (Position,Position,Dimensi
 setPosition p (Rectangle rx ry rw rh) ht =
     case p of
     Top                -> (rx      , ry    , rw   , h    , True)
-    TopW (L i)         -> (rx      , ry    , nw i , h    , True) 
-    TopW (R i)         -> (right  i, ry    , nw i , h    , True)
-    TopW (C i)         -> (center i, ry    , nw i , h    , True)
+    TopW L i           -> (rx      , ry    , nw i , h    , True) 
+    TopW R i           -> (right  i, ry    , nw i , h    , True)
+    TopW C i           -> (center i, ry    , nw i , h    , True)
     Bottom             -> (rx      , ny    , rw   , h    , True)
-    BottomW (L i)      -> (rx      , ny    , nw i , h    , True)
-    BottomW (R i)      -> (right  i, ny    , nw i , h    , True)
-    BottomW (C i)      -> (center i, ny    , nw i , h    , True)
+    BottomW L i        -> (rx      , ny    , nw i , h    , True)
+    BottomW R i        -> (right  i, ny    , nw i , h    , True)
+    BottomW C i        -> (center i, ny    , nw i , h    , True)
     Static cx cy cw ch -> (fi cx   , fi cy , fi cw, fi ch, True)
     where
       ny       = ry + fi (rh - ht)
       center i = rx + (fi $ div (remwid i) 2)
       right  i = rx + (fi $ remwid i)
       remwid i = rw - pw (fi i)
-      pw i     = rw * i `div` 100
+      pw i     = rw * (min 100 i) `div` 100
       nw       = fi . pw . fi
       h        = fi ht
 
@@ -198,8 +198,6 @@ updateWin v = do
 
 -- $print
 
-data Align = Ce | Le | Ri
-
 -- | Draws in and updates the window
 drawInWin :: Rectangle -> [[(String, String)]] -> X ()
 drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
@@ -218,9 +216,9 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   io $ fillRectangle d p gc 0 0 wid ht
   -- write to the pixmap the new string
   let strWithLenth = map (\(s,cl) -> (s,cl,textWidth fs s))
-  printStrings p gc fs 1 Le $ strWithLenth left
-  printStrings p gc fs 1 Ri $ strWithLenth right
-  printStrings p gc fs 1 Ce $ strWithLenth center
+  printStrings p gc fs 1 L $ strWithLenth left
+  printStrings p gc fs 1 R $ strWithLenth right
+  printStrings p gc fs 1 C $ strWithLenth center
   -- copy the pixmap with the new string to the window
   io $ copyArea   d p w gc 0 0 wid ht 0 0
   -- free up everything (we do not want to leak memory!)
@@ -242,9 +240,9 @@ printStrings dr gc fontst offs a sl@((s,c,l):xs) = do
       valign               = (fi ht + fi as - fi ds) `div` 2
       remWidth             = fi wid - fi totSLen
       offset               = case a of
-                               Ce -> (remWidth + offs) `div` 2
-                               Ri -> remWidth - 1
-                               Le -> offs
+                               C -> (remWidth + offs) `div` 2
+                               R -> remWidth - 1
+                               L -> offs
   (fc,bc) <- case (break (==',') c) of
                (f,',':b) -> do
                  fgc <- io $ initColor d f

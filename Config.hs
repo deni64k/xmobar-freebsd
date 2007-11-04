@@ -15,7 +15,7 @@
 module Config ( -- * Configuration
                 -- $config
                 Config (..)
-              , XPosition (..), Width (..)
+              , XPosition (..), Align (..)
               , defaultConfig
               , runnableTypes
               ) where
@@ -44,8 +44,9 @@ data Config =
            , template       :: String     -- ^ The output template 
            } deriving (Read)
 
-data XPosition = Top | TopW Width | Bottom | BottomW Width | Static {xpos, ypos, width, height :: Int} deriving ( Read, Eq )
-data Width = L Int | R Int | C Int deriving ( Read, Eq )
+data XPosition = Top | TopW Align Int | Bottom | BottomW Align Int | Static {xpos, ypos, width, height :: Int} deriving ( Read, Eq )
+
+data Align = L | R | C deriving ( Read, Eq )
 
 -- | The default configuration values
 defaultConfig :: Config
