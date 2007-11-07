@@ -3,7 +3,7 @@
 -- Module      :  Plugins.StdinReader
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
@@ -14,13 +14,20 @@
 
 module Plugins.StdinReader where
 
+import Prelude hiding (catch)
+import System.Posix.Process
+import System.Exit
 import System.IO
+import Control.Exception (catch)
 import Plugins
 
 data StdinReader = StdinReader
     deriving (Read, Show)
 
-instance Exec StdinReader where 
+instance Exec StdinReader where
     start StdinReader cb = do
-        forever (hGetLine stdin >>= cb)
-        where forever a = a >> forever a
+        cb =<< catch (hGetLine stdin) (\e -> do hPrint stderr e; return "")
+        eof <- hIsEOF stdin
+        if eof
+            then exitImmediately ExitSuccess
+            else start StdinReader cb
