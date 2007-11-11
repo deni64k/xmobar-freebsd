@@ -33,6 +33,16 @@ A recent screen shot can be found here:
 
         http://code.haskell.org/~arossato/xmobar/xmobar-0.8.png
 
+Version 0.8 requires Cabal-1.2.x, but works both with ghc-6.6.1 and
+ghc-6.8.1.
+
+[Here you can find] a source tree of xmobar-0.8 which works with
+Cabal-1.1.x, but compiles only with ghc-6.6.x:
+
+        http://code.haskell.org/~arossato/xmobar/xmobar-0.8-Cabal-1.1-ghc-6.6.tar.gz
+
+[Here you can find]: http://code.haskell.org/~arossato/xmobar/xmobar-0.8-Cabal-1.1-ghc-6.6.tar.gz
+
 Installation
 ------------
 
