@@ -293,7 +293,7 @@ command name in the template, in this case it will be executed without
 arguments, or you can configure it in the "commands" configuration
 option list with the Com template command:
 
-`Com ProgarmName Args Alias RefreshRate`
+`Com ProgramName Args Alias RefreshRate`
 
 - ProgramName: the name of the program
 - Args: the arguments to be passed to the program at execution time
