@@ -71,9 +71,10 @@ pTime = do y <- getNumbersAsString
            return (y, m, d ,([h]++[hh]++":"++[mi]++mimi))
 
 pTemp :: Parser (Int, Int)
-pTemp = do f <- manyTill (digit <|> char '.') $ char ' '
+pTemp = do let num = digit <|> char '-' <|> char '.'
+           f <- manyTill num $ char ' '
            manyTill anyChar $ char '('
-           c <- manyTill digit $ (char ' ' <|> char '.')
+           c <- manyTill num $ char ' '
            skipRestOfLine
            return $ (floor (read c :: Double), floor (read f :: Double))
 
