@@ -99,7 +99,7 @@ options =
     , Option ['b'     ] ["bottom"   ] (NoArg  B                   ) "Place Xmobar at the bottom of the screen"
     , Option ['a'     ] ["alignsep" ] (ReqArg AlignSep "alignsep" ) "Separators for left, center and right text\nalignment. Default: '}{'"
     , Option ['s'     ] ["sepchar"  ] (ReqArg SepChar  "char"     ) "The character used to separate commands in\nthe output template. Default '%'"
-    , Option ['t'     ] ["template" ] (ReqArg Template "tempate"  ) "The output template"
+    , Option ['t'     ] ["template" ] (ReqArg Template "template" ) "The output template"
     , Option ['c'     ] ["commands" ] (ReqArg Commands "commands" ) "The list of commands to be executed"
     ]
 
