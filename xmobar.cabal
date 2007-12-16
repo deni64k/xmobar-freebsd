@@ -19,7 +19,7 @@ flag small_base
 executable xmobar
     main-is:            Main.hs
     other-Modules:      Xmobar, Config, Parsers, Commands, Runnable, Plugins
-    ghc-options:        -funbox-strict-fields -O2 -fasm -Wall -optl-Wl,-s -threaded
+    ghc-options:        -funbox-strict-fields -Wall -optl-Wl,-s -threaded
     ghc-prof-options:   -prof -auto-all
     if flag(small_base)
        build-depends:   base >= 3, containers, process, old-time, old-locale, bytestring, directory
