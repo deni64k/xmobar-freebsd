@@ -17,11 +17,18 @@ module Plugins.Monitors.CpuFreq where
 import Plugins.Monitors.Common
 import Plugins.Monitors.CoreCommon
 
+-- |
+-- Cpu frequency default configuration. Default template contains only one
+-- core frequency, user should specify custom template in order to get more
+-- cpu frequencies.
 cpuFreqConfig :: IO MConfig
 cpuFreqConfig = mkMConfig
        "Freq: <core0>GHz" -- template
        (zipWith (++) (repeat "core") (map show [0 :: Int ..])) -- available
                                                                -- replacements
+
+-- |
+-- Function retrieves monitor string holding the cpu frequency (or frequencies)
 runCpuFreq :: [String] -> Monitor String
 runCpuFreq _ = do
     let dir = "/sys/devices/system/cpu"

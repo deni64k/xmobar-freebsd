@@ -197,8 +197,8 @@ External Commands). All other commands are provided by plugins.
 [Xmobar] comes with some plugins, providing a set of system monitors,
 a standard input reader, an Unix named pipe reader, and a configurable
 date plugin. These plugins install the following internal commands:
-`Weather`, `Network`, `Memory`, `Swap`, `Cpu`, `Battery`, `Date`,
-`StdinReader`, and `PipeReader`.
+`Weather`, `Network`, `Memory`, `Swap`, `Cpu`, `Battery`, `Thermal`,
+`CpuFreq`, `CoreTemp`, `Date`, `StdinReader` and `PipeReader`.
 
 To remove them see below Installing/Removing a Plugin
 
@@ -262,6 +262,37 @@ Monitors have default aliases.
 - Variables that can be used with the `-t`/`--template` argument: 
 	    `left`
 - Default template: `Batt: <left>`
+
+`Thermal Zone Args RefreshRate`
+
+- aliases to the Zone: so `Zone "THRM" []` can be used in template as `%THRM%`
+- Args: the argument list (see below)
+- Variables that can be used with the `-t`/`--template` argument:
+	    `temp`
+- Default template: `Thm: <temp>C`
+- This plugin works only on sytems with devices having thermal zone.
+  Check directories in /proc/acpi/thermal_zone for possible values.
+- Example: Run Thermal "THRM" ["-t","iwl4965-temp: \<temp\>C"]
+
+`CpuFreq Args RefreshRate`
+
+- aliases to `cpufreq`
+- Args: the argument list (see below)
+- Variables that can be used with the `-t`/`--template` argument:
+	    `core0`, `core1`, ..,  `coreN`
+- Default template: `Freq: <core0>GHz`
+- This monitor requires acpi_cpufreq module to be loaded in kernel
+- Example: Run CpuFreq ["-t","Freq:\<core0\>|\<core1\>GHz","-L","0","-H","2","-l","lightblue","-n","white","-h","red"] 50
+
+`CoreTemp Args RefreshRate`
+
+- aliases to `coretemp`
+- Args: the argument list (see below)
+- Variables that can be used with the `-t`/`--template` argument:
+	    `core0`, `core1`, ..,  `coreN`
+- Default template: `Temp: <core0>C`
+- This monitor requires coretemp module to be loaded in kernel
+- Example: Run CoreTemp ["-t","Temp:\<core0\>|\<core1\>C","-L","40","-H","60","-l","lightblue","-n","gray90","-h","red"] 50
 
 ### Monitor Plugins Commands Arguments
 
