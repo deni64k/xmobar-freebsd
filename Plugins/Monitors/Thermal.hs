@@ -24,11 +24,12 @@ thermalConfig = mkMConfig
        ["temp"]       -- available replacements
 
 runThermal :: [String] -> Monitor String
-runThermal _ = do
-    let file = "/proc/acpi/thermal_zone/THM/temperature"
+runThermal args = do
+    let zone = head args
+        file = "/proc/acpi/thermal_zone/" ++ zone ++ "/temperature"
     exists <- io $ fileExist file
     case exists of
-         False  -> return "Thermal: N/A"
+         False  -> return $ "Thermal (" ++ zone ++ "): N/A"
          True   -> do number <- io $ B.readFile file
                                      >>= return . (read :: String -> Int)
                                                 . stringParser (1, 0)
