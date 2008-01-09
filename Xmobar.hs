@@ -175,9 +175,11 @@ setProperties h c d w = do
 getStrutValues :: Dimension -> Config -> [Int]
 getStrutValues h c =
     case position c of
-    Top    -> [0, 0, fi h, 0   ]
-    Bottom -> [0, 0, 0   , fi h]
-    _      -> [0, 0, 0   , 0   ]
+    Top         -> [0, 0, fi h, 0   ]
+    TopW    _ _ -> [0, 0, fi h, 0   ]
+    Bottom      -> [0, 0, 0   , fi h]
+    BottomW _ _ -> [0, 0, 0   , fi h]
+    _           -> [0, 0, 0   , 0   ]
 
 updateWin :: TVar String -> X ()
 updateWin v = do
