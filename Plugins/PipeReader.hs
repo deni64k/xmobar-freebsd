@@ -3,7 +3,7 @@
 -- Module      :  Plugins.PipeReader
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
@@ -15,14 +15,15 @@
 module Plugins.PipeReader where
 
 import System.IO
+import qualified System.IO.UTF8 as U
 import Plugins
 
 data PipeReader = PipeReader String String
     deriving (Read, Show)
 
-instance Exec PipeReader where 
+instance Exec PipeReader where
     alias (PipeReader _ a)    = a
     start (PipeReader p _) cb = do
         h <- openFile p ReadMode
-        forever (hGetLine h >>= cb)
+        forever (U.hGetLine h >>= cb)
         where forever a = a >> forever a
