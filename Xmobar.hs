@@ -4,12 +4,12 @@
 -- Module      :  Xmobar
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- A status bar for the Xmonad Window Manager 
+-- A status bar for the Xmonad Window Manager
 --
 -----------------------------------------------------------------------------
 
@@ -44,6 +44,7 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Exception hiding (handle)
 import Data.Bits
+import Data.Char
 import System.Posix.Types (Fd(..))
 
 import Config
@@ -63,7 +64,7 @@ data XConf =
     XConf { display :: Display
           , rect    :: Rectangle
           , window  :: Window
-          , fontS   :: FontStruct
+          , fontS   :: FontSet
           , config  :: Config
           }
 
@@ -75,9 +76,9 @@ runX xc f = runReaderT f xc
 eventLoop :: XConf -> [(Maybe ThreadId, TVar String)] -> IO ()
 eventLoop xc@(XConf d _ w fs c) v = block $ do
     tv <- atomically $ newTVar []
-    t <- myThreadId
+    t  <- myThreadId
     ct <- forkIO (checker t tv "" `catch` \_ -> return ())
-    go tv ct   
+    go tv ct
  where
     -- interrupt the drawing thread every time a var is updated
     checker t tvar ov = do
@@ -127,13 +128,13 @@ startCommand (com,s,ss)
 -- $window
 
 -- | The function to create the initial window
-createWin :: Display -> FontStruct -> Config -> IO (Rectangle,Window)
+createWin :: Display -> FontSet -> Config -> IO (Rectangle,Window)
 createWin d fs c = do
   let dflt = defaultScreen d
   r:_   <- getScreenInfo d
   rootw <- rootWindow d dflt
-  let (_,as,ds,_) = textExtents fs []
-      ht          = as + ds + 2
+  let (_,rl)      = wcTextExtents fs "Tg"
+      ht          = rect_height rl + 2
       (x,y,w,h,o) = setPosition (position c) r (fi ht)
   win <- mkUnmanagedWindow d (defaultScreenOfDisplay d) rootw x y w h o
   selectInput       d win (exposureMask .|. structureNotifyMask)
@@ -145,7 +146,7 @@ setPosition :: XPosition -> Rectangle -> Dimension -> (Position,Position,Dimensi
 setPosition p (Rectangle rx ry rw rh) ht =
     case p of
     Top                -> (rx      , ry    , rw   , h    , True)
-    TopW L i           -> (rx      , ry    , nw i , h    , True) 
+    TopW L i           -> (rx      , ry    , nw i , h    , True)
     TopW R i           -> (right  i, ry    , nw i , h    , True)
     TopW C i           -> (center i, ry    , nw i , h    , True)
     Bottom             -> (rx      , ny    , rw   , h    , True)
@@ -185,8 +186,8 @@ updateWin :: TVar String -> X ()
 updateWin v = do
   xc <- ask
   let (conf,rec) = (config &&& rect) xc
-      [lc,rc]    = if length (alignSep conf) == 2 
-                   then alignSep conf 
+      [lc,rc]    = if length (alignSep conf) == 2
+                   then alignSep conf
                    else alignSep defaultConfig
   i <- io $ atomically $ readTVar v
   let def     = [i,[],[]]
@@ -209,7 +210,7 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   bgcolor <- io $ initColor d $ bgColor c
   gc      <- io $ createGC  d w
   --let's get the fonts
-  io $ setFont d gc (fontFromFontStruct fs)
+--  io $ setFont d gc (fontFromFontStruct fs)
   -- create a pixmap to write to and fill it with a rectangle
   p <- io $ createPixmap d w wid ht
             (defaultDepthOfScreen (defaultScreenOfDisplay d))
@@ -217,7 +218,7 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   io $ setForeground d gc bgcolor
   io $ fillRectangle d p gc 0 0 wid ht
   -- write to the pixmap the new string
-  let strWithLenth = map (\(s,cl) -> (s,cl,textWidth fs s))
+  let strWithLenth = map (\(s,cl) -> (s,cl,wcTextEscapement fs s))
   printStrings p gc fs 1 L $ strWithLenth left
   printStrings p gc fs 1 R $ strWithLenth right
   printStrings p gc fs 1 C $ strWithLenth center
@@ -230,16 +231,16 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   io $ sync       d True
 
 -- | An easy way to print the stuff we need to print
-printStrings :: Drawable -> GC -> FontStruct -> Position
+printStrings :: Drawable -> GC -> FontSet -> Position
              -> Align -> [(String, String, Position)] -> X ()
 printStrings _ _ _ _ _ [] = return ()
 printStrings dr gc fontst offs a sl@((s,c,l):xs) = do
   r <- ask
   let (conf,d)             = (config &&& display) r
       Rectangle _ _ wid ht = rect r
-      (_,as,ds,_)          = textExtents fontst s
+      (_,rl) = wcTextExtents fontst s
       totSLen              = foldr (\(_,_,len) -> (+) len) 0 sl
-      valign               = (fi ht + fi as - fi ds) `div` 2
+      valign               = (fi ht + fi (rect_height rl)) `div` 2
       remWidth             = fi wid - fi totSLen
       offset               = case a of
                                C -> (remWidth + offs) `div` 2
@@ -249,14 +250,14 @@ printStrings dr gc fontst offs a sl@((s,c,l):xs) = do
                (f,',':b) -> do
                  fgc <- io $ initColor d f
                  bgc <- io $ initColor d b
-                 return (fgc,bgc) 
+                 return (fgc,bgc)
                (f,_) -> do
                  fgc <- io $ initColor d f
                  bgc <- io $ initColor d (bgColor conf)
-                 return (fgc,bgc) 
+                 return (fgc,bgc)
   io $ setForeground d gc fc
   io $ setBackground d gc bc
-  io $ drawImageString d dr gc offset valign s
+  io $ wcDrawImageString d dr fontst gc offset valign s
   printStrings dr gc fontst (offs + l) a xs
 
 {- $unmanwin
@@ -279,11 +280,11 @@ mkUnmanagedWindow :: Display
 mkUnmanagedWindow dpy scr rw x y w h o = do
   let visual   = defaultVisualOfScreen scr
       attrmask = cWOverrideRedirect
-  allocaSetWindowAttributes $ 
+  allocaSetWindowAttributes $
          \attributes -> do
            set_override_redirect attributes o
-           createWindow dpy rw x y w h 0 (defaultDepthOfScreen scr) 
-                        inputOutput visual attrmask attributes                                
+           createWindow dpy rw x y w h 0 (defaultDepthOfScreen scr)
+                        inputOutput visual attrmask attributes
 
 {- $utility
 Utilities

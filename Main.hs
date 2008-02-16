@@ -3,12 +3,12 @@
 -- Module      :  Xmobar.Main
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- The main module of Xmobar, a text based status bar 
+-- The main module of Xmobar, a text based status bar
 --
 -----------------------------------------------------------------------------
 
@@ -22,20 +22,25 @@ module Main ( -- * Main Stuff
 import Xmobar
 import Parsers
 import Config
+import HsLocale
 
+import Prelude hiding (readFile)
 import Data.IORef
 import Graphics.X11.Xlib
+import Graphics.X11.Xlib.Extras
 import System.Console.GetOpt
 import System.Exit
 import System.Environment
+import System.IO.UTF8 (readFile)
 import System.Posix.Files
 
 -- $main
- 
+
 -- | The main entry point
 main :: IO ()
 main = do
   d   <- openDisplay ""
+  setupLocale
   args     <- getArgs
   (o,file) <- getOpts args
   c        <- case file of
@@ -49,13 +54,13 @@ main = do
   civ      <- newIORef c
   doOpts civ o
   conf     <- readIORef civ
-  let loadFont = loadQueryFont d . font
-  fs       <- catch (loadFont conf) (const $ loadFont defaultConfig)
+  let loadFont = createFontSet d . font
+  (_,_,fs) <- catch (loadFont conf) (const $ loadFont defaultConfig)
   cl       <- parseTemplate conf (template conf)
   vars     <- mapM startCommand cl
   (r,w)    <- createWin d fs conf
   eventLoop (XConf d r w fs conf) vars
-  freeFont d fs
+  freeFontSet d fs
 
 -- | Reads the configuration files or quits with an error
 readConfig :: FilePath -> IO Config
@@ -76,7 +81,7 @@ readDefaultConfig = do
   if f then readConfig path else return defaultConfig
 
 data Opts = Help
-          | Version 
+          | Version
           | Font     String
           | BgColor  String
           | FgColor  String
@@ -85,9 +90,9 @@ data Opts = Help
           | AlignSep String
           | Commands String
           | SepChar  String
-          | Template String 
+          | Template String
        deriving Show
-    
+
 options :: [OptDescr Opts]
 options =
     [ Option ['h','?' ] ["help"     ] (NoArg  Help                ) "This help"
@@ -104,7 +109,7 @@ options =
     ]
 
 getOpts :: [String] -> IO ([Opts], [String])
-getOpts argv = 
+getOpts argv =
     case getOpt Permute options argv of
       (o,n,[])   -> return (o,n)
       (_,_,errs) -> error (concat errs ++ usage)
@@ -141,7 +146,7 @@ doOpts conf (o:oo) =
       SepChar  s -> modifyIORef conf (\c -> c { sepChar  = s     }) >> go
       Template s -> modifyIORef conf (\c -> c { template = s     }) >> go
       Commands s -> case readCom s of
-                      Right x -> modifyIORef conf (\c -> c { commands = x }) >> go 
+                      Right x -> modifyIORef conf (\c -> c { commands = x }) >> go
                       Left e  -> putStr (e ++ usage) >> exitWith (ExitFailure 1)
     where readCom str =
               case readStr str of
