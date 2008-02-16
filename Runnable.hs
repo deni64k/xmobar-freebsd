@@ -4,16 +4,16 @@
 -- Module      :  Xmobar.Runnable
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
 --
 -- The existential type to store the list of commands to be executed.
 -- I must thank Claus Reinke for the help in understanding the mysteries of
--- reading existential types. The Read instance of Runnable must be credited to 
--- him. 
--- 
+-- reading existential types. The Read instance of Runnable must be credited to
+-- him.
+--
 -- See here:
 -- http:\/\/www.haskell.org\/pipermail\/haskell-cafe\/2007-July\/028227.html
 --
@@ -43,10 +43,10 @@ class ReadAsAnyOf ts ex where
     -- | Reads an existential type as any of hidden types ts
     readAsAnyOf :: ts -> ReadPrec ex
 
-instance ReadAsAnyOf () ex where 
+instance ReadAsAnyOf () ex where
     readAsAnyOf ~() = mzero
 
-instance (Show t, Read t, Exec t, ReadAsAnyOf ts Runnable) => ReadAsAnyOf (t,ts) Runnable where 
+instance (Show t, Read t, Exec t, ReadAsAnyOf ts Runnable) => ReadAsAnyOf (t,ts) Runnable where
     readAsAnyOf ~(t,ts) = r t `mplus` readAsAnyOf ts
               where r ty = do { m <- readPrec; return (Run (m `asTypeOf` ty)) }
 
