@@ -23,8 +23,8 @@ import Plugins.Monitors.CoreCommon
 -- cpu frequencies.
 cpuFreqConfig :: IO MConfig
 cpuFreqConfig = mkMConfig
-       "Freq: <core0>GHz" -- template
-       (zipWith (++) (repeat "core") (map show [0 :: Int ..])) -- available
+       "Freq: <cpu0>GHz" -- template
+       (zipWith (++) (repeat "cpu") (map show [0 :: Int ..])) -- available
                                                                -- replacements
 
 -- |

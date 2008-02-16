@@ -17,6 +17,8 @@ module Plugins.Monitors.CoreCommon where
 import Plugins.Monitors.Common
 import System.Posix.Files (fileExist)
 import System.Directory
+import Data.Char (isDigit)
+import Data.List (isPrefixOf)
 
 -- |
 -- Function checks the existence of first file specified by pattern and if the
@@ -42,7 +44,8 @@ retrieveData dir file pattern divisor = do
     where
         dirCount path str = getDirectoryContents path
                             >>= return . length
-                                       . filter ((str ==) . take (length str))
+                                       . filter (\s -> str `isPrefixOf` s
+                                                       && isDigit (last s))
         files count = [ foldl (++) dir [ "/", pattern, show i, "/", file ]
                       | i <- [0 .. count - 1] ]
         conversion = flip (/) divisor . (read :: String -> Double)
