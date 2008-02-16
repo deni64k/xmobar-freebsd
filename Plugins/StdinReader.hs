@@ -18,6 +18,7 @@ import Prelude hiding (catch)
 import System.Posix.Process
 import System.Exit
 import System.IO
+import qualified System.IO.UTF8 as U
 import Control.Exception (catch)
 import Plugins
 
@@ -26,7 +27,7 @@ data StdinReader = StdinReader
 
 instance Exec StdinReader where
     start StdinReader cb = do
-        cb =<< catch (hGetLine stdin) (\e -> do hPrint stderr e; return "")
+        cb =<< catch (U.hGetLine stdin) (\e -> do hPrint stderr e; return "")
         eof <- hIsEOF stdin
         if eof
             then exitImmediately ExitSuccess
