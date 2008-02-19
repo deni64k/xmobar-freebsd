@@ -133,8 +133,8 @@ createWin d fs c = do
   let dflt = defaultScreen d
   r:_   <- getScreenInfo d
   rootw <- rootWindow d dflt
-  let (_,rl)      = wcTextExtents fs "Tg"
-      ht          = rect_height rl + 2
+  let (_,rl)      = wcTextExtents fs "0"
+      ht          = rect_height rl + 4
       (x,y,w,h,o) = setPosition (position c) r (fi ht)
   win <- mkUnmanagedWindow d (defaultScreenOfDisplay d) rootw x y w h o
   selectInput       d win (exposureMask .|. structureNotifyMask)
@@ -237,10 +237,10 @@ printStrings _ _ _ _ _ [] = return ()
 printStrings dr gc fontst offs a sl@((s,c,l):xs) = do
   r <- ask
   let (conf,d)             = (config &&& display) r
-      Rectangle _ _ wid ht = rect r
+      Rectangle _ _ wid _  = rect r
       (_,rl) = wcTextExtents fontst s
       totSLen              = foldr (\(_,_,len) -> (+) len) 0 sl
-      valign               = (fi ht + fi (rect_height rl)) `div` 2
+      valign               = fi $ rect_height rl
       remWidth             = fi wid - fi totSLen
       offset               = case a of
                                C -> (remWidth + offs) `div` 2
