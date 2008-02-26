@@ -222,6 +222,8 @@ Monitors have default aliases.
 	    `wind`, `visibility`, `skyCondition`, `tempC`, `tempF`,
 	    `dewPoint`, `rh`, `pressure`
 - Default template: `<station>: <tempC>C, rh <rh>% (<hour>)`
+- Requires `curl` in the `$PATH` to retrieve weather information from
+  `http://weather.noaa.gov`
 
 `Network Interface Args RefreshRate`
 
