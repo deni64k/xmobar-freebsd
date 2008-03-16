@@ -3,12 +3,12 @@
 -- Module      :  Xmobar.Config
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
 --
--- The configuration module of Xmobar, a text based status bar 
+-- The configuration module of Xmobar, a text based status bar
 --
 -----------------------------------------------------------------------------
 
@@ -31,17 +31,17 @@ import Plugins.StdinReader
 -- Configuration data type and default configuration
 
 -- | The configuration data type
-data Config = 
+data Config =
     Config { font           :: String     -- ^ Font
            , bgColor        :: String     -- ^ Backgroud color
            , fgColor        :: String     -- ^ Default font color
            , position       :: XPosition  -- ^ Top Bottom or Static
-           , commands       :: [Runnable] -- ^ For setting the command, the command argujments 
+           , commands       :: [Runnable] -- ^ For setting the command, the command argujments
                                           --   and refresh rate for the programs to run (optional)
            , sepChar        :: String     -- ^ The character to be used for indicating
                                           --   commands in the output template (default '%')
            , alignSep       :: String     -- ^ Separators for left, center and right text alignment
-           , template       :: String     -- ^ The output template 
+           , template       :: String     -- ^ The output template
            } deriving (Read)
 
 data XPosition = Top | TopW Align Int | Bottom | BottomW Align Int | Static {xpos, ypos, width, height :: Int} deriving ( Read, Eq )
@@ -55,10 +55,12 @@ defaultConfig =
            , bgColor  = "#000000"
            , fgColor  = "#BFBFBF"
            , position = Top
-           , commands = []
+           , commands = [ Run $ Date "%a %b %_d %Y * %H:%M:%S" "theDate" 10
+                        , Run StdinReader
+                        ]
            , sepChar  = "%"
            , alignSep = "}{"
-           , template = "Uptime: <fc=#00FF00>%uptime%</fc> }{ <fc=#FF0000>%date%</fc>"
+           , template = "%StdinReader% }{ <fc=#00FF00>%uname%</fc> * <fc=#FF0000>%theDate%</fc>"
            }
 
 -- | This is the list of types that can be hidden inside
