@@ -3,7 +3,7 @@
 -- Module      :  Xmobar.Plugins.Monitors
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
@@ -27,15 +27,16 @@ import Plugins.Monitors.Thermal
 import Plugins.Monitors.CpuFreq
 import Plugins.Monitors.CoreTemp
 
-data Monitors = Weather Station Args Rate
+data Monitors = Weather Station   Args Rate
               | Network Interface Args Rate
-              | Memory Args Rate
-              | Swap Args Rate
-              | Cpu Args Rate
-              | Battery Args Rate
-              | Thermal Zone Args Rate
-              | CpuFreq Args Rate
-              | CoreTemp Args Rate
+              | Memory            Args Rate
+              | Swap              Args Rate
+              | Cpu               Args Rate
+              | Battery           Args Rate
+              | BatteryP [String] Args Rate
+              | Thermal   Zone    Args Rate
+              | CpuFreq           Args Rate
+              | CoreTemp          Args Rate
                 deriving (Show,Read,Eq)
 
 type Args      = [String]
@@ -47,21 +48,23 @@ type Interface = String
 type Rate      = Int
 
 instance Exec Monitors where
-    alias (Weather s _ _) = s
-    alias (Network i _ _) = i
-    alias (Thermal z _ _) = z
-    alias (Memory    _ _) = "memory"
-    alias (Swap      _ _) = "swap"
-    alias (Cpu       _ _) = "cpu"
-    alias (Battery   _ _) = "battery"
-    alias (CpuFreq   _ _) = "cpufreq"
-    alias (CoreTemp  _ _) = "coretemp"
-    start (Weather s a r) = runM (a ++ [s]) weatherConfig  runWeather  r
-    start (Network i a r) = runM (a ++ [i]) netConfig      runNet      r
-    start (Thermal z a r) = runM (a ++ [z]) thermalConfig  runThermal  r
-    start (Memory    a r) = runM a          memConfig      runMem      r
-    start (Swap      a r) = runM a          swapConfig     runSwap     r
-    start (Cpu       a r) = runM a          cpuConfig      runCpu      r
-    start (Battery   a r) = runM a          battConfig     runBatt     r
-    start (CpuFreq   a r) = runM a          cpuFreqConfig  runCpuFreq  r
-    start (CoreTemp  a r) = runM a          coreTempConfig runCoreTemp r
+    alias (Weather  s _ _) = s
+    alias (Network  i _ _) = i
+    alias (Thermal  z _ _) = z
+    alias (Memory     _ _) = "memory"
+    alias (Swap       _ _) = "swap"
+    alias (Cpu        _ _) = "cpu"
+    alias (Battery    _ _) = "battery"
+    alias (BatteryP  _ _ _) = "battery"
+    alias (CpuFreq    _ _) = "cpufreq"
+    alias (CoreTemp   _ _) = "coretemp"
+    start (Weather  s a r) = runM (a ++ [s]) weatherConfig  runWeather  r
+    start (Network  i a r) = runM (a ++ [i]) netConfig      runNet      r
+    start (Thermal  z a r) = runM (a ++ [z]) thermalConfig  runThermal  r
+    start (Memory     a r) = runM a          memConfig      runMem      r
+    start (Swap       a r) = runM a          swapConfig     runSwap     r
+    start (Cpu        a r) = runM a          cpuConfig      runCpu      r
+    start (Battery    a r) = runM a          battConfig     runBatt     r
+    start (BatteryP s a r) = runM a          battConfig    (runBatt' s) r
+    start (CpuFreq    a r) = runM a          cpuFreqConfig  runCpuFreq  r
+    start (CoreTemp   a r) = runM a          coreTempConfig runCoreTemp r
