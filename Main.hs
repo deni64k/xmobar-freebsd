@@ -22,16 +22,14 @@ module Main ( -- * Main Stuff
 import Xmobar
 import Parsers
 import Config
-import HsLocale
+import XUtil
 
-import Prelude hiding (readFile)
+import Prelude
 import Data.IORef
 import Graphics.X11.Xlib
-import Graphics.X11.Xlib.Extras
 import System.Console.GetOpt
 import System.Exit
 import System.Environment
-import System.IO.UTF8 (readFile)
 import System.Posix.Files
 
 -- $main
@@ -40,7 +38,6 @@ import System.Posix.Files
 main :: IO ()
 main = do
   d   <- openDisplay ""
-  setupLocale
   args     <- getArgs
   (o,file) <- getOpts args
   c        <- case file of
@@ -51,22 +48,21 @@ main = do
   rootw <- rootWindow d (defaultScreen d)
   selectInput d rootw structureNotifyMask
 
-  civ      <- newIORef c
+  civ   <- newIORef c
   doOpts civ o
-  conf     <- readIORef civ
-  let loadFont = createFontSet d . font
-  (_,_,fs) <- catch (loadFont conf) (const $ loadFont defaultConfig)
-  cl       <- parseTemplate conf (template conf)
-  vars     <- mapM startCommand cl
-  (r,w)    <- createWin d fs conf
+  conf  <- readIORef civ
+  fs    <- initFont d (font conf)
+  cl    <- parseTemplate conf (template conf)
+  vars  <- mapM startCommand cl
+  (r,w) <- createWin d fs conf
   eventLoop (XConf d r w fs conf) vars
-  freeFontSet d fs
+  releaseFont d fs
 
 -- | Reads the configuration files or quits with an error
 readConfig :: FilePath -> IO Config
 readConfig f = do
   file <- fileExist f
-  s    <- if file then readFile f else error $ f ++ ": file not found!\n" ++ usage
+  s    <- if file then readFileSafe f else error $ f ++ ": file not found!\n" ++ usage
   case reads s of
     [(conf,_)] -> return conf
     []         -> error $ f ++ ": configuration file contains errors!\n" ++ usage

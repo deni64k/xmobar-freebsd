@@ -16,6 +16,9 @@
 
 module Plugins ( Exec (..)
                , tenthSeconds
+               , readFileSafe
+               , hGetLineSafe
                ) where
 
 import Commands
+import XUtil

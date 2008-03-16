@@ -15,7 +15,6 @@
 module Plugins.PipeReader where
 
 import System.IO
-import qualified System.IO.UTF8 as U
 import Plugins
 
 data PipeReader = PipeReader String String
@@ -25,5 +24,5 @@ instance Exec PipeReader where
     alias (PipeReader _ a)    = a
     start (PipeReader p _) cb = do
         h <- openFile p ReadMode
-        forever (U.hGetLine h >>= cb)
+        forever (hGetLineSafe h >>= cb)
         where forever a = a >> forever a

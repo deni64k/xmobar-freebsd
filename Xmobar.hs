@@ -29,12 +29,10 @@ module Xmobar (-- * Main Stuff
               -- * Unmamaged Windows
               -- $unmanwin
               , mkUnmanagedWindow
-              -- * Useful Utilities
-              , initColor, io, nextEvent', fi
               ) where
 
 import Prelude hiding (catch)
-import Graphics.X11.Xlib
+import Graphics.X11.Xlib hiding (textExtents, textWidth)
 import Graphics.X11.Xlib.Extras
 import Graphics.X11.Xinerama
 
@@ -45,12 +43,13 @@ import Control.Concurrent.STM
 import Control.Exception hiding (handle)
 import Data.Bits
 import Data.Char
-import System.Posix.Types (Fd(..))
+
 
 import Config
 import Parsers
 import Commands
 import Runnable
+import XUtil
 
 -- $main
 --
@@ -64,7 +63,7 @@ data XConf =
     XConf { display :: Display
           , rect    :: Rectangle
           , window  :: Window
-          , fontS   :: FontSet
+          , fontS   :: XFont
           , config  :: Config
           }
 
@@ -128,13 +127,13 @@ startCommand (com,s,ss)
 -- $window
 
 -- | The function to create the initial window
-createWin :: Display -> FontSet -> Config -> IO (Rectangle,Window)
+createWin :: Display -> XFont -> Config -> IO (Rectangle,Window)
 createWin d fs c = do
   let dflt = defaultScreen d
-  r:_   <- getScreenInfo d
-  rootw <- rootWindow d dflt
-  let (_,rl)      = wcTextExtents fs "0"
-      ht          = rect_height rl + 4
+  r:_     <- getScreenInfo d
+  rootw   <- rootWindow d dflt
+  (as,ds) <- textExtents fs "0"
+  let ht          = as + ds + 4
       (x,y,w,h,o) = setPosition (position c) r (fi ht)
   win <- mkUnmanagedWindow d (defaultScreenOfDisplay d) rootw x y w h o
   selectInput       d win (exposureMask .|. structureNotifyMask)
@@ -207,6 +206,7 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   r <- ask
   let (c,d ) = (config &&& display) r
       (w,fs) = (window &&& fontS  ) r
+      strLn  = io . mapM (\(s,cl) -> textWidth d fs s >>= \tw -> return (s,cl,fi tw))
   bgcolor <- io $ initColor d $ bgColor c
   gc      <- io $ createGC  d w
   --let's get the fonts
@@ -218,10 +218,9 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   io $ setForeground d gc bgcolor
   io $ fillRectangle d p gc 0 0 wid ht
   -- write to the pixmap the new string
-  let strWithLenth = map (\(s,cl) -> (s,cl,wcTextEscapement fs s))
-  printStrings p gc fs 1 L $ strWithLenth left
-  printStrings p gc fs 1 R $ strWithLenth right
-  printStrings p gc fs 1 C $ strWithLenth center
+  printStrings p gc fs 1 L =<< strLn left
+  printStrings p gc fs 1 R =<< strLn right
+  printStrings p gc fs 1 C =<< strLn center
   -- copy the pixmap with the new string to the window
   io $ copyArea   d p w gc 0 0 wid ht 0 0
   -- free up everything (we do not want to leak memory!)
@@ -231,91 +230,23 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   io $ sync       d True
 
 -- | An easy way to print the stuff we need to print
-printStrings :: Drawable -> GC -> FontSet -> Position
+printStrings :: Drawable -> GC -> XFont -> Position
              -> Align -> [(String, String, Position)] -> X ()
 printStrings _ _ _ _ _ [] = return ()
 printStrings dr gc fontst offs a sl@((s,c,l):xs) = do
   r <- ask
+  (as,ds) <- io $ textExtents fontst s
   let (conf,d)             = (config &&& display) r
       Rectangle _ _ wid _  = rect r
-      (_,rl) = wcTextExtents fontst s
       totSLen              = foldr (\(_,_,len) -> (+) len) 0 sl
-      valign               = fi $ rect_height rl
+      valign               = fi $ as + ds
       remWidth             = fi wid - fi totSLen
       offset               = case a of
                                C -> (remWidth + offs) `div` 2
                                R -> remWidth - 1
                                L -> offs
-  (fc,bc) <- case (break (==',') c) of
-               (f,',':b) -> do
-                 fgc <- io $ initColor d f
-                 bgc <- io $ initColor d b
-                 return (fgc,bgc)
-               (f,_) -> do
-                 fgc <- io $ initColor d f
-                 bgc <- io $ initColor d (bgColor conf)
-                 return (fgc,bgc)
-  io $ setForeground d gc fc
-  io $ setBackground d gc bc
-  io $ wcDrawImageString d dr fontst gc offset valign s
+      (fc,bc)              = case (break (==',') c) of
+                               (f,',':b) -> (f, b           )
+                               (f,    _) -> (f, bgColor conf)
+  io $ printString d dr fontst gc fc bc offset valign s
   printStrings dr gc fontst (offs + l) a xs
-
-{- $unmanwin
-
-This is a way to create unmamaged window.
-
--}
-
--- | Creates a window with the attribute override_redirect set to True.
--- Windows Managers should not touch this kind of windows.
-mkUnmanagedWindow :: Display
-                  -> Screen
-                  -> Window
-                  -> Position
-                  -> Position
-                  -> Dimension
-                  -> Dimension
-                  -> Bool
-                  -> IO Window
-mkUnmanagedWindow dpy scr rw x y w h o = do
-  let visual   = defaultVisualOfScreen scr
-      attrmask = cWOverrideRedirect
-  allocaSetWindowAttributes $
-         \attributes -> do
-           set_override_redirect attributes o
-           createWindow dpy rw x y w h 0 (defaultDepthOfScreen scr)
-                        inputOutput visual attrmask attributes
-
-{- $utility
-Utilities
--}
-
--- | Get the Pixel value for a named color: if an invalid name is
--- given the black pixel will be returned.
-initColor :: Display -> String -> IO Pixel
-initColor dpy c =
-    catch (initColor' dpy c) (const . return . blackPixel dpy $ (defaultScreen dpy))
-
-initColor' :: Display -> String -> IO Pixel
-initColor' dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
-    where colormap = defaultColormap dpy (defaultScreen dpy)
-
--- | A version of nextEvent that does not block in foreign calls.
-nextEvent' :: Display -> XEventPtr -> IO ()
-nextEvent' d p = do
-    pend <- pending d
-    if pend /= 0
-        then nextEvent d p
-        else do
-            threadWaitRead (Fd fd)
-            nextEvent' d p
- where
-    fd = connectionNumber d
-
--- | Short-hand for lifting in the IO monad
-io :: IO a -> X a
-io = liftIO
-
--- | Short-hand for 'fromIntegral'
-fi :: (Integral a, Num b) => a -> b
-fi = fromIntegral
