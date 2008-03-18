@@ -24,8 +24,9 @@ import Parsers
 import Config
 import XUtil
 
-import Prelude
+import Paths_xmobar (version)
 import Data.IORef
+import Data.Version (showVersion)
 import Graphics.X11.Xlib
 import System.Console.GetOpt
 import System.Exit
@@ -115,8 +116,8 @@ usage = (usageInfo header options) ++ footer
     where header = "Usage: xmobar [OPTION...] [FILE]\nOptions:"
           footer = "\nMail bug reports and suggestions to " ++ mail
 
-version :: String
-version = "Xmobar 0.8 (C) 2007 Andrea Rossato " ++ mail ++ license
+info :: String
+info = "Xmobar " ++ showVersion version ++ " (C) 2007 Andrea Rossato " ++ mail ++ license
 
 mail :: String
 mail = "<andrea.rossato@unibz.it>\n"
@@ -131,8 +132,8 @@ doOpts :: IORef Config -> [Opts] -> IO ()
 doOpts _  [] = return ()
 doOpts conf (o:oo) =
     case o of
-      Help       -> putStr   usage   >> exitWith ExitSuccess
-      Version    -> putStrLn version >> exitWith ExitSuccess
+      Help       -> putStr   usage >> exitWith ExitSuccess
+      Version    -> putStrLn info  >> exitWith ExitSuccess
       Font     s -> modifyIORef conf (\c -> c { font     = s     }) >> go
       BgColor  s -> modifyIORef conf (\c -> c { bgColor  = s     }) >> go
       FgColor  s -> modifyIORef conf (\c -> c { fgColor  = s     }) >> go
