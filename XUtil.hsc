@@ -21,7 +21,7 @@ module XUtil
     , textWidth
     , printString
     , initColor
-    , mkUnmanagedWindow
+    , newWindow
     , nextEvent'
     , readFileSafe
     , hGetLineSafe
@@ -38,7 +38,7 @@ import qualified Graphics.X11.Xlib as Xlib (textExtents, textWidth)
 import Graphics.X11.Xlib.Extras
 import System.Posix.Types (Fd(..))
 import System.IO
-#if defined XFT || defined UTF8
+#if defined XFT || defined UTF_8
 import Foreign.C
 import qualified System.IO.UTF8 as UTF8 (readFile,hGetLine)
 #endif
@@ -186,16 +186,8 @@ initColor' dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
 
 -- | Creates a window with the attribute override_redirect set to True.
 -- Windows Managers should not touch this kind of windows.
-mkUnmanagedWindow :: Display
-                  -> Screen
-                  -> Window
-                  -> Position
-                  -> Position
-                  -> Dimension
-                  -> Dimension
-                  -> Bool
-                  -> IO Window
-mkUnmanagedWindow dpy scr rw x y w h o = do
+newWindow :: Display -> Screen -> Window -> Rectangle -> Bool -> IO Window
+newWindow dpy scr rw (Rectangle x y w h) o = do
   let visual   = defaultVisualOfScreen scr
       attrmask = cWOverrideRedirect
   allocaSetWindowAttributes $

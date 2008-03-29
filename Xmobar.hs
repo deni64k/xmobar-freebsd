@@ -26,9 +26,6 @@ module Xmobar (-- * Main Stuff
               -- * Printing
               -- $print
               , drawInWin, printStrings
-              -- * Unmamaged Windows
-              -- $unmanwin
-              , mkUnmanagedWindow
               ) where
 
 import Prelude hiding (catch)
@@ -130,29 +127,29 @@ startCommand (com,s,ss)
 createWin :: Display -> XFont -> Config -> IO (Rectangle,Window)
 createWin d fs c = do
   let dflt = defaultScreen d
-  r:_     <- getScreenInfo d
+  sr:_    <- getScreenInfo d
   rootw   <- rootWindow d dflt
   (as,ds) <- textExtents fs "0"
-  let ht          = as + ds + 4
-      (x,y,w,h,o) = setPosition (position c) r (fi ht)
-  win <- mkUnmanagedWindow d (defaultScreenOfDisplay d) rootw x y w h o
+  let ht       = as + ds + 4
+      (r,o) = setPosition (position c) sr (fi ht)
+  win <- newWindow  d (defaultScreenOfDisplay d) rootw r o
   selectInput       d win (exposureMask .|. structureNotifyMask)
-  setProperties h c d win
+  setProperties r c d win
   mapWindow         d win
-  return (Rectangle x y w h,win)
+  return (r,win)
 
-setPosition :: XPosition -> Rectangle -> Dimension -> (Position,Position,Dimension,Dimension,Bool)
+setPosition :: XPosition -> Rectangle -> Dimension -> (Rectangle,Bool)
 setPosition p (Rectangle rx ry rw rh) ht =
     case p of
-    Top                -> (rx      , ry    , rw   , h    , True)
-    TopW L i           -> (rx      , ry    , nw i , h    , True)
-    TopW R i           -> (right  i, ry    , nw i , h    , True)
-    TopW C i           -> (center i, ry    , nw i , h    , True)
-    Bottom             -> (rx      , ny    , rw   , h    , True)
-    BottomW L i        -> (rx      , ny    , nw i , h    , True)
-    BottomW R i        -> (right  i, ny    , nw i , h    , True)
-    BottomW C i        -> (center i, ny    , nw i , h    , True)
-    Static cx cy cw ch -> (fi cx   , fi cy , fi cw, fi ch, True)
+    Top                -> (Rectangle rx          ry      rw      h     , True)
+    TopW L i           -> (Rectangle rx          ry     (nw i)   h     , True)
+    TopW R i           -> (Rectangle (right  i)  ry     (nw i)   h     , True)
+    TopW C i           -> (Rectangle (center i)  ry     (nw i)   h     , True)
+    Bottom             -> (Rectangle rx          ny      rw      h     , True)
+    BottomW L i        -> (Rectangle rx          ny     (nw i)   h     , True)
+    BottomW R i        -> (Rectangle (right  i)  ny     (nw i)   h     , True)
+    BottomW C i        -> (Rectangle (center i)  ny     (nw i)   h     , True)
+    Static cx cy cw ch -> (Rectangle (fi cx   ) (fi cy) (fi cw) (fi ch), True)
     where
       ny       = ry + fi (rh - ht)
       center i = rx + (fi $ div (remwid i) 2)
@@ -162,24 +159,24 @@ setPosition p (Rectangle rx ry rw rh) ht =
       nw       = fi . pw . fi
       h        = fi ht
 
-setProperties :: Dimension -> Config -> Display -> Window -> IO ()
-setProperties h c d w = do
-  a1 <- internAtom d "_NET_WM_STRUT"            False
+setProperties :: Rectangle -> Config -> Display -> Window -> IO ()
+setProperties r c d w = do
+  a1 <- internAtom d "_NET_WM_STRUT_PARTIAL"    False
   c1 <- internAtom d "CARDINAL"                 False
   a2 <- internAtom d "_NET_WM_WINDOW_TYPE"      False
   c2 <- internAtom d "ATOM"                     False
   v  <- internAtom d "_NET_WM_WINDOW_TYPE_DOCK" False
-  changeProperty32 d w a1 c1 propModeReplace $ map fi $ getStrutValues h c
+  changeProperty32 d w a1 c1 propModeReplace $ map fi $ getStrutValues r c
   changeProperty32 d w a2 c2 propModeReplace [fromIntegral v]
 
-getStrutValues :: Dimension -> Config -> [Int]
-getStrutValues h c =
+getStrutValues :: Rectangle -> Config -> [Int]
+getStrutValues (Rectangle x _ w h) c =
     case position c of
-    Top         -> [0, 0, fi h, 0   ]
-    TopW    _ _ -> [0, 0, fi h, 0   ]
-    Bottom      -> [0, 0, 0   , fi h]
-    BottomW _ _ -> [0, 0, 0   , fi h]
-    _           -> [0, 0, 0   , 0   ]
+    Top         -> [0, 0, fi h, 0   , 0, 0, 0, 0, fi x, fi (x + fi w),    0,            0 ]
+    TopW    _ _ -> [0, 0, fi h, 0   , 0, 0, 0, 0, fi x, fi (x + fi w),    0,            0 ]
+    Bottom      -> [0, 0, 0   , fi h, 0, 0, 0, 0,    0,             0, fi x, fi (x + fi w)]
+    BottomW _ _ -> [0, 0, 0   , fi h, 0, 0, 0, 0,    0,             0, fi x, fi (x + fi w)]
+    _           -> [0, 0, 0   , 0   , 0, 0, 0, 0,    0,             0,    0,            0 ]
 
 updateWin :: TVar String -> X ()
 updateWin v = do
@@ -209,8 +206,6 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
       strLn  = io . mapM (\(s,cl) -> textWidth d fs s >>= \tw -> return (s,cl,fi tw))
   bgcolor <- io $ initColor d $ bgColor c
   gc      <- io $ createGC  d w
-  --let's get the fonts
---  io $ setFont d gc (fontFromFontStruct fs)
   -- create a pixmap to write to and fill it with a rectangle
   p <- io $ createPixmap d w wid ht
             (defaultDepthOfScreen (defaultScreenOfDisplay d))
