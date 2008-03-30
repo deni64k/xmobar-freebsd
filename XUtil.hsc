@@ -38,7 +38,7 @@ import qualified Graphics.X11.Xlib as Xlib (textExtents, textWidth)
 import Graphics.X11.Xlib.Extras
 import System.Posix.Types (Fd(..))
 import System.IO
-#if defined XFT || defined UTF_8
+#if defined XFT || defined UTF8
 import Foreign.C
 import qualified System.IO.UTF8 as UTF8 (readFile,hGetLine)
 #endif
