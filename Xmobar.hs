@@ -172,11 +172,14 @@ setProperties r c d w = do
 getStrutValues :: Rectangle -> Config -> [Int]
 getStrutValues (Rectangle x _ w h) c =
     case position c of
-    Top         -> [0, 0, fi h, 0   , 0, 0, 0, 0, fi x, fi (x + fi w),    0,            0 ]
-    TopW    _ _ -> [0, 0, fi h, 0   , 0, 0, 0, 0, fi x, fi (x + fi w),    0,            0 ]
-    Bottom      -> [0, 0, 0   , fi h, 0, 0, 0, 0,    0,             0, fi x, fi (x + fi w)]
-    BottomW _ _ -> [0, 0, 0   , fi h, 0, 0, 0, 0,    0,             0, fi x, fi (x + fi w)]
-    _           -> [0, 0, 0   , 0   , 0, 0, 0, 0,    0,             0,    0,            0 ]
+    Top         -> [0, 0, nh,  0, 0, 0, 0, 0, nx, nw,  0,  0]
+    TopW    _ _ -> [0, 0, nh,  0, 0, 0, 0, 0, nx, nw,  0,  0]
+    Bottom      -> [0, 0,  0, nh, 0, 0, 0, 0,  0,  0, nx, nw]
+    BottomW _ _ -> [0, 0,  0, nh, 0, 0, 0, 0,  0,  0, nx, nw]
+    _           -> [0, 0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0]
+    where nh = fi h
+          nx = fi x
+          nw = fi (x + fi w - 1)
 
 updateWin :: TVar String -> X ()
 updateWin v = do
