@@ -18,7 +18,7 @@ build-type:         Simple
 flag small_base
   description: Choose the new smaller, split-up base package.
 
-flag use_xft
+flag with_xft
   description: Use Xft to render text. UTF-8 support included.
 
 flag with_utf8
@@ -35,7 +35,7 @@ executable xmobar
     else
        build-depends:   base < 3
 
-    if flag(use_xft)
+    if flag(with_xft)
         build-depends: utf8-string, X11-xft >= 0.2
         cpp-options: -DXFT
 
