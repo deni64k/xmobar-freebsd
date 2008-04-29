@@ -3,7 +3,7 @@
 -- Module      :  Xmobar.Parsers
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
@@ -41,59 +41,57 @@ formatting template.
 
 -- | Runs the actual string parsers
 parseString :: Config -> String -> IO [(String, String)]
-parseString config s = 
-    case (parse (stringParser config) "" s) of
-      Left _  -> return [("Could not parse string: " ++ s
-                         , (fgColor config))]
-      Right x -> return x
+parseString c s =
+    case (parse (stringParser c) "" s) of
+      Left  _ -> return [("Could not parse string: " ++ s, fgColor c)]
+      Right x -> return (concat x)
 
 -- | Gets the string and combines the needed parsers
-stringParser :: Config -> Parser [(String, String)]
-stringParser c = manyTill (colorsAndText c <|> defaultColors c) eof
+stringParser :: Config -> Parser [[(String, String)]]
+stringParser c = manyTill (defaultColors c) eof
 
 -- | Parses a string with the default color (no color set)
-defaultColors :: Config -> Parser (String, String)
-defaultColors config = 
-    do { s <- many $ noneOf "<"
-       ; return (s,(fgColor config))
-       }
-    <|> colorsAndText config
+defaultColors :: Config -> Parser [(String, String)]
+defaultColors c = do
+  s <- manyTill anyChar (tryString "<fc" <|> endOfLine "")
+  n <- colorsAndText <|> endOfLine ("","")
+  return [(s,fgColor c),n]
 
 -- | Parses a string with a color set
-colorsAndText :: Config -> Parser (String, String) 
-colorsAndText config = 
-    do { string "<fc="
-       ; c <- colorSpec
-       ; string ">"
-       ; s <- many $ noneOf "<"
-       ; string "</fc>"
-       ; return (s,c)
-       }
-    <|> defaultColors config
+colorsAndText :: Parser (String, String)
+colorsAndText = do
+  string "="
+  c <- colorSpec
+  string ">"
+  s <- manyTill anyChar (tryString "</fc>")
+  return (s,c)
+
+endOfLine :: a -> Parser a
+endOfLine r = eof >> return r
+
+tryString :: String -> Parser String
+tryString = try . string
 
 -- | Parses a color specification (hex or named)
 colorSpec :: Parser String
-colorSpec =
-    many1 (alphaNum <|> char ',' <|> char '#')
+colorSpec = many1 (alphaNum <|> char ',' <|> char '#')
 
 -- | Parses the output template string
 templateStringParser :: Config -> Parser (String,String,String)
-templateStringParser c =
-    do{ s         <- many $ noneOf (sepChar c)
-      ; (com,_,_) <- templateCommandParser  c
-      ; ss        <- many $ noneOf (sepChar c)
-      ; return (com, s, ss)
-      } 
+templateStringParser c = do
+  s         <- many $ noneOf (sepChar c)
+  (com,_,_) <- templateCommandParser  c
+  ss        <- many $ noneOf (sepChar c)
+  return (com, s, ss)
 
 -- | Parses the command part of the template string
 templateCommandParser :: Config -> Parser (String,String,String)
-templateCommandParser c =
-    do { let chr = head $ sepChar c
-       ; char chr
-       ; com <- many $ noneOf (sepChar c)
-       ; char chr
-       ; return $ (com,"","")
-       } 
+templateCommandParser c = do
+  let chr = head $ sepChar c
+  char chr
+  com <- many $ noneOf (sepChar c)
+  char chr
+  return $ (com,"","")
 
 -- | Combines the template parsers
 templateParser :: Config -> Parser [(String,String,String)]
@@ -101,7 +99,7 @@ templateParser c = many (templateStringParser c)
 
 -- | Actually runs the template parsers
 parseTemplate :: Config -> String -> IO [(Runnable,String,String)]
-parseTemplate config s = 
+parseTemplate config s =
     do str <- case (parse (templateParser config) "" s) of
                 Left _  -> return [("","","")]
                 Right x -> return x
@@ -113,7 +111,7 @@ parseTemplate config s =
 -- | resulting output string.
 combine :: Config -> Map.Map String Runnable -> [(String, String, String)] -> [(Runnable,String,String)]
 combine _ _ [] = []
-combine config m ((ts,s,ss):xs) = 
+combine config m ((ts,s,ss):xs) =
     [(com, s, ss)] ++ combine config m xs
         where com  = Map.findWithDefault dflt ts m
               dflt = Run $ Com ts [] [] 10
