@@ -12,18 +12,16 @@
 --
 -----------------------------------------------------------------------------
 
-module Parsers (
-               -- * Parsing
-               -- $parser
-               parseString
-               , stringParser
-               , defaultColors
-               , colorsAndText
-               , templateStringParser
-               , templateCommandParser
-               , templateParser
-               , parseTemplate
-               ) where
+module Parsers
+    ( parseString
+    , stringParser
+    , colorParser
+    , colorsAndText
+    , templateStringParser
+    , templateCommandParser
+    , templateParser
+    , parseTemplate
+    ) where
 
 import Config
 import Commands
@@ -31,28 +29,20 @@ import Runnable
 import Text.ParserCombinators.Parsec
 import qualified Data.Map as Map
 
-
-{- $parser
-These are the neede parsers. Don't trust them too much.
-
-There are parsers for the commands output and parsers for the
-formatting template.
- -}
-
--- | Runs the actual string parsers
+-- | Runs the string parser
 parseString :: Config -> String -> IO [(String, String)]
 parseString c s =
-    case (parse (stringParser c) "" s) of
+    case parse (stringParser c) "" s of
       Left  _ -> return [("Could not parse string: " ++ s, fgColor c)]
       Right x -> return (concat x)
 
 -- | Gets the string and combines the needed parsers
 stringParser :: Config -> Parser [[(String, String)]]
-stringParser c = manyTill (defaultColors c) eof
+stringParser = flip manyTill eof . colorParser
 
 -- | Parses a string with the default color (no color set)
-defaultColors :: Config -> Parser [(String, String)]
-defaultColors c = do
+colorParser :: Config -> Parser [(String, String)]
+colorParser c = do
   s <- manyTill anyChar (tryString "<fc" <|> endOfLine "")
   n <- colorsAndText <|> endOfLine ("","")
   return [(s,fgColor c),n]
@@ -60,11 +50,49 @@ defaultColors c = do
 -- | Parses a string with a color set
 colorsAndText :: Parser (String, String)
 colorsAndText = do
-  string "="
-  c <- colorSpec
-  string ">"
+  c <- inside (string "=") colors (string ">")
   s <- manyTill anyChar (tryString "</fc>")
   return (s,c)
+
+-- | Parses a color specification (hex or named)
+colors :: Parser String
+colors = many1 (alphaNum <|> char ',' <|> char '#')
+
+-- | Parses the output template string
+templateStringParser :: Config -> Parser (String,String,String)
+templateStringParser c = do
+  s   <- allTillSep c
+  com <- templateCommandParser c
+  ss  <- allTillSep c
+  return (com, s, ss)
+
+-- | Parses the command part of the template string
+templateCommandParser :: Config -> Parser String
+templateCommandParser c =
+  let chr = char . head . sepChar
+  in  inside (chr c) (allTillSep c) (chr c)
+
+-- | Combines the template parsers
+templateParser :: Config -> Parser [(String,String,String)]
+templateParser = many . templateStringParser
+
+-- | Actually runs the template parsers
+parseTemplate :: Config -> String -> IO [(Runnable,String,String)]
+parseTemplate c s =
+    do str <- case (parse (templateParser c) "" s) of
+                Left _  -> return [("","","")]
+                Right x -> return x
+       let cl = map alias (commands c)
+           m  = Map.fromList $ zip cl (commands c)
+       return $ combine c m str
+
+-- | Given a finite "Map" and a parsed templatet produces the
+-- | resulting output string.
+combine :: Config -> Map.Map String Runnable -> [(String, String, String)] -> [(Runnable,String,String)]
+combine _ _ [] = []
+combine c m ((ts,s,ss):xs) = (com, s, ss) : combine c m xs
+    where com  = Map.findWithDefault dflt ts m
+          dflt = Run $ Com ts [] [] 10
 
 endOfLine :: a -> Parser a
 endOfLine r = eof >> return r
@@ -72,46 +100,8 @@ endOfLine r = eof >> return r
 tryString :: String -> Parser String
 tryString = try . string
 
--- | Parses a color specification (hex or named)
-colorSpec :: Parser String
-colorSpec = many1 (alphaNum <|> char ',' <|> char '#')
+allTillSep :: Config -> Parser String
+allTillSep = many . noneOf . sepChar
 
--- | Parses the output template string
-templateStringParser :: Config -> Parser (String,String,String)
-templateStringParser c = do
-  s         <- many $ noneOf (sepChar c)
-  (com,_,_) <- templateCommandParser  c
-  ss        <- many $ noneOf (sepChar c)
-  return (com, s, ss)
-
--- | Parses the command part of the template string
-templateCommandParser :: Config -> Parser (String,String,String)
-templateCommandParser c = do
-  let chr = head $ sepChar c
-  char chr
-  com <- many $ noneOf (sepChar c)
-  char chr
-  return $ (com,"","")
-
--- | Combines the template parsers
-templateParser :: Config -> Parser [(String,String,String)]
-templateParser c = many (templateStringParser c)
-
--- | Actually runs the template parsers
-parseTemplate :: Config -> String -> IO [(Runnable,String,String)]
-parseTemplate config s =
-    do str <- case (parse (templateParser config) "" s) of
-                Left _  -> return [("","","")]
-                Right x -> return x
-       let comList = map alias (commands config)
-           m       = Map.fromList $ zip comList (commands config)
-       return $ combine config m str
-
--- | Given a finite "Map" and a parsed templatet produces the
--- | resulting output string.
-combine :: Config -> Map.Map String Runnable -> [(String, String, String)] -> [(Runnable,String,String)]
-combine _ _ [] = []
-combine config m ((ts,s,ss):xs) =
-    [(com, s, ss)] ++ combine config m xs
-        where com  = Map.findWithDefault dflt ts m
-              dflt = Run $ Com ts [] [] 10
+inside :: Parser a -> Parser b -> Parser c -> Parser b
+inside pa pb pc = pa >> pb >>= \r -> pc >> return r
