@@ -97,8 +97,8 @@ options =
     , Option ['f'     ] ["font"     ] (ReqArg Font     "font name") "The font name"
     , Option ['B'     ] ["bgcolor"  ] (ReqArg BgColor  "bg color" ) "The background color. Default black"
     , Option ['F'     ] ["fgcolor"  ] (ReqArg FgColor  "fg color" ) "The foreground color. Default grey"
-    , Option ['o'     ] ["top"      ] (NoArg  T                   ) "Place Xmobar at the top of the screen"
-    , Option ['b'     ] ["bottom"   ] (NoArg  B                   ) "Place Xmobar at the bottom of the screen"
+    , Option ['o'     ] ["top"      ] (NoArg  T                   ) "Place xmobar at the top of the screen"
+    , Option ['b'     ] ["bottom"   ] (NoArg  B                   ) "Place xmobar at the bottom of the screen"
     , Option ['a'     ] ["alignsep" ] (ReqArg AlignSep "alignsep" ) "Separators for left, center and right text\nalignment. Default: '}{'"
     , Option ['s'     ] ["sepchar"  ] (ReqArg SepChar  "char"     ) "The character used to separate commands in\nthe output template. Default '%'"
     , Option ['t'     ] ["template" ] (ReqArg Template "template" ) "The output template"
@@ -117,10 +117,10 @@ usage = (usageInfo header options) ++ footer
           footer = "\nMail bug reports and suggestions to " ++ mail
 
 info :: String
-info = "Xmobar " ++ showVersion version ++ " (C) 2007 Andrea Rossato " ++ mail ++ license
+info = "xmobar " ++ showVersion version ++ " (C) 2007 - 2008 Andrea Rossato " ++ mail ++ license
 
 mail :: String
-mail = "<andrea.rossato@unibz.it>\n"
+mail = "<andrea.rossato@ing.unitn.it>\n"
 
 license :: String
 license = "\nThis program is distributed in the hope that it will be useful,\n" ++
