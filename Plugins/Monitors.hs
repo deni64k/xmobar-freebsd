@@ -55,7 +55,7 @@ instance Exec Monitors where
     alias (Swap       _ _) = "swap"
     alias (Cpu        _ _) = "cpu"
     alias (Battery    _ _) = "battery"
-    alias (BatteryP  _ _ _) = "battery"
+    alias (BatteryP  _ _ _)= "battery"
     alias (CpuFreq    _ _) = "cpufreq"
     alias (CoreTemp   _ _) = "coretemp"
     start (Weather  s a r) = runM (a ++ [s]) weatherConfig  runWeather  r

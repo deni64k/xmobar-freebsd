@@ -45,18 +45,18 @@ weatherConfig = mkMConfig
 data WeatherInfo =
     WI { stationPlace :: String
        , stationState :: String
-       , year :: String
-       , month :: String
-       , day :: String
-       , hour :: String
-       , wind :: String
-       , visibility :: String
+       , year         :: String
+       , month        :: String
+       , day          :: String
+       , hour         :: String
+       , wind         :: String
+       , visibility   :: String
        , skyCondition :: String
-       , tempC :: Int
-       , tempF :: Int
-       , dewPoint :: String
-       , humidity :: Int
-       , pressure :: Int
+       , tempC        :: Int
+       , tempF        :: Int
+       , dewPoint     :: String
+       , humidity     :: Int
+       , pressure     :: Int
        } deriving (Show)
 
 pTime :: Parser (String, String, String, String)
