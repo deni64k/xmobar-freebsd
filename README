@@ -1,19 +1,19 @@
-% Xmobar - A Minimalistic Text Based Status Bar
+% xmobar - A Minimalistic Text Based Status Bar
 % Andrea Rossato
 
 About
 -----
 
-[Xmobar] is a minimalistic, text based, status bar. It was designed to
-work with the [XMonad] Window Manager.
+[xmobar] is a minimalistic, text based, status bar. It was designed to
+work with the [xmonad] Window Manager.
 
 It was inspired by the [Ion3] status bar, and supports similar features,
 like dynamic color management, output templates, and extensibility
 through plugins.
 
-[This is a screen shot] of my desktop with [XMonad] and [Xmobar].
+[This is a screen shot] of my desktop with [xmonad] and [xmobar].
 
-[Xmobar] supports XFT and UTF-8 locales.
+[xmobar] supports XFT and UTF-8 locales.
 
 See `xmobar.config-sample`, distributed with the source code, for a
 sample configuration.
@@ -21,7 +21,7 @@ sample configuration.
 Download
 --------
 
-You can get the [Xmobar] source code from [Hackage].
+You can get the [xmobar] source code from [Hackage].
 
 To get the darcs source run:
 
@@ -29,38 +29,39 @@ To get the darcs source run:
 
 The latest binary can be found here:
 
-        http://code.haskell.org/~arossato/xmobar/xmobar-0.8.bin
+        http://code.haskell.org/~arossato/xmobar/xmobar-0.9.bin
 
 A recent screen shot can be found here:
 
-        http://code.haskell.org/~arossato/xmobar/xmobar-0.8.png
+        http://code.haskell.org/~arossato/xmobar/xmobar-0.9.png
 
-Version 0.8 requires Cabal-1.2.x, but works both with ghc-6.6.1 and
-ghc-6.8.1.
-
-[Here you can find] a source tree of xmobar-0.8 which works with
-Cabal-1.1.x, but compiles only with ghc-6.6.x:
-
-        http://code.haskell.org/~arossato/xmobar/xmobar-0.8-Cabal-1.1-ghc-6.6.tar.gz
-
-[Here you can find]: http://code.haskell.org/~arossato/xmobar/xmobar-0.8-Cabal-1.1-ghc-6.6.tar.gz
+Version 0.9 requires Cabal-1.2.x, but should work both with ghc-6.6.1
+and ghc-6.8.1.
 
 Installation
 ------------
 
 To install simply run:
 
-        tar xvfz xmobar-0.8
-        cd xmobar-0.8
+        tar xvfz xmobar-0.9
+        cd xmobar-0.9
+
+Then run the configure script:
+
         runhaskell Setup.lhs configure
-        # Or, to enable UTF-8 support:
-        # runhaskell Setup.lhs configure --flags="with_utf8"
-	# Or, to enable XFT and UTF-8 support:
-        # runhaskell Setup.lhs configure --flags="with_xft"
+
+        # To enable UTF-8 support run:
+        runhaskell Setup.lhs configure --flags="with_utf8"
+
+        # To enable both XFT and UTF-8 support run:
+        runhaskell Setup.lhs configure --flags="with_xft"
+
+Now you can build the source:
+
         runhaskell Setup.lhs build
         runhaskell Setup.lhs install # possibly to be run as root
 
-Run with:
+You can now run [xmobar] with:
 
         xmobar /path/to/config &
 
@@ -73,7 +74,7 @@ if you have the default configuration file saved as `~/.xmobarrc`
 Utf-8 and Xft Support
 ---------------------
 
-[Xmobar] can be compiled with UTF-8 and XFT support. If you want UTF-8
+[xmobar] can be compiled with UTF-8 and XFT support. If you want UTF-8
 support only, you just need to run the configuration script with the
 `"with_utf"` flag:
 
@@ -87,7 +88,7 @@ script with the `"with_xft"` flag:
 
          runhaskell Setup.lhs configure --flags="with_xft"
 
-Then build [Xmobar] as usual.
+Then build [xmobar] as usual.
 
 To use XFT fonts you need to use the `xft:` prefix in the `font`
 configuration option. For instance:
@@ -125,14 +126,14 @@ Other configuration options:
 
 :     TopW and BottomW take 2 arguments: an alignment parameter (L for
       left, C for centered, R for Right) and an integer for the
-      percentage width Xmobar window will have in respect to the
+      percentage width xmobar window will have in respect to the
       screen width.
 
 :     For example:
 
-:          position = Bottom C 75
+:          position = BottomW C 75
 
-:     to place Xmobar at the bottom, centered with the 75% of the screen width.
+:     to place xmobar at the bottom, centered with the 75% of the screen width.
 
 :     Or
 
@@ -160,7 +161,7 @@ Other configuration options:
 
 ### Command Line Options
 
-[Xmobar] can be either configured with a configuration file or with
+[xmobar] can be either configured with a configuration file or with
 command line options. In the second case, the command line options
 will overwrite the corresponding options set in the configuration
 file.
@@ -179,8 +180,8 @@ xmobar --help):
       -f font name  --font=font name     The font name
       -B bg color   --bgcolor=bg color   The background color. Default black
       -F fg color   --fgcolor=fg color   The foreground color. Default grey
-      -o            --top                Place Xmobar at the top of the screen
-      -b            --bottom             Place Xmobar at the bottom of the screen
+      -o            --top                Place xmobar at the top of the screen
+      -b            --bottom             Place xmobar at the bottom of the screen
       -a alignsep   --alignsep=alignsep  Separators for left, center and right text
                                          alignment. Default: '}{'
       -s char       --sepchar=char       The character used to separate commands in
@@ -191,14 +192,14 @@ xmobar --help):
 
 ### The Output Template
 
-The output template must contain at least one command. [Xmobar] will
+The output template must contain at least one command. [xmobar] will
 parse the template and will search for the command to be executed in
 the `commands` configuration option. First an `alias` will be searched
 (plugins such as Weather or Network have default aliases, see below).
 After that, the command name will be tried. If a command is found, the
 arguments specified in the `commands` list will be used.
 
-If no command is found in the `commands` list, [Xmobar] will ask the
+If no command is found in the `commands` list, [xmobar] will ask the
 operating system to execute a program with the name found in the
 template. If the execution is not successful an error will be
 reported.
@@ -206,9 +207,9 @@ reported.
 ### The `commands` Configuration Option
 
 The `commands` configuration option is a list of commands information
-and arguments to be used by [Xmobar] when parsing the output template.
+and arguments to be used by [xmobar] when parsing the output template.
 Each member of the list consists in a command prefixed by the `Run`
-keyword. Each command has arguments to control the way [Xmobar] is going
+keyword. Each command has arguments to control the way [xmobar] is going
 to execute it.
 
 The option consists in a list of commands separated by a comma and
@@ -223,7 +224,7 @@ swap monitor plugin, with default options, every second.
 
 The only internal available command is `Com` (see below Executing
 External Commands). All other commands are provided by plugins.
-[Xmobar] comes with some plugins, providing a set of system monitors,
+[xmobar] comes with some plugins, providing a set of system monitors,
 a standard input reader, an Unix named pipe reader, and a configurable
 date plugin. These plugins install the following internal commands:
 `Weather`, `Network`, `Memory`, `Swap`, `Cpu`, `Battery`, `Thermal`,
@@ -353,7 +354,7 @@ Commands' arguments must be set as a list. Es:
 
     Run Weather "EGPF" ["-t","<station>: <tempC>C"] 36000
 
-In this case [Xmobar] will run the weather monitor, getting information
+In this case [xmobar] will run the weather monitor, getting information
 for the weather station ID EGPF (Glasgow Airport, as a homage to GHC)
 every hour (36000 tenth of seconds), with a template that will output
 something like:
@@ -397,7 +398,7 @@ Plugins
 
 ### Writing a Plugin
 
-Writing a plugin for [Xmobar] should be very simple. You need to create
+Writing a plugin for [xmobar] should be very simple. You need to create
 a data type with at least one constructor.
 
 Next you must declare this data type an instance of the `Exec` class, by
@@ -454,12 +455,12 @@ This requires importing your plugin into `Config.hs` and adding your
 type to the type list in the type signature of `Config.runnableTypes`.
 
 For a very basic example see `Plugins/HelloWorld.hs` or the other
-plugins that are distributed with [Xmobar].
+plugins that are distributed with [xmobar].
 
 ### Installing/Removing a Plugin
 
 Installing a plugin should require 3 steps. Here we are going to
-install the HelloWorld plugin that comes with [Xmobar]:
+install the HelloWorld plugin that comes with [xmobar]:
 
 1. import the plugin module in `Config.hs`, by adding:
 
@@ -472,7 +473,7 @@ install the HelloWorld plugin that comes with [Xmobar]:
         runnableTypes :: (Command,(Monitors,(HelloWorld,())))
         runnableTypes = undefined
 
-3. Rebuild and reinstall [Xmobar]. Now test it with:
+3. Rebuild and reinstall [xmobar]. Now test it with:
 
         xmobar Plugins/helloworld.config
 
@@ -506,31 +507,31 @@ To remove the system monitor plugin:
          runnableTypes :: (Command,())
          runnableTypes = undefined
 
-3. rebuild [Xmobar].
+3. rebuild [xmobar].
 
 Credits
 -------
 
 Thanks to Robert Manea and Spencer Janssen for their help in
 understanding how X works. They gave me suggestions on how to solve
-many problems with [Xmobar].
+many problems with [xmobar].
 
 Thanks to Claus Reinke for make me understand existential types (or at
 least for letting me think I grasp existential types...;-).
 
-[Xmobar] incorporates patches from: Krzysztof Kosciuszkiewicz, Spencer
+[xmobar] incorporates patches from: Krzysztof Kosciuszkiewicz, Spencer
 Janssen, Jens Petersen, Dmitry Kurochkin, and Lennart Kolmodin.
 
 Useful links
 ------------
 
-The [Xmobar] home page
+The [xmobar] home page
 
-The [XMonad] home page
+The [xmonad] home page
 
-[Xmobar darcs repository]
+[xmobar darcs repository]
 
-To understand the internal mysteries of Xmobar you may try reading
+To understand the internal mysteries of xmobar you may try reading
 this tutorial [on X Window Programming in Haskell].
 
 Author
@@ -538,7 +539,7 @@ Author
 
 Andrea Rossato
 
-`andrea.rossato at unibz.it`
+`andrea.rossato at ing.unitn.it`
 
 Legal
 -----
@@ -550,10 +551,10 @@ Copyright &copy; 2007 Andrea Rossato
 
 [This is a screen shot]: http://haskell.org/sitewiki/images/a/ae/Arossato-config.png
 [Hackage]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
-[Xmobar]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
-[Xmobar darcs repository]: http://code.haskell.org/xmobar
+[xmobar]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/xmobar
+[xmobar darcs repository]: http://code.haskell.org/xmobar
 [on X Window Programming in Haskell]: http://www.haskell.org/haskellwiki/X_window_programming_in_Haskell
 [Ion3]: http://modeemi.fi/~tuomov/ion/
-[XMonad]: http://xmonad.org
+[xmonad]: http://xmonad.org
 [utf8-string]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/utf8-string
 [X11-xft]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-xft
