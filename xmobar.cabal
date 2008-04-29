@@ -1,5 +1,5 @@
 name:               xmobar
-version:            0.8
+version:            0.9
 homepage:           http://code.haskell.org/~arossato/xmobar
 synopsis:           A Minimalistic Text Based Status Bar
 description: 	    Xmobar is a minimalistic text based status bar.
