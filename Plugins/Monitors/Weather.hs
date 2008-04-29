@@ -16,6 +16,7 @@ module Plugins.Monitors.Weather where
 
 import Plugins.Monitors.Common
 
+import Control.Monad (when)
 import System.Process
 import System.Exit
 import System.IO
@@ -120,6 +121,8 @@ getData url=
                                  hClose e
            case exit of
              ExitSuccess -> do str <- hGetContents o
+                               when (str == str) $ return ()
+                               closeHandles
                                return str
              _ -> do closeHandles
                      return "Could not retrieve data"
