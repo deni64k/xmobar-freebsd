@@ -81,9 +81,9 @@ initFont d s =
   else
 #endif
 #ifdef UTF8
-      (setupLocale >> initUtf8Font d s >>= (return . Utf8))
+      (setupLocale >> initUtf8Font d s >>= return . Utf8)
 #else
-      (initCoreFont d s >>= (return . Core))
+      (initCoreFont d s >>= return . Core)
 #endif
 #ifdef XFT
   where xftPrefix = "xft:"
@@ -219,8 +219,6 @@ fi = fromIntegral
 foreign import ccall unsafe "locale.h setlocale"
     setlocale :: CInt -> CString -> IO CString
 
-setupLocale :: IO ()
-setupLocale = withCString "" $ \s -> do
-                setlocale (#const LC_ALL) s
-                return ()
+setupLocale :: IO CString
+setupLocale = withCString "" $ setlocale (#const LC_ALL)
 #endif

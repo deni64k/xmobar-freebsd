@@ -3,7 +3,7 @@
 -- Module      :  Xmobar.Plugins
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
@@ -14,11 +14,12 @@
 --
 -----------------------------------------------------------------------------
 
-module Plugins ( Exec (..)
-               , tenthSeconds
-               , readFileSafe
-               , hGetLineSafe
-               ) where
+module Plugins
+    ( Exec (..)
+    , tenthSeconds
+    , readFileSafe
+    , hGetLineSafe
+    ) where
 
 import Commands
 import XUtil

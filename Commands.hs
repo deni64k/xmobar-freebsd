@@ -3,7 +3,7 @@
 -- Module      :  Xmobar.Commands
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
@@ -13,11 +13,15 @@
 -- The 'Exec' class rappresents the executable types, whose constructors may
 -- appear in the 'Config.commands' field of the 'Config.Config' data type.
 --
--- The 'Command' data type is for OS commands to be run by Xmobar 
+-- The 'Command' data type is for OS commands to be run by xmobar
 --
 -----------------------------------------------------------------------------
 
-module Commands where
+module Commands
+    ( Command (..)
+    , Exec    (..)
+    , tenthSeconds
+    ) where
 
 import Control.Concurrent
 import Data.Char
@@ -54,12 +58,12 @@ instance Exec Command where
         where go = do
                 (i,o,e,p) <- runInteractiveCommand (prog ++ concat (map (' ':) args))
                 exit <- waitForProcess p
-                let closeHandles = do 
+                let closeHandles = do
                         hClose o
                         hClose i
                         hClose e
                 case exit of
-                  ExitSuccess -> do 
+                  ExitSuccess -> do
                             str <- hGetLine o
                             closeHandles
                             cb str

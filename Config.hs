@@ -12,13 +12,14 @@
 --
 -----------------------------------------------------------------------------
 
-module Config ( -- * Configuration
-                -- $config
-                Config (..)
-              , XPosition (..), Align (..)
-              , defaultConfig
-              , runnableTypes
-              ) where
+module Config
+    ( -- * Configuration
+      -- $config
+      Config (..)
+    , XPosition (..), Align (..)
+    , defaultConfig
+    , runnableTypes
+    ) where
 
 import Commands
 import {-# SOURCE #-} Runnable
@@ -44,7 +45,12 @@ data Config =
            , template       :: String     -- ^ The output template
            } deriving (Read)
 
-data XPosition = Top | TopW Align Int | Bottom | BottomW Align Int | Static {xpos, ypos, width, height :: Int} deriving ( Read, Eq )
+data XPosition = Top
+               | TopW Align Int
+               | Bottom
+               | BottomW Align Int
+               | Static {xpos, ypos, width, height :: Int}
+                 deriving ( Read, Eq )
 
 data Align = L | R | C deriving ( Read, Eq )
 
@@ -56,8 +62,7 @@ defaultConfig =
            , fgColor  = "#BFBFBF"
            , position = Top
            , commands = [ Run $ Date "%a %b %_d %Y * %H:%M:%S" "theDate" 10
-                        , Run StdinReader
-                        ]
+                        , Run StdinReader]
            , sepChar  = "%"
            , alignSep = "}{"
            , template = "%StdinReader% }{ <fc=#00FF00>%uname%</fc> * <fc=#FF0000>%theDate%</fc>"

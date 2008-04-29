@@ -13,20 +13,21 @@
 --
 -----------------------------------------------------------------------------
 
-module Xmobar (-- * Main Stuff
-               -- $main
-               X, XConf (..), runX
-              , eventLoop
-              -- * Program Execution
-              -- $command
-              , startCommand
-              -- * Window Management
-              -- $window
-              , createWin, updateWin
-              -- * Printing
-              -- $print
-              , drawInWin, printStrings
-              ) where
+module Xmobar
+    ( -- * Main Stuff
+      -- $main
+      X , XConf (..), runX
+    , eventLoop
+    -- * Program Execution
+    -- $command
+    , startCommand
+    -- * Window Management
+    -- $window
+    , createWin, updateWin
+    -- * Printing
+    -- $print
+    , drawInWin, printStrings
+    ) where
 
 import Prelude hiding (catch)
 import Graphics.X11.Xlib hiding (textExtents, textWidth)
