@@ -29,11 +29,11 @@ To get the darcs source run:
 
 The latest binary can be found here:
 
-        http://code.haskell.org/~arossato/xmobar/xmobar-0.9.bin
+<http://code.haskell.org/~arossato/xmobar/xmobar-0.9.bin>
 
 A recent screen shot can be found here:
 
-        http://code.haskell.org/~arossato/xmobar/xmobar-0.9.png
+<http://code.haskell.org/~arossato/xmobar/xmobar-0.9.png>
 
 Version 0.9 requires Cabal-1.2.x, but should work both with ghc-6.6.1
 and ghc-6.8.1.
