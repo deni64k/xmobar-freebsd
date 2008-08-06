@@ -29,6 +29,7 @@ import Data.List (isPrefixOf)
 import Data.Set (Set)
 import qualified Data.Set as S
 
+-- | A list of mail box names and paths to maildirs.
 data Mail = Mail [(String, FilePath)]
     deriving (Read, Show)
 
