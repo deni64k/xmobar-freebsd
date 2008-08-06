@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP, TypeOperators #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -75,17 +75,20 @@ defaultConfig =
            , template = "%StdinReader% }{ <fc=#00FF00>%uname%</fc> * <fc=#FF0000>%theDate%</fc>"
            }
 
+
+-- | An alias for tuple types that is more convenient for long lists.
+type a :*: b = (a, b)
+infixr :*:
+
 -- | This is the list of types that can be hidden inside
 -- 'Runnable.Runnable', the existential type that stores all commands
 -- to be executed by Xmobar. It is used by 'Runnable.readRunnable' in
 -- the 'Runnable.Runnable' Read instance. To install a plugin just add
--- the plugin's type to the list of types appearing in this function's type
--- signature.
-runnableTypes :: (Command,(Monitors,(Date,(PipeReader,(StdinReader,
+-- the plugin's type to the list of types (separated by ':*:') appearing in
+-- this function's type signature.
+runnableTypes :: Command :*: Monitors :*: Date :*: PipeReader :*: StdinReader :*:
 #ifdef INOTIFY
-                 (Mail,())
-#else
-                 ()
+                 Mail :*:
 #endif
-                 )))))
+                 ()
 runnableTypes = undefined
