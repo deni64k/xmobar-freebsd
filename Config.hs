@@ -28,6 +28,10 @@ import Plugins.Date
 import Plugins.PipeReader
 import Plugins.StdinReader
 
+#ifdef INOTIFY
+import Plugins.Mail
+#endif
+
 -- $config
 -- Configuration data type and default configuration
 
@@ -74,5 +78,11 @@ defaultConfig =
 -- the 'Runnable.Runnable' Read instance. To install a plugin just add
 -- the plugin's type to the list of types appearing in this function's type
 -- signature.
-runnableTypes :: (Command,(Monitors,(Date,(PipeReader,(StdinReader,())))))
+runnableTypes :: (Command,(Monitors,(Date,(PipeReader,(StdinReader,
+#ifdef INOTIFY
+                 (Mail,())
+#else
+                 ()
+#endif
+                 )))))
 runnableTypes = undefined
