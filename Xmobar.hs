@@ -128,20 +128,20 @@ startCommand (com,s,ss)
 createWin :: Display -> XFont -> Config -> IO (Rectangle,Window)
 createWin d fs c = do
   let dflt = defaultScreen d
-  sr:_    <- getScreenInfo d
+  srs     <- getScreenInfo d
   rootw   <- rootWindow d dflt
   (as,ds) <- textExtents fs "0"
   let ht       = as + ds + 4
-      (r,o) = setPosition (position c) sr (fi ht)
+      (r,o) = setPosition (position c) srs (fi ht)
   win <- newWindow  d (defaultScreenOfDisplay d) rootw r o
   selectInput       d win (exposureMask .|. structureNotifyMask)
   setProperties r c d win
   mapWindow         d win
   return (r,win)
 
-setPosition :: XPosition -> Rectangle -> Dimension -> (Rectangle,Bool)
-setPosition p (Rectangle rx ry rw rh) ht =
-    case p of
+setPosition :: XPosition -> [Rectangle] -> Dimension -> (Rectangle,Bool)
+setPosition p rs ht =
+    case p' of
     Top                -> (Rectangle rx          ry      rw      h     , True)
     TopW L i           -> (Rectangle rx          ry     (nw i)   h     , True)
     TopW R i           -> (Rectangle (right  i)  ry     (nw i)   h     , True)
@@ -151,7 +151,11 @@ setPosition p (Rectangle rx ry rw rh) ht =
     BottomW R i        -> (Rectangle (right  i)  ny     (nw i)   h     , True)
     BottomW C i        -> (Rectangle (center i)  ny     (nw i)   h     , True)
     Static cx cy cw ch -> (Rectangle (fi cx   ) (fi cy) (fi cw) (fi ch), True)
+    OnScreen _ _       -> error "Nested OnScreen positions are not allowed"
     where
+      (Rectangle rx ry rw rh, p') = case p of
+                                        OnScreen i x -> (rs !! i, x)
+                                        _            -> (head rs, p)
       ny       = ry + fi (rh - ht)
       center i = rx + (fi $ div (remwid i) 2)
       right  i = rx + (fi $ remwid i)

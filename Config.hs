@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Xmobar.Config
@@ -54,6 +56,7 @@ data XPosition = Top
                | Bottom
                | BottomW Align Int
                | Static {xpos, ypos, width, height :: Int}
+               | OnScreen Int XPosition
                  deriving ( Read, Eq )
 
 data Align = L | R | C deriving ( Read, Eq )
