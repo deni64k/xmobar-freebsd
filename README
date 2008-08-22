@@ -298,7 +298,7 @@ Monitors have default aliases.
 `BatteryP Dirs Args RefreshRate`
 
 - aliases to `battery`
-- Files: list of directories in /proc/acpi/battery/ direcotry where to
+- Files: list of directories in /proc/acpi/battery/ directory where to
   look for the `state` and `info` files. Example:
   `["BAT0","BAT1","BAT2"]`. Only the first 3 directories will be
   searched.

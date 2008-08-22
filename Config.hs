@@ -43,7 +43,7 @@ data Config =
            , bgColor        :: String     -- ^ Backgroud color
            , fgColor        :: String     -- ^ Default font color
            , position       :: XPosition  -- ^ Top Bottom or Static
-           , commands       :: [Runnable] -- ^ For setting the command, the command argujments
+           , commands       :: [Runnable] -- ^ For setting the command, the command arguments
                                           --   and refresh rate for the programs to run (optional)
            , sepChar        :: String     -- ^ The character to be used for indicating
                                           --   commands in the output template (default '%')
