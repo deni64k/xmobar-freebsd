@@ -338,6 +338,13 @@ Monitors have default aliases.
 - This monitor requires coretemp module to be loaded in kernel
 - Example: `Run CoreTemp ["-t","Temp:\<core0\>|\<core1\>C","-L","40","-H","60","-l","lightblue","-n","gray90","-h","red"] 50`
 
+`Mail Args`
+
+- aliases to `Mail`
+- Args: list of maildirs in form [("name1","path1"),("name2","path2")]
+- This plugin requires INOTIFY support in Linux kernel and hinotify library.
+  To activate, pass --flags="with_inotify" to "runhaskell Setup configure".
+
 ### Monitor Plugins Commands Arguments
 
 These are the arguments that can be used for internal commands in the
