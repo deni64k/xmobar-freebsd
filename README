@@ -470,7 +470,7 @@ install the HelloWorld plugin that comes with [xmobar]:
    signature of `runnableTypes` in `Config.hs`. For instance, for the
    HelloWorld plugin, change `runnableTypes` into:
 
-        runnableTypes :: (Command,(Monitors,(HelloWorld,())))
+        runnableTypes :: Command :*: Monitors :*: HelloWorld :*: ()
         runnableTypes = undefined
 
 3. Rebuild and reinstall [xmobar]. Now test it with:
@@ -499,12 +499,12 @@ To remove the system monitor plugin:
 
 2. in `Config.hs` change
 
-         runnableTypes :: (Command,(Monitors,()))
+         runnableTypes :: Command :*: Monitors :*: ()
          runnableTypes = undefined
 
     to
 
-         runnableTypes :: (Command,())
+         runnableTypes :: Command :*: ()
          runnableTypes = undefined
 
 3. rebuild [xmobar].
