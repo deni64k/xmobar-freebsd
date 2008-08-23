@@ -1,4 +1,4 @@
-{-# OPTIONS -fglasgow-exts #-}
+{-# LANGUAGE ExistentialQuantification  #-}
 module Runnable where
 import Commands
 
