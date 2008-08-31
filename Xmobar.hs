@@ -170,16 +170,17 @@ setProperties r c d w = do
   a2 <- internAtom d "_NET_WM_WINDOW_TYPE"      False
   c2 <- internAtom d "ATOM"                     False
   v  <- internAtom d "_NET_WM_WINDOW_TYPE_DOCK" False
-  changeProperty32 d w a1 c1 propModeReplace $ map fi $ getStrutValues r c
+  changeProperty32 d w a1 c1 propModeReplace $ map fi $ getStrutValues r (position c)
   changeProperty32 d w a2 c2 propModeReplace [fromIntegral v]
 
-getStrutValues :: Rectangle -> Config -> [Int]
-getStrutValues (Rectangle x _ w h) c =
-    case position c of
+getStrutValues :: Rectangle -> XPosition -> [Int]
+getStrutValues r@(Rectangle x _ w h) p =
+    case p of
     Top         -> [0, 0, nh,  0, 0, 0, 0, 0, nx, nw,  0,  0]
     TopW    _ _ -> [0, 0, nh,  0, 0, 0, 0, 0, nx, nw,  0,  0]
     Bottom      -> [0, 0,  0, nh, 0, 0, 0, 0,  0,  0, nx, nw]
     BottomW _ _ -> [0, 0,  0, nh, 0, 0, 0, 0,  0,  0, nx, nw]
+    OnScreen _ p' -> getStrutValues r p'
     _           -> [0, 0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0]
     where nh = fi h
           nx = fi x
