@@ -130,7 +130,7 @@ createWin d fs c = do
   srs     <- getScreenInfo d
   rootw   <- rootWindow d dflt
   (as,ds) <- textExtents fs "0"
-  let ht       = as + ds + 4
+  let ht    = as + ds + 4
       (r,o) = setPosition (position c) srs (fi ht)
   win <- newWindow  d (defaultScreenOfDisplay d) rootw r o
   selectInput       d win (exposureMask .|. structureNotifyMask)
