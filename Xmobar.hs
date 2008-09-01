@@ -134,7 +134,7 @@ createWin d fs c = do
       (r,o) = setPosition (position c) srs (fi ht)
   win <- newWindow  d (defaultScreenOfDisplay d) rootw r o
   selectInput       d win (exposureMask .|. structureNotifyMask)
-  setProperties r c d win
+  setProperties r c d win srs
   mapWindow         d win
   return (r,win)
 
@@ -163,26 +163,33 @@ setPosition p rs ht =
       nw       = fi . pw . fi
       h        = fi ht
 
-setProperties :: Rectangle -> Config -> Display -> Window -> IO ()
-setProperties r c d w = do
+setProperties :: Rectangle -> Config -> Display -> Window -> [Rectangle] -> IO ()
+setProperties r c d w srs = do
   a1 <- internAtom d "_NET_WM_STRUT_PARTIAL"    False
   c1 <- internAtom d "CARDINAL"                 False
   a2 <- internAtom d "_NET_WM_WINDOW_TYPE"      False
   c2 <- internAtom d "ATOM"                     False
   v  <- internAtom d "_NET_WM_WINDOW_TYPE_DOCK" False
-  changeProperty32 d w a1 c1 propModeReplace $ map fi $ getStrutValues r (position c)
+  changeProperty32 d w a1 c1 propModeReplace $ map fi $
+    getStrutValues r (position c) (getRootWindowHeight srs)
   changeProperty32 d w a2 c2 propModeReplace [fromIntegral v]
 
-getStrutValues :: Rectangle -> XPosition -> [Int]
-getStrutValues r@(Rectangle x _ w h) p =
+getRootWindowHeight :: [Rectangle] -> Int
+getRootWindowHeight srs = foldr1 max (map getMaxScreenYCoord srs)
+  where
+    getMaxScreenYCoord sr = fi (rect_y sr) + fi (rect_height sr)
+
+getStrutValues :: Rectangle -> XPosition -> Int -> [Int]
+getStrutValues r@(Rectangle x y w h) p rwh =
     case p of
-    Top         -> [0, 0, nh,  0, 0, 0, 0, 0, nx, nw,  0,  0]
-    TopW    _ _ -> [0, 0, nh,  0, 0, 0, 0, 0, nx, nw,  0,  0]
-    Bottom      -> [0, 0,  0, nh, 0, 0, 0, 0,  0,  0, nx, nw]
-    BottomW _ _ -> [0, 0,  0, nh, 0, 0, 0, 0,  0,  0, nx, nw]
-    OnScreen _ p' -> getStrutValues r p'
-    _           -> [0, 0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0]
-    where nh = fi h
+    OnScreen _ p' -> getStrutValues r p' rwh
+    Top           -> [0, 0, st,  0, 0, 0, 0, 0, nx, nw,  0,  0]
+    TopW    _ _   -> [0, 0, st,  0, 0, 0, 0, 0, nx, nw,  0,  0]
+    Bottom        -> [0, 0,  0, sb, 0, 0, 0, 0,  0,  0, nx, nw]
+    BottomW _ _   -> [0, 0,  0, sb, 0, 0, 0, 0,  0,  0, nx, nw]
+    _             -> [0, 0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0]
+    where st = fi y + fi h
+          sb = rwh - fi y
           nx = fi x
           nw = fi (x + fi w - 1)
 
