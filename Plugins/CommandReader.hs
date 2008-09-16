@@ -17,6 +17,7 @@ module Plugins.CommandReader where
 
 import System.IO
 import Plugins
+import System.Process(runInteractiveCommand)
 
 data CommandReader = CommandReader String String
     deriving (Read, Show)
@@ -24,7 +25,7 @@ data CommandReader = CommandReader String String
 instance Exec CommandReader where
     alias (CommandReader _ a)    = a
     start (CommandReader p _) cb = do
-        (hstdin, hstdout, hstderr) <- runInteractiveCommand p
+        (hstdin, hstdout, hstderr, _) <- runInteractiveCommand p
         hClose hstdin
         hClose hstderr
         forever (hGetLineSafe hstdout >>= cb)
