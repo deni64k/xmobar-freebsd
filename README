@@ -228,7 +228,7 @@ External Commands). All other commands are provided by plugins.
 a standard input reader, an Unix named pipe reader, and a configurable
 date plugin. These plugins install the following internal commands:
 `Weather`, `Network`, `Memory`, `Swap`, `Cpu`, `Battery`, `Thermal`,
-`CpuFreq`, `CoreTemp`, `Date`, `StdinReader` and `PipeReader`.
+`CpuFreq`, `CoreTemp`, `Date`, `StdinReader`, `CommandReader`, and `PipeReader`.
 
 To remove them see below Installing/Removing a Plugin
 
@@ -397,6 +397,8 @@ can be used in the output template as `%mydate%`
 `Date Args Alias RefreshRate`
 
 `StdinReader`
+
+`CommandReader "/path/to/program" Alias`
 
 `PipeReader "/path/to/pipe" Alias`
 
