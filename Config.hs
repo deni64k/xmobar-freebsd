@@ -28,6 +28,7 @@ import {-# SOURCE #-} Runnable
 import Plugins.Monitors
 import Plugins.Date
 import Plugins.PipeReader
+import Plugins.CommandReader
 import Plugins.StdinReader
 
 #ifdef INOTIFY
@@ -86,7 +87,7 @@ infixr :*:
 -- the 'Runnable.Runnable' Read instance. To install a plugin just add
 -- the plugin's type to the list of types (separated by ':*:') appearing in
 -- this function's type signature.
-runnableTypes :: Command :*: Monitors :*: Date :*: PipeReader :*: StdinReader :*:
+runnableTypes :: Command :*: Monitors :*: Date :*: PipeReader :*: CommandReader :*: StdinReader :*:
 #ifdef INOTIFY
                  Mail :*:
 #endif
