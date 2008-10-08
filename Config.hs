@@ -44,6 +44,8 @@ data Config =
            , bgColor        :: String     -- ^ Backgroud color
            , fgColor        :: String     -- ^ Default font color
            , position       :: XPosition  -- ^ Top Bottom or Static
+           , lowerOnStart   :: Bool       -- ^ Lower to the bottom of the
+                                          --   window stack on initialization
            , commands       :: [Runnable] -- ^ For setting the command, the command arguments
                                           --   and refresh rate for the programs to run (optional)
            , sepChar        :: String     -- ^ The character to be used for indicating
@@ -69,6 +71,7 @@ defaultConfig =
            , bgColor  = "#000000"
            , fgColor  = "#BFBFBF"
            , position = Top
+           , lowerOnStart = True
            , commands = [ Run $ Date "%a %b %_d %Y * %H:%M:%S" "theDate" 10
                         , Run StdinReader]
            , sepChar  = "%"

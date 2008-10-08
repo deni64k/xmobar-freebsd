@@ -135,7 +135,7 @@ createWin d fs c = do
   win <- newWindow  d (defaultScreenOfDisplay d) rootw r o
   selectInput       d win (exposureMask .|. structureNotifyMask)
   setProperties r c d win srs
-  lowerWindow       d win
+  when (lowerOnStart c) (lowerWindow d win)
   mapWindow         d win
   return (r,win)
 
