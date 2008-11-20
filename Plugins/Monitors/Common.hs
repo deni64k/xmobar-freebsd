@@ -55,6 +55,7 @@ import Data.List
 import Numeric
 import Text.ParserCombinators.Parsec
 import System.Console.GetOpt
+import Control.Exception (handle)
 
 import Plugins
 -- $monitor
@@ -148,7 +149,7 @@ runM args conf action r cb = do go
     where go = do
             c <- conf
             let ac = doArgs args action
-            s <- runReaderT ac c
+            s <- handle (const $ return "error") $ runReaderT ac c
             cb s
             tenthSeconds r
             go
