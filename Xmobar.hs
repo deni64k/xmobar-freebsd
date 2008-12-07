@@ -183,17 +183,30 @@ getRootWindowHeight srs = foldr1 max (map getMaxScreenYCoord srs)
 getStrutValues :: Rectangle -> XPosition -> Int -> [Int]
 getStrutValues r@(Rectangle x y w h) p rwh =
     case p of
-    OnScreen _ p' -> getStrutValues r p' rwh
-    Top           -> [0, 0, st,  0, 0, 0, 0, 0, nx, nw,  0,  0]
-    TopW    _ _   -> [0, 0, st,  0, 0, 0, 0, 0, nx, nw,  0,  0]
-    Bottom        -> [0, 0,  0, sb, 0, 0, 0, 0,  0,  0, nx, nw]
-    BottomW _ _   -> [0, 0,  0, sb, 0, 0, 0, 0,  0,  0, nx, nw]
-    _             -> [0, 0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0]
+    OnScreen _ p'   -> getStrutValues r p' rwh
+    Top             -> [0, 0, st,  0, 0, 0, 0, 0, nx, nw,  0,  0]
+    TopW    _ _     -> [0, 0, st,  0, 0, 0, 0, 0, nx, nw,  0,  0]
+    Bottom          -> [0, 0,  0, sb, 0, 0, 0, 0,  0,  0, nx, nw]
+    BottomW _ _     -> [0, 0,  0, sb, 0, 0, 0, 0,  0,  0, nx, nw]
+    Static _ _ _ _  -> getStaticStrutValues p rwh
     where st = fi y + fi h
           sb = rwh - fi y
           nx = fi x
           nw = fi (x + fi w - 1)
 
+-- get some reaonable strut values for static placement. 
+getStaticStrutValues :: XPosition -> Int -> [Int]
+getStaticStrutValues (Static cx cy cw ch) rwh
+    -- if the yPos is in the top half of the screen, then assume a Top
+    -- placement, otherwise, it's a Bottom placement
+    | cy < (rwh `div` 2) = [0, 0, st,  0, 0, 0, 0, 0, xs, xe,  0,  0]
+    | otherwise          = [0, 0,  0, sb, 0, 0, 0, 0,  0,  0, xs, xe]
+    where st = cy + ch 
+          sb = rwh - cy
+          xs = cx -- a simple calculation for horizontal (x) placement
+          xe = xs + cw
+getStaticStrutValues _ _ = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+       
 updateWin :: TVar String -> X ()
 updateWin v = do
   xc <- ask
