@@ -27,7 +27,8 @@ import Control.Concurrent
 import Data.Char
 import System.Process
 import System.Exit
-import System.IO (hClose, hGetLine)
+import System.IO (hClose)
+import XUtil
 
 class Show e => Exec e where
     alias :: e -> String
@@ -64,7 +65,7 @@ instance Exec Command where
                         hClose e
                 case exit of
                   ExitSuccess -> do
-                            str <- hGetLine o
+                            str <- hGetLineSafe o
                             closeHandles
                             cb str
                   _ -> do closeHandles
