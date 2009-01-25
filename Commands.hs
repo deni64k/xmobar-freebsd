@@ -23,7 +23,9 @@ module Commands
     , tenthSeconds
     ) where
 
+import Prelude hiding (catch)
 import Control.Concurrent
+import Control.Exception
 import Data.Char
 import System.Process
 import System.Exit
@@ -65,7 +67,7 @@ instance Exec Command where
                         hClose e
                 case exit of
                   ExitSuccess -> do
-                            str <- hGetLineSafe o
+                            str <- catch (hGetLineSafe o) (\eof -> return "")
                             closeHandles
                             cb str
                   _ -> do closeHandles
