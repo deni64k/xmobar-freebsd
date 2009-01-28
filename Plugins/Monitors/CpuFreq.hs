@@ -25,7 +25,7 @@ cpuFreqConfig :: IO MConfig
 cpuFreqConfig = mkMConfig
        "Freq: <cpu0>GHz" -- template
        (zipWith (++) (repeat "cpu") (map show [0 :: Int ..])) -- available
-                                                               -- replacements
+                                                              -- replacements
 
 -- |
 -- Function retrieves monitor string holding the cpu frequency (or frequencies)

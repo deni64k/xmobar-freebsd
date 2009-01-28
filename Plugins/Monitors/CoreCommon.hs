@@ -16,6 +16,7 @@ module Plugins.Monitors.CoreCommon where
 
 import Plugins.Monitors.Common
 import System.Posix.Files (fileExist)
+import System.IO (withFile, IOMode(ReadMode), hGetLine)
 import System.Directory
 import Data.Char (isDigit)
 import Data.List (isPrefixOf)
@@ -26,7 +27,7 @@ import Data.List (isPrefixOf)
 -- is performed.
 checkedDataRetrieval :: String -> String -> String -> String -> Double -> Monitor String
 checkedDataRetrieval failureMessage dir file pattern divisor = do
-    exists <- io $ fileExist $ foldl (++) dir ["/", pattern, "0/", file]
+    exists <- io $ fileExist $ concat [dir, "/", pattern, "0/", file]
     case exists of
          False  -> return failureMessage
          True   -> retrieveData dir file pattern divisor
@@ -38,15 +39,16 @@ checkedDataRetrieval failureMessage dir file pattern divisor = do
 retrieveData :: String -> String -> String -> Double -> Monitor String
 retrieveData dir file pattern divisor = do
     count <- io $ dirCount dir pattern
-    contents <- io $ mapM readFile $ files count
+    contents <- io $ mapM getGuts $ files count
     values <- mapM (showWithColors show) $ map conversion contents
     parseTemplate values
     where
+        getGuts file = withFile file ReadMode hGetLine
         dirCount path str = getDirectoryContents path
                             >>= return . length
                                        . filter (\s -> str `isPrefixOf` s
                                                        && isDigit (last s))
-        files count = [ foldl (++) dir [ "/", pattern, show i, "/", file ]
-                      | i <- [0 .. count - 1] ]
-        conversion = flip (/) divisor . (read :: String -> Double)
+        files count = map (\i -> concat [dir, "/", pattern, show i, "/", file])
+                          [0 .. count - 1]
+        conversion = (/divisor) . (read :: String -> Double)
 
