@@ -67,7 +67,7 @@ instance Exec Command where
                         hClose e
                 case exit of
                   ExitSuccess -> do
-                            str <- catch (hGetLineSafe o) (\eof -> return "")
+                            str <- catch (hGetLineSafe o) (\_ -> return "")
                             closeHandles
                             cb str
                   _ -> do closeHandles
