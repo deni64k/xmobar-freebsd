@@ -43,7 +43,7 @@ retrieveData dir file pattern divisor = do
     values <- mapM (showWithColors show) $ map conversion contents
     parseTemplate values
     where
-        getGuts file = withFile file ReadMode hGetLine
+        getGuts f = withFile f ReadMode hGetLine
         dirCount path str = getDirectoryContents path
                             >>= return . length
                                        . filter (\s -> str `isPrefixOf` s
