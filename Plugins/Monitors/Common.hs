@@ -196,19 +196,30 @@ skipTillString s =
 -- | Parses the output template string
 templateStringParser :: Parser (String,String,String)
 templateStringParser =
-    do{ s <- many $ noneOf "<"
-      ; (_,com,_) <- templateCommandParser
-      ; ss <- many $ noneOf "<"
-      ; return (s, com, ss)
-      } 
+    do { s <- nonPlaceHolder
+       ; com <- templateCommandParser
+       ; ss <- nonPlaceHolder
+       ; return (s, com, ss)
+       } 
+    where
+      nonPlaceHolder = liftM concat . many $
+                       (many1 $ noneOf "<") <|> colorSpec
+
+-- | Recognizes color specification and returns it unchanged
+colorSpec :: Parser String
+colorSpec = (try $ string "</fc>") <|> try (
+            do string "<fc="
+               s <- many1 (alphaNum <|> char ',' <|> char '#')
+               char '>'
+               return $ "<fc=" ++ s ++ ">")
 
 -- | Parses the command part of the template string
-templateCommandParser :: Parser (String,String,String)
+templateCommandParser :: Parser String
 templateCommandParser =
     do { char '<'
        ; com <- many $ noneOf ">"
        ; char '>'
-       ; return $ ("",com,"")
+       ; return com
        }
 
 -- | Combines the template parsers
