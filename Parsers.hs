@@ -64,7 +64,7 @@ templateStringParser c = do
 templateCommandParser :: Config -> Parser String
 templateCommandParser c =
   let chr = char . head . sepChar
-  in  inside (chr c) (allTillSep c) (chr c)
+  in  between (chr c) (chr c) (allTillSep c) 
 
 -- | Combines the template parsers
 templateParser :: Config -> Parser [(String,String,String)]
@@ -96,6 +96,3 @@ tryString = try . string
 
 allTillSep :: Config -> Parser String
 allTillSep = many . noneOf . sepChar
-
-inside :: Parser a -> Parser b -> Parser c -> Parser b
-inside pa pb pc = pa >> pb >>= \r -> pc >> return r
