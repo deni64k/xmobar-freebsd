@@ -14,12 +14,6 @@
 
 module Parsers
     ( parseString
-    , stringParser
-    , colorParser
-    , colorsAndText
-    , templateStringParser
-    , templateCommandParser
-    , templateParser
     , parseTemplate
     ) where
 
