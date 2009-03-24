@@ -97,11 +97,5 @@ combine c m ((ts,s,ss):xs) = (com, s, ss) : combine c m xs
     where com  = Map.findWithDefault dflt ts m
           dflt = Run $ Com ts [] [] 10
 
-endOfLine :: a -> Parser a
-endOfLine r = eof >> return r
-
-tryString :: String -> Parser String
-tryString = try . string
-
 allTillSep :: Config -> Parser String
 allTillSep = many . noneOf . sepChar
