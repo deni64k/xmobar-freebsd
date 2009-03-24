@@ -26,27 +26,36 @@ import qualified Data.Map as Map
 -- | Runs the string parser
 parseString :: Config -> String -> IO [(String, String)]
 parseString c s =
-    case parse (stringParser c) "" s of
+    case parse (stringParser (fgColor c)) "" s of
       Left  _ -> return [("Could not parse string: " ++ s, fgColor c)]
       Right x -> return (concat x)
 
 -- | Gets the string and combines the needed parsers
-stringParser :: Config -> Parser [[(String, String)]]
-stringParser = flip manyTill eof . colorParser
+stringParser :: String -> Parser [[(String, String)]]
+stringParser c = manyTill (textParser c <|> colorParser) eof
 
--- | Parses a string with the default color (no color set)
-colorParser :: Config -> Parser [(String, String)]
-colorParser c = do
-  s <- manyTill anyChar (tryString "<fc" <|> endOfLine "")
-  n <- colorsAndText <|> endOfLine ("","")
-  return [(s,fgColor c),n]
+-- | Parses a maximal string without color markup.
+textParser :: String -> Parser [(String, String)]
+textParser c = do s <- many1 $
+                    noneOf "<" <|>
+                    ( try $ notFollowedBy' (char '<')
+                                           (string "fc=" <|> string "/fc>" ) )
+                  return [(s, c)]
 
--- | Parses a string with a color set
-colorsAndText :: Parser (String, String)
-colorsAndText = do
-  c <- inside (string "=") colors (string ">")
-  s <- manyTill anyChar (tryString "</fc>")
-  return (s,c)
+-- | Wrapper for notFollowedBy that returns the result of the first parser.
+--   Also works around the issue that, at least in Parsec 3.0.0, notFollowedBy
+--   accepts only parsers with return type Char.
+notFollowedBy' :: Parser a -> Parser b -> Parser a
+notFollowedBy' p e = do x <- p
+                        notFollowedBy (e >> return '*')
+                        return x
+
+-- | Parsers a string wrapped in a color specification.
+colorParser :: Parser [(String, String)]
+colorParser = do
+  c <- between (string "<fc=") (string ">") colors
+  s <- manyTill (textParser c <|> colorParser) (try $ string "</fc>")
+  return (concat s)
 
 -- | Parses a color specification (hex or named)
 colors :: Parser String
