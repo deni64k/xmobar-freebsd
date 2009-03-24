@@ -27,6 +27,7 @@ module XUtil
     , hGetLineSafe
     , io
     , fi
+    , withColors
     ) where
 
 import Control.Concurrent
@@ -147,42 +148,55 @@ printString :: Display -> Drawable -> XFont -> GC -> String -> String
             -> Position -> Position -> String  -> IO ()
 printString d p (Core fs) gc fc bc x y s = do
     setFont d gc $ fontFromFontStruct fs
-    [fc',bc'] <- mapM (initColor d) [fc,bc]
-    setForeground d gc fc'
-    setBackground d gc bc'
-    drawImageString d p gc x y s
-printString d p (Utf8 fs) gc fc bc x y s = do
-    [fc',bc'] <- mapM (initColor d) [fc,bc]
-    setForeground d gc fc'
-    setBackground d gc bc'
-    io $ wcDrawImageString d p fs gc x y s
+    withColors d [fc, bc] $ \[fc', bc'] -> do
+      setForeground d gc fc'
+      setBackground d gc bc'
+      drawImageString d p gc x y s
+
+printString d p (Utf8 fs) gc fc bc x y s =
+    withColors d [fc, bc] $ \[fc', bc'] -> do
+      setForeground d gc fc'
+      setBackground d gc bc'
+      io $ wcDrawImageString d p fs gc x y s
+
 #ifdef XFT
 printString dpy drw fs@(Xft font) gc fc bc x y s = do
   let screen   = defaultScreenOfDisplay dpy
       colormap = defaultColormapOfScreen screen
       visual   = defaultVisualOfScreen screen
-  bcolor <- initColor dpy bc
-  (a,d)  <- textExtents fs s
-  gi     <- xftTextExtents dpy font s
-  setForeground dpy gc bcolor
-  fillRectangle dpy drw gc (x - fi (xglyphinfo_x gi))
-                           (y - fi a)
-                           (fi $ xglyphinfo_xOff gi)
-                           (fi $ a + d)
-  withXftDraw dpy drw visual colormap $
-         \draw -> withXftColorName dpy visual colormap fc $
-                   \color -> xftDrawString draw color font x y s
+  withColors d [bc] $ \[bcolor] -> do
+    (a,d)  <- textExtents fs s
+    gi     <- xftTextExtents dpy font s
+    setForeground dpy gc bcolor
+    fillRectangle dpy drw gc (x - fi (xglyphinfo_x gi))
+                             (y - fi a)
+                             (fi $ xglyphinfo_xOff gi)
+                             (fi $ a + d)
+    withXftDraw dpy drw visual colormap $
+      \draw -> withXftColorName dpy visual colormap fc $
+      \color -> xftDrawString draw color font x y s
 #endif
 
 -- | Get the Pixel value for a named color: if an invalid name is
 -- given the black pixel will be returned.
-initColor :: Display -> String -> IO Pixel
-initColor dpy c =
-    catch (initColor' dpy c) (const . return . blackPixel dpy $ (defaultScreen dpy))
+initColor :: Display -> String -> IO (Bool, Pixel)
+initColor dpy c = (initColor' dpy c) `catch`
+                  (const $ return (False, blackPixel dpy $ defaultScreen dpy))
 
-initColor' :: Display -> String -> IO Pixel
-initColor' dpy c = (color_pixel . fst) `liftM` allocNamedColor dpy colormap c
-    where colormap = defaultColormap dpy (defaultScreen dpy)
+initColor' :: Display -> String -> IO (Bool, Pixel)
+initColor' dpy c = do
+  (c', _) <- allocNamedColor dpy colormap c
+  return (True, color_pixel c')
+  where colormap = defaultColormap dpy (defaultScreen dpy)
+
+withColors :: MonadIO m => Display -> [String] -> ([Pixel] -> m a) -> m a
+withColors d cs f = do
+  ps <- mapM (io . initColor d) cs
+  r  <- f $ map snd ps
+  io $ freeColors d cmap (map snd $ filter fst ps) 0
+  return r
+  where
+    cmap = defaultColormap d (defaultScreen d)
 
 -- | Creates a window with the attribute override_redirect set to True.
 -- Windows Managers should not touch this kind of windows.

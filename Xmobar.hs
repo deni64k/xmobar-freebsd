@@ -233,25 +233,25 @@ drawInWin (Rectangle _ _ wid ht) ~[left,center,right] = do
   let (c,d ) = (config &&& display) r
       (w,fs) = (window &&& fontS  ) r
       strLn  = io . mapM (\(s,cl) -> textWidth d fs s >>= \tw -> return (s,cl,fi tw))
-  bgcolor <- io $ initColor d $ bgColor c
-  gc      <- io $ createGC  d w
-  -- create a pixmap to write to and fill it with a rectangle
-  p <- io $ createPixmap d w wid ht
-            (defaultDepthOfScreen (defaultScreenOfDisplay d))
-  -- the fgcolor of the rectangle will be the bgcolor of the window
-  io $ setForeground d gc bgcolor
-  io $ fillRectangle d p gc 0 0 wid ht
-  -- write to the pixmap the new string
-  printStrings p gc fs 1 L =<< strLn left
-  printStrings p gc fs 1 R =<< strLn right
-  printStrings p gc fs 1 C =<< strLn center
-  -- copy the pixmap with the new string to the window
-  io $ copyArea   d p w gc 0 0 wid ht 0 0
-  -- free up everything (we do not want to leak memory!)
-  io $ freeGC     d gc
-  io $ freePixmap d p
-  -- resync
-  io $ sync       d True
+  withColors d [bgColor c] $ \[bgcolor] -> do
+    gc <- io $ createGC  d w
+    -- create a pixmap to write to and fill it with a rectangle
+    p <- io $ createPixmap d w wid ht
+         (defaultDepthOfScreen (defaultScreenOfDisplay d))
+    -- the fgcolor of the rectangle will be the bgcolor of the window
+    io $ setForeground d gc bgcolor
+    io $ fillRectangle d p gc 0 0 wid ht
+    -- write to the pixmap the new string
+    printStrings p gc fs 1 L =<< strLn left
+    printStrings p gc fs 1 R =<< strLn right
+    printStrings p gc fs 1 C =<< strLn center
+    -- copy the pixmap with the new string to the window
+    io $ copyArea   d p w gc 0 0 wid ht 0 0
+    -- free up everything (we do not want to leak memory!)
+    io $ freeGC     d gc
+    io $ freePixmap d p
+    -- resync
+    io $ sync       d True
 
 -- | An easy way to print the stuff we need to print
 printStrings :: Drawable -> GC -> XFont -> Position
