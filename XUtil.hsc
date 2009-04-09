@@ -177,23 +177,27 @@ printString dpy drw fs@(Xft font) gc fc bc x y s = do
       \color -> xftDrawString draw color font x y s
 #endif
 
+data DynPixel = DynPixel { allocated :: Bool
+                         , pixel     :: Pixel
+                         }
+
 -- | Get the Pixel value for a named color: if an invalid name is
 -- given the black pixel will be returned.
-initColor :: Display -> String -> IO (Bool, Pixel)
+initColor :: Display -> String -> IO DynPixel
 initColor dpy c = (initColor' dpy c) `catch`
-                  (const $ return (False, blackPixel dpy $ defaultScreen dpy))
+                  (const . return $ DynPixel False (blackPixel dpy $ defaultScreen dpy))
 
-initColor' :: Display -> String -> IO (Bool, Pixel)
+initColor' :: Display -> String -> IO DynPixel
 initColor' dpy c = do
   (c', _) <- allocNamedColor dpy colormap c
-  return (True, color_pixel c')
+  return $ DynPixel True (color_pixel c')
   where colormap = defaultColormap dpy (defaultScreen dpy)
 
 withColors :: MonadIO m => Display -> [String] -> ([Pixel] -> m a) -> m a
 withColors d cs f = do
   ps <- mapM (io . initColor d) cs
-  r  <- f $ map snd ps
-  io $ freeColors d cmap (map snd $ filter fst ps) 0
+  r  <- f $ map pixel ps
+  io $ freeColors d cmap (map pixel $ filter allocated ps) 0
   return r
   where
     cmap = defaultColormap d (defaultScreen d)
