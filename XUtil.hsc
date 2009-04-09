@@ -164,7 +164,7 @@ printString dpy drw fs@(Xft font) gc fc bc x y s = do
   let screen   = defaultScreenOfDisplay dpy
       colormap = defaultColormapOfScreen screen
       visual   = defaultVisualOfScreen screen
-  withColors d [bc] $ \[bcolor] -> do
+  withColors dpy [bc] $ \[bcolor] -> do
     (a,d)  <- textExtents fs s
     gi     <- xftTextExtents dpy font s
     setForeground dpy gc bcolor

@@ -73,7 +73,7 @@ templateStringParser c = do
 templateCommandParser :: Config -> Parser String
 templateCommandParser c =
   let chr = char . head . sepChar
-  in  between (chr c) (chr c) (allTillSep c) 
+  in  between (chr c) (chr c) (allTillSep c)
 
 -- | Combines the template parsers
 templateParser :: Config -> Parser [(String,String,String)]
