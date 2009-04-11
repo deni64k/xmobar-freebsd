@@ -117,10 +117,10 @@ usage = (usageInfo header options) ++ footer
           footer = "\nMail bug reports and suggestions to " ++ mail
 
 info :: String
-info = "xmobar " ++ showVersion version ++ " (C) 2007 - 2008 Andrea Rossato " ++ mail ++ license
+info = "xmobar " ++ showVersion version ++ " (C) 2007 - 2009 Andrea Rossato " ++ mail ++ license
 
 mail :: String
-mail = "<andrea.rossato@ing.unitn.it>\n"
+mail = "<andrea.rossato@unitn.it>\n"
 
 license :: String
 license = "\nThis program is distributed in the hope that it will be useful,\n" ++
