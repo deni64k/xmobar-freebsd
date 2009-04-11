@@ -29,7 +29,7 @@ To get the darcs source run:
 
 The latest binary can be found here:
 
-<http://code.haskell.org/~arossato/xmobar/xmobar-0.9.bin>
+<http://code.haskell.org/~arossato/xmobar/xmobar-0.9.2.bin>
 
 A recent screen shot can be found here:
 
@@ -37,6 +37,15 @@ A recent screen shot can be found here:
 
 Version 0.9 requires Cabal-1.2.x, but should work both with ghc-6.6.1
 and ghc-6.8.1.
+
+Bug Reports
+-----------
+
+To submit bug reports you can use the Google code bug tracking system
+available at the following address:
+
+<http://code.google.com/p/xmobar/issues>
+
 
 Installation
 ------------
@@ -529,7 +538,8 @@ Thanks to Claus Reinke for make me understand existential types (or at
 least for letting me think I grasp existential types...;-).
 
 [xmobar] incorporates patches from: Krzysztof Kosciuszkiewicz, Spencer
-Janssen, Jens Petersen, Dmitry Kurochkin, and Lennart Kolmodin.
+Janssen, Jens Petersen, Dmitry Kurochkin, Lennart Kolmodin, and
+Norbert Zeh..
 
 Useful links
 ------------
