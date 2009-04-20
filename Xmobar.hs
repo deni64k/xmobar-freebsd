@@ -40,6 +40,7 @@ import Control.Concurrent.STM
 import Control.Exception hiding (handle)
 import Data.Bits
 import Data.Char
+import Data.Maybe(fromMaybe)
 
 
 import Config
@@ -151,11 +152,11 @@ setPosition p rs ht =
     BottomW R i        -> (Rectangle (right  i)  ny     (nw i)   h     , True)
     BottomW C i        -> (Rectangle (center i)  ny     (nw i)   h     , True)
     Static cx cy cw ch -> (Rectangle (fi cx   ) (fi cy) (fi cw) (fi ch), True)
-    OnScreen _ _       -> error "Nested OnScreen positions are not allowed"
+    OnScreen _ p''     -> setPosition p'' [scr] ht
     where
-      (Rectangle rx ry rw rh, p') = case p of
-                                        OnScreen i x -> (rs !! i, x)
-                                        _            -> (head rs, p)
+      (scr@(Rectangle rx ry rw rh), p') =
+        case p of OnScreen i x -> (fromMaybe (head rs) $ safeIndex i rs, x)
+                  _            -> (head rs, p)
       ny       = ry + fi (rh - ht)
       center i = rx + (fi $ div (remwid i) 2)
       right  i = rx + (fi $ remwid i)
@@ -163,6 +164,8 @@ setPosition p rs ht =
       pw i     = rw * (min 100 i) `div` 100
       nw       = fi . pw . fi
       h        = fi ht
+
+      safeIndex i = lookup i . zip [0..]
 
 setProperties :: Rectangle -> Config -> Display -> Window -> [Rectangle] -> IO ()
 setProperties r c d w srs = do
