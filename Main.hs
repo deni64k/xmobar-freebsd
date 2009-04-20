@@ -88,6 +88,7 @@ data Opts = Help
           | Commands String
           | SepChar  String
           | Template String
+          | OnScr    String
        deriving Show
 
 options :: [OptDescr Opts]
@@ -103,6 +104,7 @@ options =
     , Option ['s'     ] ["sepchar"  ] (ReqArg SepChar  "char"     ) "The character used to separate commands in\nthe output template. Default '%'"
     , Option ['t'     ] ["template" ] (ReqArg Template "template" ) "The output template"
     , Option ['c'     ] ["commands" ] (ReqArg Commands "commands" ) "The list of commands to be executed"
+    , Option ['x'     ] ["screen"   ] (ReqArg OnScr    "screen"   ) "On which X screen number to start"
     ]
 
 getOpts :: [String] -> IO ([Opts], [String])
@@ -142,6 +144,7 @@ doOpts conf (o:oo) =
       AlignSep s -> modifyIORef conf (\c -> c { alignSep = s     }) >> go
       SepChar  s -> modifyIORef conf (\c -> c { sepChar  = s     }) >> go
       Template s -> modifyIORef conf (\c -> c { template = s     }) >> go
+      OnScr    n -> modifyIORef conf (\c -> c { position = OnScreen (read n) $ position c }) >> go
       Commands s -> case readCom s of
                       Right x -> modifyIORef conf (\c -> c { commands = x }) >> go
                       Left e  -> putStr (e ++ usage) >> exitWith (ExitFailure 1)

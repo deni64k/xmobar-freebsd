@@ -197,6 +197,7 @@ xmobar --help):
                                          the output template. Default '%'
       -t template   --template=template  The output template
       -c commands   --commands=commands  The list of commands to be executed
+	  -x screen     --screen=screen      On which X screen number to start
     Mail bug reports and suggestions to <andrea.rossato@unibz.it>
 
 ### The Output Template
