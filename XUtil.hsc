@@ -33,6 +33,7 @@ module XUtil
 import Control.Concurrent
 import Control.Monad
 import Control.Monad.Trans
+import Data.IORef
 import Foreign
 import Graphics.X11.Xlib hiding (textExtents, textWidth)
 import qualified Graphics.X11.Xlib as Xlib (textExtents, textWidth)
@@ -187,9 +188,30 @@ initColor :: Display -> String -> IO DynPixel
 initColor dpy c = (initColor' dpy c) `catch`
                   (const . return $ DynPixel False (blackPixel dpy $ defaultScreen dpy))
 
+type ColorCache = [(String, Color)]
+colorCache :: IO (IORef ColorCache)
+colorCache = newIORef []
+
+getCachedColor :: String -> IO (Maybe Color)
+getCachedColor color_name = do
+  ref <- colorCache
+  result <- lookup color_name `fmap` readIORef ref
+  return result
+
+putCachedColor :: String -> Color -> IO ()
+putCachedColor color_name color_id = do
+    ref <- colorCache
+    modifyIORef ref $ \cache -> (color_name,color_id) : cache
+
 initColor' :: Display -> String -> IO DynPixel
 initColor' dpy c = do
-  (c', _) <- allocNamedColor dpy colormap c
+  cached_color <- getCachedColor c
+  c' <- do
+      case cached_color of
+          Just col -> return col
+          _        -> do (c'', _) <- allocNamedColor dpy colormap c
+                         putCachedColor c c''
+                         return c''
   return $ DynPixel True (color_pixel c')
   where colormap = defaultColormap dpy (defaultScreen dpy)
 
@@ -197,7 +219,8 @@ withColors :: MonadIO m => Display -> [String] -> ([Pixel] -> m a) -> m a
 withColors d cs f = do
   ps <- mapM (io . initColor d) cs
   r  <- f $ map pixel ps
-  io $ freeColors d cmap (map pixel $ filter allocated ps) 0
+  -- there is color leak in 'putCachedColor'. might be freed at xmobar shutdown
+  -- io $ freeColors d cmap (map pixel $ filter allocated ps) 0
   return r
   where
     cmap = defaultColormap d (defaultScreen d)
