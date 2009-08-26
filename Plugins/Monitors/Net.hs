@@ -3,7 +3,7 @@
 -- Module      :  Plugins.Monitors.Net
 -- Copyright   :  (c) Andrea Rossato
 -- License     :  BSD-style (see LICENSE)
--- 
+--
 -- Maintainer  :  Andrea Rossato <andrea.rossato@unibz.it>
 -- Stability   :  unstable
 -- Portability :  unportable
@@ -31,42 +31,36 @@ netConfig = mkMConfig
     "<dev>: <rx>|<tx>"      -- template
     ["dev", "rx", "tx"]     -- available replacements
 
+-- Given a list of indexes, take the indexed elements from a list.
+getNElements :: [Int] -> [a] -> [a]
+getNElements ns as = map (as!!) ns
 
--- takes two elements of a list given their indexes
-getTwoElementsAt :: Int -> Int -> [a] -> [a]
-getTwoElementsAt x y xs =
-    z : [zz]
-      where z = xs !! x
-            zz = xs !! y
-
--- split a list of strings returning a list with: 1. the first part of
--- the split; 2. the second part of the split without the Char; 3. the
--- rest of the list. For instance: 
+-- Split into words, with word boundaries indicated by the given predicate.
+-- Drops delimiters.  Duplicates 'Data.List.Split.wordsBy'. 
 --
--- > splitAtChar ':' ["lo:31174097","31174097"] 
+-- > map (wordsBy (`elem` " :")) ["lo:31174097 31174097", "eth0:  43598 88888"]
 --
--- will become ["lo","31174097","31174097"]
-splitAtChar :: Char ->  [String] -> [String]
-splitAtChar c xs =
-    first : (rest xs)
-        where rest = map $ \x -> if (c `elem` x) then (tail $ dropWhile (/= c) x) else x
-              first = head $ map (takeWhile (/= c)) . filter (\x -> (c `elem` x)) $ xs
+-- will become @[["lo","31174097","31174097"], ["eth0","43598","88888"]]@
+wordsBy :: (a -> Bool) -> [a] -> [[a]]
+wordsBy f s = case dropWhile f s of
+    [] -> []
+    s' -> w : wordsBy f s'' where (w, s'') = break f s'
 
-readNetDev :: [String] -> NetDev               
+readNetDev :: [String] -> NetDev
 readNetDev [] = NA
 readNetDev xs =
     ND (xs !! 0) (r (xs !! 1)) (r (xs !! 2))
        where r s | s == "" = 0
-                 | otherwise = (read s) / 1024
+                 | otherwise = read s / 1024
 
 fileNET :: IO [NetDev]
-fileNET = 
+fileNET =
     do f <- B.readFile "/proc/net/dev"
        return $ netParser f
 
 netParser :: B.ByteString -> [NetDev]
 netParser =
-    map readNetDev . map (splitAtChar ':') . map (getTwoElementsAt 0 8) . map (words . B.unpack) . drop 2 . B.lines
+    map (readNetDev . getNElements [0,1,9] . wordsBy (`elem` " :") . B.unpack) . drop 2 . B.lines
 
 formatNet :: Float -> Monitor String
 formatNet d =
@@ -75,25 +69,25 @@ formatNet d =
 
 printNet :: NetDev -> Monitor String
 printNet nd =
-    do case nd of
+    case nd of
          ND d r t -> do rx <- formatNet r
                         tx <- formatNet t
                         parseTemplate [d,rx,tx]
          NA -> return "N/A"
 
 parseNET :: String -> IO [NetDev]
-parseNET nd = 
+parseNET nd =
     do (a,b) <- doActionTwiceWithDelay interval fileNET
-       let netRate f da db = takeDigits 2 $ ((f db) - (f da)) * fromIntegral (1000000 `div` interval)
-           diffRate (da,db) = ND (netDev da) 
+       let netRate f da db = takeDigits 2 $ (f db - f da) * fromIntegral (1000000 `div` interval)
+           diffRate (da,db) = ND (netDev da)
                               (netRate netRx da db)
                               (netRate netTx da db)
        return $ filter (\d -> netDev d == nd) $ map diffRate $ zip a b
 
 runNet :: [String] -> Monitor String
-runNet nd = 
+runNet nd =
     do pn <- io $ parseNET $ head nd
        n <- case pn of
               [x] -> return x
-              _ -> return $ NA
+              _ -> return NA
        printNet n
