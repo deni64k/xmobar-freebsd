@@ -15,13 +15,21 @@
 module Parsers
     ( parseString
     , parseTemplate
+    , parseConfig
     ) where
 
 import Config
 import Commands
 import Runnable
-import Text.ParserCombinators.Parsec
+import Text.ParserCombinators.Parsec hiding ((<|>))
+import qualified Text.ParserCombinators.Parsec as Parsec
 import qualified Data.Map as Map
+
+import Data.Foldable (sequenceA_)
+import Data.List (find,inits,tails)
+import Control.Applicative.Permutation(optAtom, runPermsSep)
+import Control.Monad(Monad(return), mapM_, ap)
+import Control.Applicative hiding (many)
 
 -- | Runs the string parser
 parseString :: Config -> String -> IO [(String, String)]
@@ -99,3 +107,57 @@ combine c m ((ts,s,ss):xs) = (com, s, ss) : combine c m xs
 
 allTillSep :: Config -> Parser String
 allTillSep = many . noneOf . sepChar
+
+instance Applicative (GenParser tok st) where
+    pure = return
+    (<*>) = ap
+
+instance Alternative (GenParser tok st) where
+    (<|>) x y = (Parsec.<|>) (try x) y
+    empty = pzero
+
+readsToParsec :: Read b => CharParser st b
+readsToParsec = do
+    pos0 <- getPosition
+    input <- getInput
+    case reads input of
+        (result,rest):_ -> do
+            sequenceA_ $ do
+                  ls <- fmap (lines . fst) . find ((==rest) . snd)
+                            $ zip (inits input) (tails input)
+                  lastLine <- safeLast ls
+                  return $ setPosition
+                      . flip setSourceColumn (length lastLine)
+                      . flip incSourceLine (length ls - 1) $ pos0
+            setInput rest
+            return result
+        _ -> setInput input >> fail "readsToParsec failed"
+
+safeLast :: [a] -> Maybe a
+safeLast [] = Nothing
+safeLast xs = Just (last xs)
+
+-- | Parse the config
+parseConfig :: String -> Either ParseError Config
+parseConfig = flip parse "Config" $ sepEndSpaces ["Config","{"]
+                                    *> perms<* wrapSkip (string "}")
+    where
+      perms = runPermsSep (wrapSkip $ string ",") $ Config
+        <$> withDef font         (strField "font")
+        <*> withDef bgColor      (strField "bgColor")
+        <*> withDef fgColor      (strField "fgColor")
+        <*> withDef position     (field "position" readsToParsec)
+        <*> withDef lowerOnStart (field "lowerOnStart" parseEnum)
+        <*> withDef commands     (field "commands" readsToParsec)
+        <*> withDef sepChar      (strField "sepChar")
+        <*> withDef alignSep     (strField "alignSep")
+        <*> withDef template     (strField "template")
+
+      wrapSkip x = many space *> x <* many space
+      sepEndSpaces = mapM_ (\s -> string s <* many space)
+      withDef f = optAtom (f defaultConfig)
+
+      parseEnum = choice $ map (\x -> x <$ string (show x)) [minBound .. maxBound]
+
+      strField name = field name $ between (char '"') (char '"') (many1 . satisfy $ (/= '"'))
+      field name cont = sepEndSpaces [name,"="] *> cont

@@ -64,11 +64,8 @@ readConfig :: FilePath -> IO Config
 readConfig f = do
   file <- fileExist f
   s    <- if file then readFileSafe f else error $ f ++ ": file not found!\n" ++ usage
-  case reads s of
-    [(conf,_)] -> return conf
-    []         -> error $ f ++ ": configuration file contains errors!\n" ++ usage
-    _          -> error ("Some problem occured. Aborting...")
-
+  either (\err -> error $ f ++ ": configuration file contains errors at:\n" ++ show err)
+         return $ parseConfig s
 -- | Read default configuration file or load the default config
 readDefaultConfig :: IO Config
 readDefaultConfig = do

@@ -54,4 +54,4 @@ executable xmobar
         build-depends: hinotify
         cpp-options: -DINOTIFY
 
-    build-depends:      X11>=1.3.0, mtl, unix, parsec, filepath, stm
+    build-depends:      X11>=1.3.0, mtl, unix, parsec, filepath, stm, action-permutations==0.0.0.0
