@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Xmobar.Parsers
@@ -27,9 +28,11 @@ import qualified Data.Map as Map
 
 import Data.Foldable (sequenceA_)
 import Data.List (find,inits,tails)
-import Control.Applicative.Permutation(optAtom, runPermsSep)
-import Control.Monad(Monad(return), mapM_, ap)
+import Control.Applicative.Permutation -- (atom, maybeAtom, optAtom, runPermsSep)
+import Control.Monad(Monad(return), mapM_, liftM, ap)
 import Control.Applicative hiding (many)
+import Control.Monad.Writer
+import Data.Either
 
 -- | Runs the string parser
 parseString :: Config -> String -> IO [(String, String)]
@@ -137,27 +140,33 @@ safeLast :: [a] -> Maybe a
 safeLast [] = Nothing
 safeLast xs = Just (last xs)
 
--- | Parse the config
-parseConfig :: String -> Either ParseError Config
+liftM9 :: (Monad m) => (a1 -> a -> a11 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> b) -> m a1 -> m a -> m a11 -> m a2 -> m a3 -> m a4 -> m a5 -> m a6 -> m a7 -> m b
+liftM9 fun a b c d e f g h i = fun `liftM` a `ap` b `ap` c `ap` d `ap` e `ap` f `ap` g `ap` h `ap` i
+
+-- | Parse the config, logging a list of fields that were missing and replaced
+-- by the default definition.
+parseConfig :: MonadWriter [String] m => String -> Either ParseError (m Config)
 parseConfig = flip parse "Config" $ sepEndSpaces ["Config","{"]
-                                    *> perms<* wrapSkip (string "}")
+                                    *> perms <* wrapSkip (string "}") <* eof
     where
-      perms = runPermsSep (wrapSkip $ string ",") $ Config
-        <$> withDef font         (strField "font")
-        <*> withDef bgColor      (strField "bgColor")
-        <*> withDef fgColor      (strField "fgColor")
-        <*> withDef position     (field "position" readsToParsec)
-        <*> withDef lowerOnStart (field "lowerOnStart" parseEnum)
-        <*> withDef commands     (field "commands" readsToParsec)
-        <*> withDef sepChar      (strField "sepChar")
-        <*> withDef alignSep     (strField "alignSep")
-        <*> withDef template     (strField "template")
+      perms = runPermsSep (wrapSkip $ string ",") $ liftM9 Config
+        <$> withDef font         "font"          strField
+        <*> withDef bgColor      "bgColor"       strField
+        <*> withDef fgColor      "fgColor"       strField
+        <*> withDef position     "position"     (field readsToParsec)
+        <*> withDef lowerOnStart "lowerOnStart" (field parseEnum    )
+        <*> withDef commands     "commands"     (field readsToParsec)
+        <*> withDef sepChar      "sepChar"       strField
+        <*> withDef alignSep     "alignSep"      strField
+        <*> withDef template     "template"      strField
 
       wrapSkip x = many space *> x <* many space
       sepEndSpaces = mapM_ (\s -> string s <* many space)
-      withDef f = optAtom (f defaultConfig)
+
+      withDef ext name parser = optAtom (do tell [name]; return $ ext defaultConfig)
+                                        (liftM return $ parser name)
 
       parseEnum = choice $ map (\x -> x <$ string (show x)) [minBound .. maxBound]
 
-      strField name = field name $ between (char '"') (char '"') (many1 . satisfy $ (/= '"'))
-      field name cont = sepEndSpaces [name,"="] *> cont
+      strField name = flip field name $ between (char '"') (char '"') (many1 . satisfy $ (/= '"'))
+      field cont name = sepEndSpaces [name,"="] *> cont

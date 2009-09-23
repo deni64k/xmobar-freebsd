@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Xmobar.Main
@@ -24,6 +25,8 @@ import Parsers
 import Config
 import XUtil
 
+import Data.List (intercalate)
+
 import Paths_xmobar (version)
 import Data.IORef
 import Data.Version (showVersion)
@@ -33,6 +36,8 @@ import System.Exit
 import System.Environment
 import System.Posix.Files
 
+import Control.Monad.Writer (MonadWriter,MonadIO,unless,runWriterT)
+
 -- $main
 
 -- | The main entry point
@@ -41,9 +46,12 @@ main = do
   d   <- openDisplay ""
   args     <- getArgs
   (o,file) <- getOpts args
-  c        <- case file of
-                [cfgfile] -> readConfig cfgfile
-                _         -> readDefaultConfig
+  (c,defaultings) <- runWriterT $ case file of
+                    [cfgfile] -> readConfig cfgfile
+                    _         -> readDefaultConfig
+
+  unless (null defaultings) $ putStrLn $ "Fields missing from config defaulted: "
+                                            ++ intercalate "," defaultings
 
   -- listen for ConfigureEvents on the root window, for xrandr support:
   rootw <- rootWindow d (defaultScreen d)
@@ -60,18 +68,18 @@ main = do
   releaseFont d fs
 
 -- | Reads the configuration files or quits with an error
-readConfig :: FilePath -> IO Config
+readConfig :: (MonadIO m, MonadWriter [String] m) => FilePath -> m Config
 readConfig f = do
-  file <- fileExist f
-  s    <- if file then readFileSafe f else error $ f ++ ": file not found!\n" ++ usage
+  file <- io $ fileExist f
+  s    <- io $ if file then readFileSafe f else error $ f ++ ": file not found!\n" ++ usage
   either (\err -> error $ f ++ ": configuration file contains errors at:\n" ++ show err)
-         return $ parseConfig s
+         id $ parseConfig s
 -- | Read default configuration file or load the default config
-readDefaultConfig :: IO Config
+readDefaultConfig :: (MonadIO m, MonadWriter [String] m) => m Config
 readDefaultConfig = do
-  home <- getEnv "HOME"
+  home <- io $ getEnv "HOME"
   let path = home ++ "/.xmobarrc"
-  f <- fileExist path
+  f <- io $ fileExist path
   if f then readConfig path else return defaultConfig
 
 data Opts = Help
