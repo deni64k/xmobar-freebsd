@@ -40,6 +40,7 @@ import qualified Graphics.X11.Xlib as Xlib (textExtents, textWidth)
 import Graphics.X11.Xlib.Extras
 import System.Posix.Types (Fd(..))
 import System.IO
+import System.IO.Unsafe (unsafePerformIO)
 #if defined XFT || defined UTF8
 import Foreign.C
 import qualified System.IO.UTF8 as UTF8 (readFile,hGetLine)
@@ -189,41 +190,32 @@ initColor dpy c = (initColor' dpy c) `catch`
                   (const . return $ DynPixel False (blackPixel dpy $ defaultScreen dpy))
 
 type ColorCache = [(String, Color)]
-colorCache :: IO (IORef ColorCache)
-colorCache = newIORef []
+{-# NOINLINE colorCache #-}
+colorCache :: IORef ColorCache
+colorCache = unsafePerformIO $ newIORef []
 
 getCachedColor :: String -> IO (Maybe Color)
-getCachedColor color_name = do
-  ref <- colorCache
-  result <- lookup color_name `fmap` readIORef ref
-  return result
+getCachedColor color_name = lookup color_name `fmap` readIORef colorCache
 
 putCachedColor :: String -> Color -> IO ()
-putCachedColor color_name color_id = do
-    ref <- colorCache
-    modifyIORef ref $ \cache -> (color_name,color_id) : cache
+putCachedColor name c_id = modifyIORef colorCache $ \c -> (name, c_id) : c
 
 initColor' :: Display -> String -> IO DynPixel
 initColor' dpy c = do
+  let colormap = defaultColormap dpy (defaultScreen dpy)
   cached_color <- getCachedColor c
-  c' <- do
-      case cached_color of
+  c' <- case cached_color of
           Just col -> return col
           _        -> do (c'', _) <- allocNamedColor dpy colormap c
                          putCachedColor c c''
                          return c''
   return $ DynPixel True (color_pixel c')
-  where colormap = defaultColormap dpy (defaultScreen dpy)
 
 withColors :: MonadIO m => Display -> [String] -> ([Pixel] -> m a) -> m a
 withColors d cs f = do
+  let cmap = defaultColormap d (defaultScreen d)
   ps <- mapM (io . initColor d) cs
-  r  <- f $ map pixel ps
-  -- there is color leak in 'putCachedColor'. might be freed at xmobar shutdown
-  -- io $ freeColors d cmap (map pixel $ filter allocated ps) 0
-  return r
-  where
-    cmap = defaultColormap d (defaultScreen d)
+  f $ map pixel ps
 
 -- | Creates a window with the attribute override_redirect set to True.
 -- Windows Managers should not touch this kind of windows.
