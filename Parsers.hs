@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Xmobar.Parsers
@@ -28,8 +29,7 @@ import qualified Data.Map as Map
 
 import Data.Foldable (sequenceA_)
 import Data.List (find,inits,tails)
-import Control.Applicative.Permutation -- (atom, maybeAtom, optAtom, runPermsSep)
-import Control.Monad(Monad(return), mapM_, liftM, ap)
+import Control.Applicative.Permutation (optAtom, runPermsSep)
 import Control.Applicative hiding (many)
 import Control.Monad.Writer
 import Data.Either
@@ -140,8 +140,10 @@ safeLast :: [a] -> Maybe a
 safeLast [] = Nothing
 safeLast xs = Just (last xs)
 
-liftM9 :: (Monad m) => (a1 -> a -> a11 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> b) -> m a1 -> m a -> m a11 -> m a2 -> m a3 -> m a4 -> m a5 -> m a6 -> m a7 -> m b
-liftM9 fun a b c d e f g h i = fun `liftM` a `ap` b `ap` c `ap` d `ap` e `ap` f `ap` g `ap` h `ap` i
+liftM9 :: (Monad m) => (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> b) ->
+          m a1 -> m a2 -> m a3 -> m a4 -> m a5 -> m a6 -> m a7 -> m a8 -> m a9 -> m b
+liftM9 fun a b c d e f g h i
+    = fun `liftM` a `ap` b `ap` c `ap` d `ap` e `ap` f `ap` g `ap` h `ap` i
 
 -- | Parse the config, logging a list of fields that were missing and replaced
 -- by the default definition.

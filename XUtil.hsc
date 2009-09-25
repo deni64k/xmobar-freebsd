@@ -28,6 +28,7 @@ module XUtil
     , io
     , fi
     , withColors
+    , DynPixel(..)
     ) where
 
 import Control.Concurrent
@@ -213,7 +214,6 @@ initColor' dpy c = do
 
 withColors :: MonadIO m => Display -> [String] -> ([Pixel] -> m a) -> m a
 withColors d cs f = do
-  let cmap = defaultColormap d (defaultScreen d)
   ps <- mapM (io . initColor d) cs
   f $ map pixel ps
 
