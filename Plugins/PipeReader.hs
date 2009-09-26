@@ -23,6 +23,6 @@ data PipeReader = PipeReader String String
 instance Exec PipeReader where
     alias (PipeReader _ a)    = a
     start (PipeReader p _) cb = do
-        h <- openFile p ReadMode
+        h <- openFile p ReadWriteMode
         forever (hGetLineSafe h >>= cb)
         where forever a = a >> forever a
