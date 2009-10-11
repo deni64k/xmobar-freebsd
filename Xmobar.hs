@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Xmobar
@@ -41,7 +42,7 @@ import Control.Exception hiding (handle)
 import Data.Bits
 import Data.Char
 import Data.Maybe(fromMaybe)
-
+import Data.Typeable (Typeable)
 
 import Config
 import Parsers
@@ -69,12 +70,15 @@ data XConf =
 runX :: XConf -> X () -> IO ()
 runX xc f = runReaderT f xc
 
+data WakeUp = WakeUp deriving (Show,Typeable)
+instance Exception WakeUp
+
 -- | The event loop
 eventLoop :: XConf -> [(Maybe ThreadId, TVar String)] -> IO ()
 eventLoop xc@(XConf d _ w fs c) v = block $ do
     tv <- atomically $ newTVar []
     t  <- myThreadId
-    ct <- forkIO (checker t tv "" `catch` \_ -> return ())
+    ct <- forkIO (checker t tv "" `catch` \(SomeException _) -> return ())
     go tv ct
  where
     -- interrupt the drawing thread every time a var is updated
@@ -84,14 +88,14 @@ eventLoop xc@(XConf d _ w fs c) v = block $ do
               guard (nv /= ov)
               writeTVar tvar nv
               return nv
-      throwDynTo t ()
+      throwTo t WakeUp
       checker t tvar nval
 
     -- Continuously wait for a timer interrupt or an expose event
     go tv ct = do
-      catchDyn (unblock $ allocaXEvent $ \e ->
-                    handle tv ct =<< (nextEvent' d e >> getEvent e))
-               (\() -> runX xc (updateWin tv) >> return ())
+      catch (unblock $ allocaXEvent $ \e ->
+                 handle tv ct =<< (nextEvent' d e >> getEvent e))
+            (\WakeUp -> runX xc (updateWin tv) >> return ())
       go tv ct
 
     -- event hanlder

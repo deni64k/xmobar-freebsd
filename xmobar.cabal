@@ -39,7 +39,7 @@ executable xmobar
             ghc-options:    -O0
 
     if flag(small_base)
-       build-depends:   base >= 3, base < 4, containers, process, old-time, old-locale, bytestring, directory
+       build-depends:   base == 4.*, containers, process, old-time, old-locale, bytestring, directory
 
     else
        build-depends:   base < 3
