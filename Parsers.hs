@@ -1,5 +1,4 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE FlexibleContexts, GeneralizedNewtypeDeriving #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Xmobar.Parsers
@@ -21,18 +20,18 @@ module Parsers
     ) where
 
 import Config
-import Commands
 import Runnable
-import Text.ParserCombinators.Parsec hiding ((<|>))
-import qualified Text.ParserCombinators.Parsec as Parsec
+import Commands
+
+import Control.Monad.Writer(mapM_, ap, liftM, liftM2, MonadWriter, tell)
+import Control.Applicative.Permutation(optAtom, runPermsSep)
+import Control.Applicative(Applicative, (<*>), Alternative, empty, (<$), (<$>))
+import qualified Control.Applicative
+
+import Data.List(tails, find, inits)
 import qualified Data.Map as Map
 
-import Data.Foldable (sequenceA_)
-import Data.List (find,inits,tails)
-import Control.Applicative.Permutation (optAtom, runPermsSep)
-import Control.Applicative hiding (many)
-import Control.Monad.Writer
-import Data.Either
+import Text.ParserCombinators.Parsec as Parsec
 
 -- | Runs the string parser
 parseString :: Config -> String -> IO [(String, String)]
@@ -111,13 +110,16 @@ combine c m ((ts,s,ss):xs) = (com, s, ss) : combine c m xs
 allTillSep :: Config -> Parser String
 allTillSep = many . noneOf . sepChar
 
-instance Applicative (GenParser tok st) where
-    pure = return
-    (<*>) = ap
+newtype WrappedParser tok st a = WrappedParser { unWrapParser :: GenParser tok st a }
+    deriving (Functor,Monad)
 
-instance Alternative (GenParser tok st) where
-    (<|>) x y = (Parsec.<|>) (try x) y
-    empty = pzero
+instance Applicative (WrappedParser tok st) where
+    pure = WrappedParser . return
+    (<*>) x y = WrappedParser $ unWrapParser x `ap` unWrapParser y
+
+instance Alternative (WrappedParser tok st) where
+    (<|>) x y = WrappedParser $ try (unWrapParser x) Parsec.<|> unWrapParser y
+    empty = WrappedParser pzero
 
 readsToParsec :: Read b => CharParser st b
 readsToParsec = do
@@ -125,7 +127,7 @@ readsToParsec = do
     input <- getInput
     case reads input of
         (result,rest):_ -> do
-            sequenceA_ $ do
+            maybe (return Nothing) (fmap Just) $ do
                   ls <- fmap (lines . fst) . find ((==rest) . snd)
                             $ zip (inits input) (tails input)
                   lastLine <- safeLast ls
@@ -148,10 +150,14 @@ liftM9 fun a b c d e f g h i
 -- | Parse the config, logging a list of fields that were missing and replaced
 -- by the default definition.
 parseConfig :: MonadWriter [String] m => String -> Either ParseError (m Config)
-parseConfig = flip parse "Config" $ sepEndSpaces ["Config","{"]
-                                    *> perms <* wrapSkip (string "}") <* eof
+parseConfig = flip parse "Config" $ do
+                sepEndSpaces ["Config","{"]
+                x <- unWrapParser perms
+                wrapSkip (string "}")
+                eof
+                return x
     where
-      perms = runPermsSep (wrapSkip $ string ",") $ liftM9 Config
+      perms = runPermsSep (WrappedParser $ wrapSkip $ string ",") $ liftM9 Config
         <$> withDef font         "font"          strField
         <*> withDef bgColor      "bgColor"       strField
         <*> withDef fgColor      "fgColor"       strField
@@ -162,13 +168,13 @@ parseConfig = flip parse "Config" $ sepEndSpaces ["Config","{"]
         <*> withDef alignSep     "alignSep"      strField
         <*> withDef template     "template"      strField
 
-      wrapSkip x = many space *> x <* many space
-      sepEndSpaces = mapM_ (\s -> string s <* many space)
+      wrapSkip x = many space >> liftM2 const x (many space)
+      sepEndSpaces = mapM_ (\s -> liftM2 const (string s) $ many space)
 
       withDef ext name parser = optAtom (do tell [name]; return $ ext defaultConfig)
-                                        (liftM return $ parser name)
+                                        (liftM return $ WrappedParser $ parser name)
 
       parseEnum = choice $ map (\x -> x <$ string (show x)) [minBound .. maxBound]
 
       strField name = flip field name $ between (char '"') (char '"') (many1 . satisfy $ (/= '"'))
-      field cont name = sepEndSpaces [name,"="] *> cont
+      field cont name = sepEndSpaces [name,"="] >> cont
