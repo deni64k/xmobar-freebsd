@@ -147,16 +147,27 @@ liftM9 :: (Monad m) => (a1 -> a2 -> a3 -> a4 -> a5 -> a6 -> a7 -> a8 -> a9 -> b)
 liftM9 fun a b c d e f g h i
     = fun `liftM` a `ap` b `ap` c `ap` d `ap` e `ap` f `ap` g `ap` h `ap` i
 
+stripComments :: String -> String
+stripComments = unlines . map (drop 5 . strip False . (replicate 5 ' '++)) . lines
+    where strip m ('-':'-':xs) = if m then "--" ++ strip m xs else ""
+          strip m ('\\':xss) = case xss of
+                                '\\':xs -> '\\' : strip m xs
+                                _ -> strip m $ drop 1 xss
+          strip m ('"':xs) = '"': strip (not m) xs
+          strip m (x:xs) = x : strip m xs
+          strip _ [] = []
+
 -- | Parse the config, logging a list of fields that were missing and replaced
 -- by the default definition.
 parseConfig :: MonadWriter [String] m => String -> Either ParseError (m Config)
-parseConfig = flip parse "Config" $ do
-                sepEndSpaces ["Config","{"]
-                x <- unWrapParser perms
-                wrapSkip (string "}")
-                eof
-                return x
+parseConfig = parseConf "Config" . stripComments
     where
+      parseConf = parse $ do
+        sepEndSpaces ["Config","{"]
+        x <- unWrapParser perms
+        wrapSkip (string "}")
+        eof
+        return x
       perms = runPermsSep (WrappedParser $ wrapSkip $ string ",") $ liftM9 Config
         <$> withDef font         "font"          strField
         <*> withDef bgColor      "bgColor"       strField
