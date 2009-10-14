@@ -168,6 +168,27 @@ Other configuration options:
 `template`
 :    The output template.
 
+### Running xmobar with i3status
+
+[xmobar] can be used to display information gathered by [i3status], a
+small program that gathers information and formats it suitable for
+being displayed by the dzen2 status bar, wmii's status bar or xmobar's
+StdinReader.
+
+Since xmobar support has been added only recently you need to get the
+git repository, and build it with the appropriate flags:
+
+    git clone git://code.stapelberg.de/i3status
+
+and then build it:
+
+    cd i3status
+    make EXTRA_CFLAGS="-DXMOBAR
+
+Then you can run it with:
+
+    ./i3status -c i3status.conf | xmobar -o -t "%StdinReader%" -c "[Run StdinReader]"
+
 ### Command Line Options
 
 [xmobar] can be either configured with a configuration file or with
@@ -578,3 +599,4 @@ Copyright &copy; 2007 Andrea Rossato
 [xmonad]: http://xmonad.org
 [utf8-string]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/utf8-string
 [X11-xft]: http://hackage.haskell.org/cgi-bin/hackage-scripts/package/X11-xft
+[i3status]: http://i3.zekjur.net/i3status/
