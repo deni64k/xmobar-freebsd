@@ -36,7 +36,7 @@ readFileBatt (i,s) =
        return (a,b)
     where rf file = do
             f <- fileExist file
-            if f then B.readFile file else return B.empty
+            if f then catRead file else return B.empty
 
 parseBATT :: [(String, String)] -> IO Batt
 parseBATT bfs =
