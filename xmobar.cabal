@@ -12,7 +12,7 @@ license:            BSD3
 license-file:       LICENSE
 author:             Andrea Rossato
 maintainer:         andrea.rossato@unitn.it
-cabal-version:      >= 1.2
+cabal-version:      >= 1.6
 build-type:         Simple
 
 data-files:         xmobar.config-sample
