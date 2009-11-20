@@ -14,7 +14,7 @@
 import Control.Monad
 import Graphics.X11
 import Graphics.X11.Xlib.Extras
-import Codec.Binary.UTF8.String as UTF8
+import qualified Data.ByteString as B
 import Foreign.C (CChar)
 import System.IO
 import System.Environment
@@ -31,11 +31,11 @@ main = do
     root  <- rootWindow d (defaultScreen d)
 
     forever $ do
-        msg <- getLine
+        msg <- B.getLine
         changeProperty8 d root xlog ustring propModeReplace (encodeCChar msg)
         sync d True
 
     return ()
 
-encodeCChar :: String -> [CChar]
-encodeCChar = map fromIntegral . UTF8.encode
+encodeCChar :: B.ByteString -> [CChar]
+encodeCChar = map fromIntegral . B.unpack
