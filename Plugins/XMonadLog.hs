@@ -30,13 +30,19 @@ import Foreign.C (CChar)
 import XUtil (nextEvent')
 
 
-data XMonadLog = XMonadLog
+data XMonadLog = XMonadLog | XPropertyLog String
     deriving (Read, Show)
 
 instance Exec XMonadLog where
-    start XMonadLog cb = do
+    alias XMonadLog = "XMonadLog"
+    alias (XPropertyLog atom) = atom
+
+    start x cb = do
+        let atom = case x of
+                XMonadLog      -> "_XMONAD_LOG"
+                XPropertyLog a -> a
         d <- openDisplay ""
-        xlog <- internAtom d "_XMONAD_LOG" False
+        xlog <- internAtom d atom False
 
         root  <- rootWindow d (defaultScreen d)
         selectInput d root propertyChangeMask
