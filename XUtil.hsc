@@ -44,7 +44,11 @@ import System.IO
 import System.IO.Unsafe (unsafePerformIO)
 #if defined XFT || defined UTF8
 import Foreign.C
+# if __GLASGOW_HASKELL__ < 612
 import qualified System.IO.UTF8 as UTF8 (readFile,hGetLine)
+# else
+import qualified System.IO as UTF8 (readFile,hGetLine)
+# endif
 #endif
 #if defined XFT
 import Data.List
