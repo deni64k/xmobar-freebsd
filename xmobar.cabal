@@ -2,10 +2,10 @@ name:               xmobar
 version:            0.9.2
 homepage:           http://code.haskell.org/~arossato/xmobar
 synopsis:           A Minimalistic Text Based Status Bar
-description: 	    Xmobar is a minimalistic text based status bar.
-		    .
-                    Inspired by the Ion3 status bar, it supports similar features, 
-		    like dynamic color management, output templates, and extensibility 
+description:        Xmobar is a minimalistic text based status bar.
+                    .
+                    Inspired by the Ion3 status bar, it supports similar features,
+                    like dynamic color management, output templates, and extensibility
                     through plugins.
 category:           System
 license:            BSD3
@@ -51,6 +51,10 @@ executable xmobar
     if flag(with_utf8)
         build-depends: utf8-string
         cpp-options: -DUTF8
+
+    if os(freebsd)
+        build-depends: bsd-sysctl
+        cpp-options: -DFREEBSD
 
     if flag(with_inotify)
         build-depends: hinotify

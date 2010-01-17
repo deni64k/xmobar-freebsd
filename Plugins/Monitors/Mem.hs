@@ -1,4 +1,4 @@
-{-# OPTIONS -cpp #-}
+{-# LANGUAGE CPP #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Plugins.Monitors.Mem
@@ -16,7 +16,7 @@
 module Plugins.Monitors.Mem where
 
 import Data.List
-import Data.Maybe
+import Data.Maybe (fromJust)
 
 import Plugins.Monitors.Common
 
@@ -29,7 +29,7 @@ memConfig = mkMConfig
 fileMEM :: IO String
 fileMEM = readFile "/proc/meminfo"
 
-#if defined (__freebsd__)
+#if defined (FREEBSD)
 parseMEM :: IO [Float]
 parseMEM =
     do file <- fileMEM
